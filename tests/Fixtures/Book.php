@@ -8,6 +8,5 @@ final class Book
 {
     public function __construct(
         public readonly string $title,
-    ) {
-    }
+    ) {}
 }

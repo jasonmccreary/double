@@ -17,13 +17,11 @@ final class TestDouble
 {
     private static ?\WeakMap $states = null;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function for(string $target): object
     {
-        $generatedClass = (new ClassGenerator())->generate($target);
+        $generatedClass = (new ClassGenerator)->generate($target);
 
         $state = new DoubleState($target, self::deriveLabel($target));
 
@@ -68,7 +66,7 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        if (!method_exists($state->target(), $method)) {
+        if (! method_exists($state->target(), $method)) {
             throw UnknownMethodException::forMethod($state->target(), $method);
         }
 
@@ -80,7 +78,7 @@ final class TestDouble
 
     private static function states(): \WeakMap
     {
-        return self::$states ??= new \WeakMap();
+        return self::$states ??= new \WeakMap;
     }
 
     private static function deriveLabel(string $target): string

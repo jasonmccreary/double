@@ -41,7 +41,7 @@ final class ClassGenerator
 
     public function generate(string $target): string
     {
-        if (!class_exists($target) && !interface_exists($target)) {
+        if (! class_exists($target) && ! interface_exists($target)) {
             throw InvalidDoubleTargetException::doesNotExist($target);
         }
 
@@ -113,12 +113,11 @@ final class ClassGenerator
 
         return array_values(array_filter(
             $methods,
-            static fn (\ReflectionMethod $method): bool =>
-                !$method->isFinal()
-                && !$method->isStatic()
-                && !$method->isConstructor()
-                && !$method->isDestructor()
-                && !str_starts_with($method->getName(), '__'),
+            static fn (\ReflectionMethod $method): bool => ! $method->isFinal()
+                && ! $method->isStatic()
+                && ! $method->isConstructor()
+                && ! $method->isDestructor()
+                && ! str_starts_with($method->getName(), '__'),
         ));
     }
 
@@ -133,7 +132,7 @@ final class ClassGenerator
         ));
 
         $returnType = $method->getReturnType();
-        $returnDeclaration = $returnType !== null ? ': ' . $this->stringifyType($returnType) : '';
+        $returnDeclaration = $returnType !== null ? ': '.$this->stringifyType($returnType) : '';
         $isVoid = $returnType !== null && $this->stringifyType($returnType) === 'void';
 
         $call = sprintf(
@@ -158,15 +157,15 @@ final class ClassGenerator
     private function buildParameter(\ReflectionParameter $parameter): string
     {
         $type = $parameter->getType();
-        $typeDeclaration = $type !== null ? $this->stringifyType($type) . ' ' : '';
+        $typeDeclaration = $type !== null ? $this->stringifyType($type).' ' : '';
 
         $byRef = $parameter->isPassedByReference() ? '&' : '';
         $variadic = $parameter->isVariadic() ? '...' : '';
 
         $default = '';
 
-        if (!$parameter->isVariadic() && $parameter->isDefaultValueAvailable()) {
-            $default = ' = ' . ($parameter->isDefaultValueConstant()
+        if (! $parameter->isVariadic() && $parameter->isDefaultValueAvailable()) {
+            $default = ' = '.($parameter->isDefaultValueConstant()
                 ? $this->qualifyConstantName($parameter->getDefaultValueConstantName())
                 : var_export($parameter->getDefaultValue(), true));
         }
@@ -182,7 +181,7 @@ final class ClassGenerator
      */
     private function qualifyConstantName(string $name): string
     {
-        return str_contains($name, '::') && !str_starts_with($name, '\\') ? '\\' . $name : $name;
+        return str_contains($name, '::') && ! str_starts_with($name, '\\') ? '\\'.$name : $name;
     }
 
     private function stringifyType(\ReflectionType $type): string
@@ -199,7 +198,7 @@ final class ClassGenerator
         // for a member like (A&B)|C, a nested ReflectionIntersectionType.
         return implode('|', array_map(
             fn (\ReflectionType $member): string => $member instanceof \ReflectionIntersectionType
-                ? '(' . $this->stringifyIntersectionType($member) . ')'
+                ? '('.$this->stringifyIntersectionType($member).')'
                 : $this->stringifyNamedType($member),
             $type->getTypes(),
         ));
@@ -222,12 +221,12 @@ final class ClassGenerator
         $name = $type->getName();
         $lower = strtolower($name);
 
-        if (!$type->isBuiltin() && !in_array($lower, ['self', 'static', 'parent'], true)) {
-            $name = '\\' . $name;
+        if (! $type->isBuiltin() && ! in_array($lower, ['self', 'static', 'parent'], true)) {
+            $name = '\\'.$name;
         }
 
-        $nullablePrefix = $type->allowsNull() && !in_array($lower, ['mixed', 'null'], true) ? '?' : '';
+        $nullablePrefix = $type->allowsNull() && ! in_array($lower, ['mixed', 'null'], true) ? '?' : '';
 
-        return $nullablePrefix . $name;
+        return $nullablePrefix.$name;
     }
 }

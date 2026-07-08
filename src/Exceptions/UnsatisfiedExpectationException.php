@@ -16,7 +16,7 @@ namespace JMac\Testing\Exceptions;
 final class UnsatisfiedExpectationException extends TestDoubleException
 {
     /**
-     * @param string[] $descriptions one pre-formatted line per unmet expectation
+     * @param  string[]  $descriptions  one pre-formatted line per unmet expectation
      */
     public static function forUnmet(string $label, array $descriptions): self
     {
@@ -24,7 +24,7 @@ final class UnsatisfiedExpectationException extends TestDoubleException
             "%d expectation(s) were not satisfied on test double \"%s\":\n\n%s",
             count($descriptions),
             $label,
-            implode("\n", array_map(static fn (string $d): string => '    ' . $d, $descriptions)),
+            implode("\n", array_map(static fn (string $d): string => '    '.$d, $descriptions)),
         ));
     }
 }

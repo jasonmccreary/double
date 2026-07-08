@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\TestDouble;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
@@ -25,20 +23,22 @@ use JMac\Testing\Tests\Fixtures\StrictCollisionInterface;
 use JMac\Testing\Tests\Fixtures\Suit;
 use JMac\Testing\Tests\Fixtures\UnionTypeInterface;
 use JMac\Testing\Tests\Fixtures\VariadicInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 
 final class ClassGeneratorTest extends TestCase
 {
-    public function testGeneratesAClassImplementingATargetInterface(): void
+    public function test_generates_a_class_implementing_a_target_interface(): void
     {
-        $generated = (new ClassGenerator())->generate(BookRepositoryInterface::class);
+        $generated = (new ClassGenerator)->generate(BookRepositoryInterface::class);
 
         $this->assertTrue(class_exists($generated));
         $this->assertTrue(is_subclass_of($generated, BookRepositoryInterface::class));
     }
 
-    public function testGeneratesAClassExtendingATargetClassWithoutInvokingItsConstructor(): void
+    public function test_generates_a_class_extending_a_target_class_without_invoking_its_constructor(): void
     {
-        $generated = (new ClassGenerator())->generate(ConcreteLogger::class);
+        $generated = (new ClassGenerator)->generate(ConcreteLogger::class);
 
         $this->assertTrue(is_subclass_of($generated, ConcreteLogger::class));
 
@@ -49,9 +49,9 @@ final class ClassGeneratorTest extends TestCase
         $this->assertInstanceOf(ConcreteLogger::class, $instance);
     }
 
-    public function testEachCallToGenerateProducesADistinctClassForTheSameTarget(): void
+    public function test_each_call_to_generate_produces_a_distinct_class_for_the_same_target(): void
     {
-        $generator = new ClassGenerator();
+        $generator = new ClassGenerator;
 
         $first = $generator->generate(BookRepositoryInterface::class);
         $second = $generator->generate(BookRepositoryInterface::class);
@@ -61,20 +61,20 @@ final class ClassGeneratorTest extends TestCase
         $this->assertTrue(class_exists($second));
     }
 
-    public function testRejectsANonExistentTarget(): void
+    public function test_rejects_a_non_existent_target(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
         $this->expectExceptionMessage('no such class or interface exists');
 
-        (new ClassGenerator())->generate('JMac\Testing\Tests\Fixtures\NoSuchThing');
+        (new ClassGenerator)->generate('JMac\Testing\Tests\Fixtures\NoSuchThing');
     }
 
-    public function testRejectsAFinalClass(): void
+    public function test_rejects_a_final_class(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
         $this->expectExceptionMessage('declared final');
 
-        (new ClassGenerator())->generate(FinalLogger::class);
+        (new ClassGenerator)->generate(FinalLogger::class);
     }
 
     public static function reservedNameFixtures(): iterable
@@ -88,10 +88,10 @@ final class ClassGeneratorTest extends TestCase
     }
 
     #[DataProvider('reservedNameFixtures')]
-    public function testRejectsATargetDeclaringAReservedControlMethodName(string $target, string $method): void
+    public function test_rejects_a_target_declaring_a_reserved_control_method_name(string $target, string $method): void
     {
         try {
-            (new ClassGenerator())->generate($target);
+            (new ClassGenerator)->generate($target);
             $this->fail('Expected ReservedNameCollisionException to be thrown.');
         } catch (ReservedNameCollisionException $exception) {
             $this->assertStringContainsString($target, $exception->getMessage());
@@ -99,9 +99,9 @@ final class ClassGeneratorTest extends TestCase
         }
     }
 
-    public function testNeverEmitsAnImplicitNullableParameterSignature(): void
+    public function test_never_emits_an_implicit_nullable_parameter_signature(): void
     {
-        $generated = (new ClassGenerator())->generate(NullableParamInterface::class);
+        $generated = (new ClassGenerator)->generate(NullableParamInterface::class);
 
         $parameter = (new \ReflectionMethod($generated, 'greet'))->getParameters()[0];
 
@@ -109,7 +109,7 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('?string', (string) $parameter->getType());
     }
 
-    public function testGeneratedMethodsWithExplicitNullableParametersTriggerNoDeprecation(): void
+    public function test_generated_methods_with_explicit_nullable_parameters_trigger_no_deprecation(): void
     {
         $instance = TestDouble::for(NullableParamInterface::class);
 
@@ -130,9 +130,9 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame([], $deprecations);
     }
 
-    public function testDoesNotAddASpuriousNullableMarkerToAGenuinelyUntypedParameter(): void
+    public function test_does_not_add_a_spurious_nullable_marker_to_a_genuinely_untyped_parameter(): void
     {
-        $generated = (new ClassGenerator())->generate(NullableParamInterface::class);
+        $generated = (new ClassGenerator)->generate(NullableParamInterface::class);
 
         $parameter = (new \ReflectionMethod($generated, 'untypedDefaultNull'))->getParameters()[0];
 
@@ -141,7 +141,7 @@ final class ClassGeneratorTest extends TestCase
         $this->assertNull($parameter->getDefaultValue());
     }
 
-    public function testSupportsUnionTypedParametersAndReturns(): void
+    public function test_supports_union_typed_parameters_and_returns(): void
     {
         $instance = TestDouble::for(UnionTypeInterface::class);
 
@@ -150,7 +150,7 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('ok', $instance->accept(123));
     }
 
-    public function testSupportsVariadicParameters(): void
+    public function test_supports_variadic_parameters(): void
     {
         $instance = TestDouble::for(VariadicInterface::class);
 
@@ -159,9 +159,9 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('a-b-c', $instance->combine('-', 'a', 'b', 'c'));
     }
 
-    public function testPreservesEnumCaseDefaultValues(): void
+    public function test_preserves_enum_case_default_values(): void
     {
-        $generated = (new ClassGenerator())->generate(EnumDefaultInterface::class);
+        $generated = (new ClassGenerator)->generate(EnumDefaultInterface::class);
 
         $parameter = (new \ReflectionMethod($generated, 'draw'))->getParameters()[0];
 
@@ -169,16 +169,15 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame(Suit::Hearts, $parameter->getDefaultValue());
     }
 
-    public function testGeneratedDoubleSatisfiesTypeHintsInRealCollaborators(): void
+    public function test_generated_double_satisfies_type_hints_in_real_collaborators(): void
     {
         $instance = TestDouble::for(BookRepositoryInterface::class);
 
         $instance->allows('find')->returns(new Book('Some Title'));
 
-        $consumer = new class ($instance) {
-            public function __construct(public readonly BookRepositoryInterface $repository)
-            {
-            }
+        $consumer = new class($instance)
+        {
+            public function __construct(public readonly BookRepositoryInterface $repository) {}
         };
 
         $this->assertInstanceOf(BookRepositoryInterface::class, $consumer->repository);

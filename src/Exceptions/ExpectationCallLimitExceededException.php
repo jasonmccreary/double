@@ -21,7 +21,7 @@ final class ExpectationCallLimitExceededException extends TestDoubleException
     ): self {
         return new self(sprintf(
             'Test double "%s" received call #%d to "%s(%s)", but the matching expectation '
-            . 'allows at most %d call(s).',
+            .'allows at most %d call(s).',
             $label,
             $callNumber,
             $method,

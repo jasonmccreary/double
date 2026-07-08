@@ -28,8 +28,7 @@ final class DoubleState
     public function __construct(
         private readonly string $target,
         private readonly string $label,
-    ) {
-    }
+    ) {}
 
     public function target(): string
     {
@@ -100,7 +99,7 @@ final class DoubleState
     {
         return array_values(array_filter(
             $this->expectations,
-            static fn (MethodExpectation $expectation): bool => !$expectation->isSatisfied(),
+            static fn (MethodExpectation $expectation): bool => ! $expectation->isSatisfied(),
         ));
     }
 }

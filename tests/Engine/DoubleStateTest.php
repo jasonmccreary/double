@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
-use PHPUnit\Framework\TestCase;
 use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\Mode;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
+use PHPUnit\Framework\TestCase;
 
 final class DoubleStateTest extends TestCase
 {
-    public function testTargetAndLabelAreExposed(): void
+    public function test_target_and_label_are_exposed(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
 
@@ -21,14 +21,14 @@ final class DoubleStateTest extends TestCase
         $this->assertSame('BookRepositoryInterface', $state->label());
     }
 
-    public function testModeDefaultsToStrictWhenUnset(): void
+    public function test_mode_defaults_to_strict_when_unset(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
 
         $this->assertSame(Mode::Strict, $state->mode());
     }
 
-    public function testSetModeCanOnlyHappenOnce(): void
+    public function test_set_mode_can_only_happen_once(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
         $state->setMode(Mode::Strict);
@@ -38,7 +38,7 @@ final class DoubleStateTest extends TestCase
         $state->setMode(Mode::Strict);
     }
 
-    public function testExpectationsForFiltersByMethodNameAndPreservesRegistrationOrder(): void
+    public function test_expectations_for_filters_by_method_name_and_preserves_registration_order(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
         $find = new MethodExpectation('find', required: false);
@@ -53,18 +53,18 @@ final class DoubleStateTest extends TestCase
         $this->assertSame([$save], $state->expectationsFor('save'));
     }
 
-    public function testRecordCallAndCallsForTrackEveryCallRegardlessOfMatching(): void
+    public function test_record_call_and_calls_for_track_every_call_regardless_of_matching(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
 
         $state->recordCall('find', [1]);
-        $state->recordCall('save', [new \stdClass()]);
+        $state->recordCall('save', [new \stdClass]);
         $state->recordCall('find', [2]);
 
         $this->assertSame([[1], [2]], $state->callsFor('find'));
     }
 
-    public function testUnmetExpectationsExcludesSatisfiedOnes(): void
+    public function test_unmet_expectations_excludes_satisfied_ones(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
         $satisfied = new MethodExpectation('save', required: true);

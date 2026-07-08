@@ -87,7 +87,7 @@ final class MethodExpectation
     }
 
     /**
-     * @param callable(mixed...): mixed $resolver
+     * @param  callable(mixed...): mixed  $resolver
      */
     public function returnsUsing(callable $resolver): static
     {

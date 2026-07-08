@@ -23,7 +23,7 @@ final class InvalidDoubleTargetException extends TestDoubleException
     {
         return new self(sprintf(
             'Cannot create a test double for "%s": it is declared final, so it cannot be '
-            . 'doubled by extending it.',
+            .'doubled by extending it.',
             $target,
         ));
     }

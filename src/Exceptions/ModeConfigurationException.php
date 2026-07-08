@@ -16,7 +16,7 @@ final class ModeConfigurationException extends TestDoubleException
     {
         return new self(sprintf(
             'Test double "%s" already has its mode set to %s; cannot also set it to %s. '
-            . 'A double\'s mode is set once, at setup time, and is immutable after that.',
+            .'A double\'s mode is set once, at setup time, and is immutable after that.',
             $label,
             $current,
             $attempted,

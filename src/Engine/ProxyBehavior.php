@@ -50,7 +50,7 @@ final class ProxyBehavior
             );
         }
 
-        if (!$expectation->hasReturnConfigured()) {
+        if (! $expectation->hasReturnConfigured()) {
             throw UnconfiguredReturnException::forCall($state->label(), $method);
         }
 

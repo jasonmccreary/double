@@ -10,6 +10,4 @@ namespace JMac\Testing\Exceptions;
  * Diagnostic + DiagnosticRenderer instead, once the Diagnostics module
  * (M3) exists — that refactor is deliberately deferred, not done here.
  */
-abstract class TestDoubleException extends \RuntimeException
-{
-}
+abstract class TestDoubleException extends \RuntimeException {}

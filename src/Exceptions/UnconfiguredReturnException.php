@@ -19,8 +19,8 @@ final class UnconfiguredReturnException extends TestDoubleException
     {
         return new self(sprintf(
             'Test double "%s" matched a call to "%s" that has no configured returns()/throws()/'
-            . 'returnsUsing(). Automatic safe-default return values are not implemented until M4 '
-            . '(see ARCHITECTURE.md) — configure an explicit return for this expectation for now.',
+            .'returnsUsing(). Automatic safe-default return values are not implemented until M4 '
+            .'(see ARCHITECTURE.md) — configure an explicit return for this expectation for now.',
             $label,
             $method,
         ));

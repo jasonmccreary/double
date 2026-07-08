@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
-use PHPUnit\Framework\TestCase;
 use JMac\Testing\Engine\MethodExpectation;
+use PHPUnit\Framework\TestCase;
 
 final class MethodExpectationTest extends TestCase
 {
-    public function testRequiredExpectationDefaultsToExactlyOnce(): void
+    public function test_required_expectation_defaults_to_exactly_once(): void
     {
         $expectation = new MethodExpectation('find', required: true);
 
@@ -25,7 +25,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertTrue($expectation->exceedsMaximum());
     }
 
-    public function testOptionalExpectationDefaultsToAnyNumberIncludingZero(): void
+    public function test_optional_expectation_defaults_to_any_number_including_zero(): void
     {
         $expectation = new MethodExpectation('find', required: false);
 
@@ -39,7 +39,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertFalse($expectation->exceedsMaximum());
     }
 
-    public function testWithOmittedMatchesAnyArguments(): void
+    public function test_with_omitted_matches_any_arguments(): void
     {
         $expectation = new MethodExpectation('find', required: false);
 
@@ -48,7 +48,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertTrue($expectation->matchesArguments([]));
     }
 
-    public function testWithConstrainsToMatchingArgumentsByValueEquality(): void
+    public function test_with_constrains_to_matching_arguments_by_value_equality(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->with(1, 'two');
 
@@ -57,7 +57,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertFalse($expectation->matchesArguments([1]));
     }
 
-    public function testNeverSetsMaximumToZero(): void
+    public function test_never_sets_maximum_to_zero(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->never();
 
@@ -66,7 +66,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertTrue($expectation->exceedsMaximum());
     }
 
-    public function testTimesSetsAnExactRequiredCount(): void
+    public function test_times_sets_an_exact_required_count(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->times(2);
 
@@ -81,7 +81,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertTrue($expectation->exceedsMaximum());
     }
 
-    public function testResolveReturnHoldsAtTheLastValueOnceSequentialReturnsAreExhausted(): void
+    public function test_resolve_return_holds_at_the_last_value_once_sequential_returns_are_exhausted(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->returns('a', 'b');
 
@@ -95,7 +95,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertSame('b', $expectation->resolveReturn([]));
     }
 
-    public function testResolveReturnThrowsTheConfiguredException(): void
+    public function test_resolve_return_throws_the_configured_exception(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->throws(new \RuntimeException('boom'));
 
@@ -106,7 +106,7 @@ final class MethodExpectationTest extends TestCase
         $expectation->resolveReturn([]);
     }
 
-    public function testResolveReturnUsingPassesTheActualCallArgumentsToTheResolver(): void
+    public function test_resolve_return_using_passes_the_actual_call_arguments_to_the_resolver(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
             ->returnsUsing(fn (int $id): string => "id-{$id}");
@@ -116,7 +116,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertSame('id-7', $expectation->resolveReturn([7]));
     }
 
-    public function testHasReturnConfiguredIsFalseUntilAnOutcomeIsSet(): void
+    public function test_has_return_configured_is_false_until_an_outcome_is_set(): void
     {
         $expectation = new MethodExpectation('find', required: false);
 
@@ -127,7 +127,7 @@ final class MethodExpectationTest extends TestCase
         $this->assertTrue($expectation->hasReturnConfigured());
     }
 
-    public function testDescribeRendersArgumentsAndExpectedCount(): void
+    public function test_describe_renders_arguments_and_expected_count(): void
     {
         $expectation = (new MethodExpectation('find', required: true))->with(123);
 
