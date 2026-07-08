@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\TestDouble;
+
 /**
  * @internal
  *

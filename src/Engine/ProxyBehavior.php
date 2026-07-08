@@ -6,6 +6,7 @@ namespace JMac\Testing\Engine;
 
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
+use JMac\Testing\TestDouble;
 
 /**
  * @internal

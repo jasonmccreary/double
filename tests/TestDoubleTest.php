@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace JMac\Testing\Tests\Engine;
+namespace JMac\Testing\Tests;
 
-use JMac\Testing\Engine\TestDouble;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\Book;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 use PHPUnit\Framework\TestCase;

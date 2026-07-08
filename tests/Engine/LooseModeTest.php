@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
-use JMac\Testing\Engine\TestDouble;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 use JMac\Testing\Tests\Fixtures\Fillable;
 use JMac\Testing\Tests\Fixtures\IntersectionReturnInterface;

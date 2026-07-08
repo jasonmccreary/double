@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\ClassGenerator;
-use JMac\Testing\Engine\TestDouble;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\AllowsCollisionInterface;
 use JMac\Testing\Tests\Fixtures\AuthorizerInterface;
 use JMac\Testing\Tests\Fixtures\Book;

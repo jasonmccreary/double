@@ -2,17 +2,26 @@
 
 declare(strict_types=1);
 
-namespace JMac\Testing\Engine;
+namespace JMac\Testing;
 
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
+use JMac\Testing\Engine\ArgumentFormatter;
+use JMac\Testing\Engine\ClassGenerator;
+use JMac\Testing\Engine\DoubleState;
+use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 
 /**
- * The public facade. `TestDouble::for()` creates a double; `TestDouble::verify()`
- * is the manual verification call every test runner can use (see
- * ARCHITECTURE.md, "PHPUnit integration" — a framework-specific
- * auto-verify extension is future, additive work, not M1).
+ * The public facade and the library's sole entry point — deliberately a
+ * top-level class (`JMac\Testing\TestDouble`, not nested under `Engine\`)
+ * since it's the one class every consumer touches directly; everything it
+ * delegates to (`ClassGenerator`, `ProxyBehavior`, `DoubleState`,
+ * `MethodExpectation`) stays internal under Engine. `TestDouble::for()`
+ * creates a double; `TestDouble::verify()` is the manual verification call
+ * every test runner can use (see ARCHITECTURE.md, "PHPUnit integration" —
+ * a framework-specific auto-verify extension is future, additive work, not
+ * M1).
  */
 final class TestDouble
 {
