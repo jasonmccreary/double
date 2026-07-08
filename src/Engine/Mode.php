@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
 /**
  * See ARCHITECTURE.md, "Modes: Loose, Strict, Passthru." A double has

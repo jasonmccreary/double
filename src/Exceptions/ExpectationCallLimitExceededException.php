@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Exceptions;
+namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown when a call matches a configured expectation, but accepting it

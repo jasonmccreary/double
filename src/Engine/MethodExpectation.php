@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
 /**
  * One configured expects()/allows() entry. See ARCHITECTURE.md's "Verb
@@ -10,7 +10,7 @@ namespace TestDouble\Engine;
  * modifier must have.
  *
  * M1 scope note: argument matching here is a placeholder direct value
- * comparison (`==`), not the Matcher contract — TestDouble\Matching is M2.
+ * comparison (`==`), not the Matcher contract — JMac\Testing\Matching is M2.
  * A bare literal passed to with() will be routed through EqualsMatcher
  * once that module exists; until then, with() only accepts literal values
  * compared by value equality.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Exceptions;
+namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown at TestDouble::for() time when the target declares a real public
@@ -20,7 +20,7 @@ final class ReservedNameCollisionException extends \LogicException
     {
         return new self(sprintf(
             'Cannot create a test double for "%s": it declares method(s) %s, '
-            . 'which collide with TestDouble\'s own control API and cannot be '
+            . 'which collide with JMac\Testing\'s own control API and cannot be '
             . 'both a real interface method and a configuration verb on the '
             . 'same object.',
             $target,

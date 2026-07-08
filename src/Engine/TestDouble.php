@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
-use TestDouble\Exceptions\UnknownMethodException;
-use TestDouble\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\Exceptions\UnknownMethodException;
+use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 
 /**
  * The public facade. `TestDouble::for()` creates a double; `TestDouble::verify()`

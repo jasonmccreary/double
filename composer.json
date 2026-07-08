@@ -24,12 +24,12 @@
     },
     "autoload": {
         "psr-4": {
-            "TestDouble\\": "src/"
+            "JMac\\Testing\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "TestDouble\\Tests\\": "tests/"
+            "JMac\\Testing\\Tests\\": "tests/"
         }
     },
     "config": {

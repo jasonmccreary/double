@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Tests\Engine;
+namespace JMac\Testing\Tests\Engine;
 
 use PHPUnit\Framework\TestCase;
-use TestDouble\Engine\TestDouble;
-use TestDouble\Exceptions\ExpectationCallLimitExceededException;
-use TestDouble\Exceptions\ModeConfigurationException;
-use TestDouble\Exceptions\UnconfiguredReturnException;
-use TestDouble\Exceptions\UnexpectedCallException;
-use TestDouble\Exceptions\UnknownMethodException;
-use TestDouble\Exceptions\UnsatisfiedExpectationException;
-use TestDouble\Tests\Fixtures\Book;
-use TestDouble\Tests\Fixtures\BookRepositoryInterface;
+use JMac\Testing\Engine\TestDouble;
+use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\ModeConfigurationException;
+use JMac\Testing\Exceptions\UnconfiguredReturnException;
+use JMac\Testing\Exceptions\UnexpectedCallException;
+use JMac\Testing\Exceptions\UnknownMethodException;
+use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\Tests\Fixtures\Book;
+use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 
 final class TestDoubleTest extends TestCase
 {

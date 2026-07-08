@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Tests\Engine;
+namespace JMac\Testing\Tests\Engine;
 
 use PHPUnit\Framework\TestCase;
-use TestDouble\Engine\DoubleState;
-use TestDouble\Engine\MethodExpectation;
-use TestDouble\Engine\Mode;
-use TestDouble\Exceptions\ModeConfigurationException;
-use TestDouble\Tests\Fixtures\BookRepositoryInterface;
+use JMac\Testing\Engine\DoubleState;
+use JMac\Testing\Engine\MethodExpectation;
+use JMac\Testing\Engine\Mode;
+use JMac\Testing\Exceptions\ModeConfigurationException;
+use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 
 final class DoubleStateTest extends TestCase
 {

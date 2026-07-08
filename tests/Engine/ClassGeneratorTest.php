@@ -2,29 +2,29 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Tests\Engine;
+namespace JMac\Testing\Tests\Engine;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use TestDouble\Engine\ClassGenerator;
-use TestDouble\Engine\TestDouble;
-use TestDouble\Exceptions\InvalidDoubleTargetException;
-use TestDouble\Exceptions\ReservedNameCollisionException;
-use TestDouble\Tests\Fixtures\AllowsCollisionInterface;
-use TestDouble\Tests\Fixtures\AuthorizerInterface;
-use TestDouble\Tests\Fixtures\Book;
-use TestDouble\Tests\Fixtures\BookRepositoryInterface;
-use TestDouble\Tests\Fixtures\ConcreteLogger;
-use TestDouble\Tests\Fixtures\EnumDefaultInterface;
-use TestDouble\Tests\Fixtures\ExpectsCollisionInterface;
-use TestDouble\Tests\Fixtures\FinalLogger;
-use TestDouble\Tests\Fixtures\NullableParamInterface;
-use TestDouble\Tests\Fixtures\PassthruCollisionInterface;
-use TestDouble\Tests\Fixtures\ReceivedCollisionInterface;
-use TestDouble\Tests\Fixtures\StrictCollisionInterface;
-use TestDouble\Tests\Fixtures\Suit;
-use TestDouble\Tests\Fixtures\UnionTypeInterface;
-use TestDouble\Tests\Fixtures\VariadicInterface;
+use JMac\Testing\Engine\ClassGenerator;
+use JMac\Testing\Engine\TestDouble;
+use JMac\Testing\Exceptions\InvalidDoubleTargetException;
+use JMac\Testing\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\Tests\Fixtures\AllowsCollisionInterface;
+use JMac\Testing\Tests\Fixtures\AuthorizerInterface;
+use JMac\Testing\Tests\Fixtures\Book;
+use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
+use JMac\Testing\Tests\Fixtures\ConcreteLogger;
+use JMac\Testing\Tests\Fixtures\EnumDefaultInterface;
+use JMac\Testing\Tests\Fixtures\ExpectsCollisionInterface;
+use JMac\Testing\Tests\Fixtures\FinalLogger;
+use JMac\Testing\Tests\Fixtures\NullableParamInterface;
+use JMac\Testing\Tests\Fixtures\PassthruCollisionInterface;
+use JMac\Testing\Tests\Fixtures\ReceivedCollisionInterface;
+use JMac\Testing\Tests\Fixtures\StrictCollisionInterface;
+use JMac\Testing\Tests\Fixtures\Suit;
+use JMac\Testing\Tests\Fixtures\UnionTypeInterface;
+use JMac\Testing\Tests\Fixtures\VariadicInterface;
 
 final class ClassGeneratorTest extends TestCase
 {
@@ -66,7 +66,7 @@ final class ClassGeneratorTest extends TestCase
         $this->expectException(InvalidDoubleTargetException::class);
         $this->expectExceptionMessage('no such class or interface exists');
 
-        (new ClassGenerator())->generate('TestDouble\Tests\Fixtures\NoSuchThing');
+        (new ClassGenerator())->generate('JMac\Testing\Tests\Fixtures\NoSuchThing');
     }
 
     public function testRejectsAFinalClass(): void

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Exceptions;
+namespace JMac\Testing\Exceptions;
 
 /**
  * ARCHITECTURE.md's "Sensible defaults" section calls for a single

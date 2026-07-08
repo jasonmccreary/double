@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Exceptions;
+namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown at TestDouble::for() time when the requested target cannot be

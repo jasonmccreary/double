@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Tests\Engine;
+namespace JMac\Testing\Tests\Engine;
 
 use PHPUnit\Framework\TestCase;
-use TestDouble\Engine\MethodExpectation;
+use JMac\Testing\Engine\MethodExpectation;
 
 final class MethodExpectationTest extends TestCase
 {

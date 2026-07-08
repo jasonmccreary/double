@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Exceptions;
+namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown when expects()/allows() is configured for a method the double's

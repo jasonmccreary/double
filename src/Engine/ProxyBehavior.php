@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
-use TestDouble\Exceptions\ExpectationCallLimitExceededException;
-use TestDouble\Exceptions\UnconfiguredReturnException;
-use TestDouble\Exceptions\UnexpectedCallException;
+use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\UnconfiguredReturnException;
+use JMac\Testing\Exceptions\UnexpectedCallException;
 
 /**
  * @internal

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
-use TestDouble\Exceptions\ModeConfigurationException;
+use JMac\Testing\Exceptions\ModeConfigurationException;
 
 /**
  * @internal

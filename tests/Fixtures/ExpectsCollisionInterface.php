@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Tests\Fixtures;
+namespace JMac\Testing\Tests\Fixtures;
 
 /**
  * Real-world precedent per ARCHITECTURE.md: Laravel's own

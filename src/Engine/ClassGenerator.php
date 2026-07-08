@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace TestDouble\Engine;
+namespace JMac\Testing\Engine;
 
-use TestDouble\Exceptions\InvalidDoubleTargetException;
-use TestDouble\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\Exceptions\InvalidDoubleTargetException;
+use JMac\Testing\Exceptions\ReservedNameCollisionException;
 
 /**
  * @internal
@@ -78,7 +78,7 @@ final class ClassGenerator
     {
         $short = preg_replace('/[^A-Za-z0-9_]/', '_', $reflection->getShortName());
 
-        return sprintf('TestDouble\\Engine\\Generated\\%s_%d', $short, ++self::$counter);
+        return sprintf('JMac\Testing\\Engine\\Generated\\%s_%d', $short, ++self::$counter);
     }
 
     private function buildSource(string $fqcn, string $target, \ReflectionClass $reflection): string
