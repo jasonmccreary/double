@@ -237,4 +237,24 @@ final class TestDoubleTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    public function test_verify_failure_correlates_other_calls_observed_for_the_same_method(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(null);
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        $double->find(456);
+
+        try {
+            TestDouble::verify($double);
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (UnsatisfiedExpectationException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('find(123) — expected exactly 1 time(s), called 0 time(s)', $message);
+            $this->assertStringContainsString('"find" was called with different arguments elsewhere in this test:', $message);
+            $this->assertStringContainsString('find(456)', $message);
+        }
+    }
 }

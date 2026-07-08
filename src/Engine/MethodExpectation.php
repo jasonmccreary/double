@@ -167,6 +167,11 @@ final class MethodExpectation
         return $this->timesMatched;
     }
 
+    public function minimumCalls(): int
+    {
+        return $this->minimumCalls;
+    }
+
     public function maximumCalls(): int
     {
         return $this->maximumCalls;

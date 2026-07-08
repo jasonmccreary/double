@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 
@@ -40,7 +41,20 @@ final class TestDouble
         if ($unmet !== []) {
             throw UnsatisfiedExpectationException::forUnmet(
                 $state->label(),
-                array_map(static fn (MethodExpectation $expectation): string => $expectation->describe(), $unmet),
+                array_map(
+                    static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(
+                        method: $expectation->method(),
+                        description: $expectation->describe(),
+                        expectedMin: $expectation->minimumCalls(),
+                        expectedMax: $expectation->maximumCalls(),
+                        timesCalled: $expectation->timesMatched(),
+                        otherObservedCalls: array_map(
+                            ArgumentFormatter::describe(...),
+                            $state->callsFor($expectation->method()),
+                        ),
+                    ),
+                    $unmet,
+                ),
             );
         }
     }

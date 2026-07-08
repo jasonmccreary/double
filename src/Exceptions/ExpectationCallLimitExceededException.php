@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Exceptions;
 
+use JMac\Testing\Diagnostics\CallLimitExceededDiagnostic;
+
 /**
  * Thrown when a call matches a configured expectation, but accepting it
  * would exceed that expectation's configured maximum call count (e.g. a
@@ -19,14 +21,6 @@ final class ExpectationCallLimitExceededException extends TestDoubleException
         int $maximum,
         int $callNumber,
     ): self {
-        return new self(sprintf(
-            'Test double "%s" received call #%d to "%s(%s)", but the matching expectation '
-            .'allows at most %d call(s).',
-            $label,
-            $callNumber,
-            $method,
-            $argumentsDescription,
-            $maximum,
-        ));
+        return new self(new CallLimitExceededDiagnostic($label, $method, $argumentsDescription, $maximum, $callNumber));
     }
 }

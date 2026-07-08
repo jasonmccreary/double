@@ -1,0 +1,1 @@
+Test double "BookRepository" already has its mode set to Strict; cannot also set it to Strict. A double's mode is set once, at setup time, and is immutable after that.

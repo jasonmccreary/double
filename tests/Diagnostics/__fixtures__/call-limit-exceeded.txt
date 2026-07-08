@@ -1,0 +1,1 @@
+Test double "BookRepository" received call #2 to "delete(1)", but the matching expectation allows at most 1 call(s).
