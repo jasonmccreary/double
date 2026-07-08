@@ -52,10 +52,13 @@ final class SafeDefaultResolver
 
     public static function resolveForMethod(DoubleState $state, string $method, object $double): mixed
     {
-        $declaringTarget = array_find(
-            $state->targetCandidates(),
-            static fn (string $candidate): bool => method_exists($candidate, $method),
-        );
+        $declaringTarget = null;
+        foreach ($state->targetCandidates() as $candidate) {
+            if (method_exists($candidate, $method)) {
+                $declaringTarget = $candidate;
+                break;
+            }
+        }
 
         $reflectionMethod = $declaringTarget !== null ? new \ReflectionMethod($declaringTarget, $method) : null;
 

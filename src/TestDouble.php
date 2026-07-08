@@ -122,7 +122,13 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        $declared = array_any($state->targetCandidates(), static fn (string $candidate): bool => method_exists($candidate, $method));
+        $declared = false;
+        foreach ($state->targetCandidates() as $candidate) {
+            if (method_exists($candidate, $method)) {
+                $declared = true;
+                break;
+            }
+        }
 
         if (! $declared) {
             throw new UnknownMethodException($state->target(), $method, $state->isFabricated());
