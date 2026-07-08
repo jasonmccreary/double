@@ -74,7 +74,7 @@ final class DoubleState
     public function setMode(Mode $mode): void
     {
         if ($this->mode !== null) {
-            throw ModeConfigurationException::alreadyConfigured($this->label, $this->mode->name, $mode->name, $this->isFabricated());
+            throw new ModeConfigurationException($this->label, $this->mode->name, $mode->name, $this->isFabricated());
         }
 
         $this->mode = $mode;

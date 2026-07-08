@@ -43,7 +43,7 @@ final class ProxyBehavior
         $expectation->recordMatch();
 
         if ($expectation->exceedsMaximum()) {
-            throw ExpectationCallLimitExceededException::forExpectation(
+            throw new ExpectationCallLimitExceededException(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),
@@ -76,7 +76,7 @@ final class ProxyBehavior
     private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed
     {
         return match ($state->mode()) {
-            Mode::Strict => throw UnexpectedCallException::forCall(
+            Mode::Strict => throw new UnexpectedCallException(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),

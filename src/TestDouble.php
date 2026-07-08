@@ -80,7 +80,7 @@ final class TestDouble
         $unmet = $state->unmetExpectations();
 
         if ($unmet !== []) {
-            throw UnsatisfiedExpectationException::forUnmet(
+            throw new UnsatisfiedExpectationException(
                 $state->label(),
                 array_map(
                     static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(
@@ -125,7 +125,7 @@ final class TestDouble
         $declared = array_any($state->targetCandidates(), static fn (string $candidate): bool => method_exists($candidate, $method));
 
         if (! $declared) {
-            throw UnknownMethodException::forMethod($state->target(), $method, $state->isFabricated());
+            throw new UnknownMethodException($state->target(), $method, $state->isFabricated());
         }
 
         $expectation = new MethodExpectation($method, $required);

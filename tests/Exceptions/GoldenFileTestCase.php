@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace JMac\Testing\Tests\Diagnostics;
+namespace JMac\Testing\Tests\Exceptions;
 
 use PHPUnit\Framework\TestCase;
 
 /**
- * Base for tests that compare rendered diagnostic output against a fixture
- * file rather than an inline string, so a rendering change shows up as a
- * reviewable diff on the fixture instead of a wall of escaped text in the
- * test itself. Run with UPDATE_GOLDEN=1 to (re)write every fixture a test
- * touches from the current actual output, then diff the fixture change
- * before committing it.
+ * Base for tests that compare a rendered exception message against a
+ * fixture file rather than an inline string, so a rendering change shows up
+ * as a reviewable diff on the fixture instead of a wall of escaped text in
+ * the test itself. Run with UPDATE_GOLDEN=1 to (re)write every fixture a
+ * test touches from the current actual output, then diff the fixture
+ * change before committing it.
  */
 abstract class GoldenFileTestCase extends TestCase
 {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
-use JMac\Testing\Diagnostics\UnsatisfiedExpectationsDiagnostic;
 
 /**
  * Thrown by TestDouble::verify() when one or more expects() expectations
@@ -14,13 +13,54 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectationsDiagnostic;
  * ARCHITECTURE.md, "Correlating unsatisfied expectations with actual
  * observed calls."
  */
-final class UnsatisfiedExpectationException extends TestDoubleException
+class UnsatisfiedExpectationException extends TestDoubleException
 {
     /**
      * @param  list<UnsatisfiedExpectation>  $expectations
      */
-    public static function forUnmet(string $label, array $expectations, bool $fabricated = false): self
+    public function __construct(
+        public readonly string $label,
+        public readonly array $expectations,
+        public readonly bool $fabricated = false,
+    ) {
+        parent::__construct($this->render());
+    }
+
+    private function render(): string
     {
-        return new self(new UnsatisfiedExpectationsDiagnostic($label, $expectations, $fabricated));
+        $blocks = array_map($this->renderOne(...), $this->expectations);
+
+        $message = sprintf(
+            "%d expectation(s) were not satisfied on test double \"%s\":\n\n%s",
+            count($this->expectations),
+            $this->label,
+            implode("\n\n", $blocks),
+        );
+
+        if ($this->fabricated) {
+            $message .= "\n\n".trim($this->fabricatedNote(true));
+        }
+
+        return $message;
+    }
+
+    private function renderOne(UnsatisfiedExpectation $expectation): string
+    {
+        $lines = ['    '.$expectation->description];
+
+        if ($expectation->otherObservedCalls !== []) {
+            $lines[] = '';
+            $lines[] = sprintf(
+                '    "%s" was called with different arguments elsewhere in this test:',
+                $expectation->method,
+            );
+            $lines[] = '';
+
+            foreach ($expectation->otherObservedCalls as $call) {
+                $lines[] = sprintf('        %s(%s)', $expectation->method, $call);
+            }
+        }
+
+        return implode("\n", $lines);
     }
 }

@@ -4,16 +4,27 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Exceptions;
 
-use JMac\Testing\Diagnostics\UnknownMethodDiagnostic;
-
 /**
  * Thrown when expects()/allows() is configured for a method the double's
  * target never declared.
  */
-final class UnknownMethodException extends TestDoubleException
+class UnknownMethodException extends TestDoubleException
 {
-    public static function forMethod(string $target, string $method, bool $fabricated = false): self
+    public function __construct(
+        public readonly string $target,
+        public readonly string $method,
+        public readonly bool $fabricated = false,
+    ) {
+        parent::__construct($this->render());
+    }
+
+    private function render(): string
     {
-        return new self(new UnknownMethodDiagnostic($target, $method, $fabricated));
+        return sprintf(
+            'Cannot configure "%s" on a test double of "%s": no such method is declared there.%s',
+            $this->method,
+            $this->target,
+            $this->fabricatedNote($this->fabricated),
+        );
     }
 }
