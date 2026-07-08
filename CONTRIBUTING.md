@@ -22,10 +22,10 @@ already exists), open an issue to discuss it before sending a PR.
 
 ## Module boundaries
 
-The codebase is split into `TestDouble\Engine`, `TestDouble\Matching`,
-`TestDouble\Diagnostics`, and `TestDouble\Exceptions`. Only `Engine` is allowed to
-depend on the others — `Matching` and `Diagnostics` have zero dependencies on the
-rest of the library, and `Exceptions` depends only on `Diagnostics`. See
+The codebase is split into `JMac\Testing\Engine`, `JMac\Testing\Matching`,
+`JMac\Testing\Diagnostics`, and `JMac\Testing\Exceptions`. Only `Engine` is allowed
+to depend on the others — `Matching` and `Diagnostics` have zero dependencies on
+the rest of the library, and `Exceptions` depends only on `Diagnostics`. See
 `ARCHITECTURE.md` for the full reasoning. A PR that introduces a dependency
 pointing the wrong direction (e.g. `Matching` referencing `Engine`) will need to
 be restructured before it can be merged.

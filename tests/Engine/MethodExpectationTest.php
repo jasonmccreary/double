@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\MethodExpectation;
+use JMac\Testing\Matching\TestMatch;
+use JMac\Testing\Tests\Fixtures\Book;
 use PHPUnit\Framework\TestCase;
 
 final class MethodExpectationTest extends TestCase
@@ -132,5 +134,41 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))->with(123);
 
         $this->assertSame('find(123) — expected exactly 1 time(s), called 0 time(s)', $expectation->describe());
+    }
+
+    public function test_with_accepts_a_matcher_alongside_bare_literals(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))
+            ->with(TestMatch::any(), 'two');
+
+        $this->assertTrue($expectation->matchesArguments([1, 'two']));
+        $this->assertTrue($expectation->matchesArguments(['anything', 'two']));
+        $this->assertFalse($expectation->matchesArguments([1, 'three']));
+    }
+
+    public function test_with_type_matcher_constrains_to_instances_of_the_given_class(): void
+    {
+        $expectation = (new MethodExpectation('save', required: false))
+            ->with(TestMatch::type(Book::class));
+
+        $this->assertTrue($expectation->matchesArguments([new Book('Some Title')]));
+        $this->assertFalse($expectation->matchesArguments(['not a book']));
+    }
+
+    public function test_with_predicate_matcher_constrains_by_a_callable(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))
+            ->with(TestMatch::that(fn (int $id): bool => $id > 100));
+
+        $this->assertTrue($expectation->matchesArguments([101]));
+        $this->assertFalse($expectation->matchesArguments([100]));
+    }
+
+    public function test_describe_renders_matcher_descriptions(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))
+            ->with(TestMatch::any());
+
+        $this->assertSame('find(any()) — expected exactly 1 time(s), called 0 time(s)', $expectation->describe());
     }
 }

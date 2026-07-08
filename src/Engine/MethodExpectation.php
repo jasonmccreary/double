@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Matching\EqualsMatcher;
+use JMac\Testing\Matching\Matcher;
+
 /**
  * One configured expects()/allows() entry. See ARCHITECTURE.md's "Verb
  * lineage" and "Sensible defaults" sections for the semantics each fluent
  * modifier must have.
  *
- * M1 scope note: argument matching here is a placeholder direct value
- * comparison (`==`), not the Matcher contract — JMac\Testing\Matching is M2.
- * A bare literal passed to with() will be routed through EqualsMatcher
- * once that module exists; until then, with() only accepts literal values
- * compared by value equality.
+ * Argument matching is the Matcher contract (JMac\Testing\Matching, M2). A
+ * bare literal passed to with() is wrapped in EqualsMatcher at this
+ * boundary so the rest of the engine only ever deals in Matcher instances.
  */
 final class MethodExpectation
 {
     private const UNBOUNDED = PHP_INT_MAX;
 
+    /** @var list<Matcher>|null */
     private ?array $argumentConstraints = null;
 
     /** @var list<mixed> */
@@ -57,7 +59,10 @@ final class MethodExpectation
 
     public function with(mixed ...$arguments): static
     {
-        $this->argumentConstraints = $arguments;
+        $this->argumentConstraints = array_map(
+            static fn (mixed $argument): Matcher => $argument instanceof Matcher ? $argument : new EqualsMatcher($argument),
+            $arguments,
+        );
 
         return $this;
     }
@@ -143,8 +148,8 @@ final class MethodExpectation
             return false;
         }
 
-        foreach (array_values($this->argumentConstraints) as $index => $expected) {
-            if ($expected != $arguments[$index]) {
+        foreach (array_values($this->argumentConstraints) as $index => $matcher) {
+            if (! $matcher->matches($arguments[$index])) {
                 return false;
             }
         }
@@ -201,7 +206,7 @@ final class MethodExpectation
     {
         $arguments = $this->argumentConstraints === null
             ? 'any arguments'
-            : ArgumentFormatter::describe($this->argumentConstraints);
+            : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
 
         return sprintf(
             '%s(%s) — expected %s, called %d time(s)',
