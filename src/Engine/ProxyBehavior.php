@@ -5,37 +5,38 @@ declare(strict_types=1);
 namespace JMac\Testing\Engine;
 
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
-use JMac\Testing\Exceptions\UnconfiguredReturnException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 
 /**
  * @internal
  *
  * The call-interception logic every generated double's overridden methods
- * funnel through. Stateless — everything it needs comes from the
- * DoubleState passed in.
+ * funnel through. Takes the double instance itself (not just its
+ * DoubleState) because resolving a self/static safe-default return needs
+ * the actual object to return (see SafeDefaultResolver).
  *
  * Matching rule: last-registered expectation whose arguments match wins
  * (see ARCHITECTURE.md, "Expectation matching order"). No exhaustion-based
  * fallthrough to an earlier expectation once one is selected.
  *
- * Mode handling: M1 only implements Strict (see DoubleState::mode() for
- * the M1 stand-in default). The Loose/Passthru branches below are
- * unreachable today — DoubleControlMethods::passthru() throws before mode
- * could ever become Passthru, and there is no way to request Loose
- * explicitly — but the structure is here so M4 only has to add behavior,
- * not restructure this method.
+ * A matched expectation with no configured return, and Loose mode's
+ * unmatched-call fallback, both resolve through the same
+ * SafeDefaultResolver::resolveForMethod() — see ARCHITECTURE.md's "Sensible
+ * defaults": "there is only one safe-default-by-return-type resolver in the
+ * codebase, used at both call sites."
  */
 final class ProxyBehavior
 {
-    public static function intercept(DoubleState $state, string $method, array $arguments): mixed
+    public static function intercept(object $double, string $method, array $arguments): mixed
     {
+        $state = TestDouble::stateFor($double);
+
         $state->recordCall($method, $arguments);
 
         $expectation = self::findMatch($state, $method, $arguments);
 
         if ($expectation === null) {
-            return self::handleUnmatchedCall($state, $method, $arguments);
+            return self::handleUnmatchedCall($state, $method, $arguments, $double);
         }
 
         $expectation->recordMatch();
@@ -47,11 +48,12 @@ final class ProxyBehavior
                 ArgumentFormatter::describe($arguments),
                 $expectation->maximumCalls(),
                 $expectation->timesMatched(),
+                $state->isFabricated(),
             );
         }
 
         if (! $expectation->hasReturnConfigured()) {
-            throw UnconfiguredReturnException::forCall($state->label(), $method);
+            return SafeDefaultResolver::resolveForMethod($state, $method, $double);
         }
 
         return $expectation->resolveReturn($arguments);
@@ -70,17 +72,17 @@ final class ProxyBehavior
         return null;
     }
 
-    private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments): mixed
+    private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed
     {
         return match ($state->mode()) {
             Mode::Strict => throw UnexpectedCallException::forCall(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),
+                $state->isFabricated(),
             ),
-            Mode::Loose, Mode::Passthru => throw new \LogicException(
-                'Unreachable in M1: Loose/Passthru fallback behavior ships in M4.',
-            ),
+            Mode::Loose => SafeDefaultResolver::resolveForMethod($state, $method, $double),
+            Mode::Passthru => $state->passthruTarget()->{$method}(...$arguments),
         };
     }
 }

@@ -22,9 +22,41 @@ final class TestDouble
 
     public static function for(string $target): object
     {
+        return self::fabricate($target, depth: 0);
+    }
+
+    /**
+     * @internal used only by SafeDefaultResolver for recursive Loose-mode
+     * fabrication. depth=0 is exactly TestDouble::for()'s own public path —
+     * a depth-0 double is never marked fabricated.
+     */
+    public static function fabricate(string $target, int $depth): object
+    {
         $generatedClass = (new ClassGenerator)->generate($target);
 
+        return self::create($generatedClass, $target, $depth);
+    }
+
+    /**
+     * @internal used only by SafeDefaultResolver for intersection-typed
+     * fabrication (see ClassGenerator::generateForIntersection()).
+     *
+     * @param  list<string>  $targets
+     */
+    public static function fabricateIntersection(array $targets, int $depth): object
+    {
+        $generatedClass = (new ClassGenerator)->generateForIntersection($targets);
+
+        return self::create($generatedClass, implode('&', $targets), $depth);
+    }
+
+    private static function create(string $generatedClass, string $target, int $depth): object
+    {
         $state = new DoubleState($target, self::deriveLabel($target));
+
+        if ($depth > 0) {
+            $state->markFabricated($depth);
+        }
 
         $instance = $generatedClass::__td_instantiate();
 
@@ -55,6 +87,7 @@ final class TestDouble
                     ),
                     $unmet,
                 ),
+                $state->isFabricated(),
             );
         }
     }
@@ -80,8 +113,10 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        if (! method_exists($state->target(), $method)) {
-            throw UnknownMethodException::forMethod($state->target(), $method);
+        $declared = array_any($state->targetCandidates(), static fn (string $candidate): bool => method_exists($candidate, $method));
+
+        if (! $declared) {
+            throw UnknownMethodException::forMethod($state->target(), $method, $state->isFabricated());
         }
 
         $expectation = new MethodExpectation($method, $required);

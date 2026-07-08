@@ -14,8 +14,8 @@ use JMac\Testing\Diagnostics\ModeConfigurationDiagnostic;
  */
 final class ModeConfigurationException extends TestDoubleException
 {
-    public static function alreadyConfigured(string $label, string $current, string $attempted): self
+    public static function alreadyConfigured(string $label, string $current, string $attempted, bool $fabricated = false): self
     {
-        return new self(new ModeConfigurationDiagnostic($label, $current, $attempted));
+        return new self(new ModeConfigurationDiagnostic($label, $current, $attempted, $fabricated));
     }
 }

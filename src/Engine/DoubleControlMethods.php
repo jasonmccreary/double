@@ -14,12 +14,10 @@ namespace JMac\Testing\Engine;
  * risk. ClassGenerator's collision check runs before a double using this
  * trait is ever generated.
  *
- * M1 implements expects()/allows()/strict() fully. passthru() and
- * received() are reserved names with real methods (satisfying the
- * "these are real, callable methods" contract) but throw — both are
- * out of the M1 component list in ARCHITECTURE.md's roadmap (Passthru is
- * explicit M4 scope; received()'s spy-style assertions aren't scoped to
- * any milestone yet).
+ * expects()/allows()/strict()/passthru() are fully implemented as of M4.
+ * received() is a reserved name with a real method (satisfying the "these
+ * are real, callable methods" contract) but still throws — its spy-style
+ * assertions aren't scoped to any milestone yet.
  */
 trait DoubleControlMethods
 {
@@ -48,15 +46,18 @@ trait DoubleControlMethods
 
     public function passthru(?object $realInstance = null): static
     {
-        throw new \LogicException(
-            'Passthru mode is not implemented yet. It ships in M4 — see ARCHITECTURE.md\'s roadmap.',
-        );
+        $state = TestDouble::stateFor($this);
+        $realInstance ??= PassthruInstantiator::autoInstantiate($state->target());
+
+        $state->configurePassthru($realInstance);
+
+        return $this;
     }
 
     public function received(string $method): mixed
     {
         throw new \LogicException(
-            'received() spy-style assertions are not implemented yet in M1 — see ARCHITECTURE.md\'s roadmap.',
+            'received() spy-style assertions are not implemented yet — see ARCHITECTURE.md\'s roadmap.',
         );
     }
 }

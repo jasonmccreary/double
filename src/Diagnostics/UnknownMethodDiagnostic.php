@@ -13,5 +13,6 @@ final class UnknownMethodDiagnostic implements Diagnostic
     public function __construct(
         public readonly string $target,
         public readonly string $method,
+        public readonly bool $fabricated = false,
     ) {}
 }

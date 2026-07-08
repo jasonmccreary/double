@@ -16,5 +16,6 @@ final class CallLimitExceededDiagnostic implements Diagnostic
         public readonly string $argumentsDescription,
         public readonly int $maximum,
         public readonly int $callNumber,
+        public readonly bool $fabricated = false,
     ) {}
 }

@@ -7,8 +7,8 @@ namespace JMac\Testing\Tests\Diagnostics;
 use JMac\Testing\Diagnostics\CallLimitExceededDiagnostic;
 use JMac\Testing\Diagnostics\InvalidDoubleTargetDiagnostic;
 use JMac\Testing\Diagnostics\ModeConfigurationDiagnostic;
+use JMac\Testing\Diagnostics\PassthruAutoInstantiationDiagnostic;
 use JMac\Testing\Diagnostics\PlainTextRenderer;
-use JMac\Testing\Diagnostics\UnconfiguredReturnDiagnostic;
 use JMac\Testing\Diagnostics\UnexpectedCallDiagnostic;
 use JMac\Testing\Diagnostics\UnknownMethodDiagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
@@ -95,11 +95,25 @@ final class PlainTextRendererTest extends GoldenFileTestCase
         $this->assertMatchesGolden('call-limit-exceeded', $this->renderer->render($diagnostic));
     }
 
-    public function test_renders_unconfigured_return(): void
+    public function test_renders_unexpected_call_on_a_fabricated_double_with_provenance_note(): void
     {
-        $diagnostic = new UnconfiguredReturnDiagnostic('BookRepository', 'count');
+        $diagnostic = new UnexpectedCallDiagnostic('Book', 'getAuthor', '', fabricated: true);
 
-        $this->assertMatchesGolden('unconfigured-return', $this->renderer->render($diagnostic));
+        $this->assertMatchesGolden('unexpected-call-fabricated', $this->renderer->render($diagnostic));
+    }
+
+    public function test_renders_passthru_auto_instantiation_for_an_interface(): void
+    {
+        $diagnostic = PassthruAutoInstantiationDiagnostic::isInterface('BookRepositoryInterface');
+
+        $this->assertMatchesGolden('passthru-auto-instantiation-interface', $this->renderer->render($diagnostic));
+    }
+
+    public function test_renders_passthru_auto_instantiation_for_a_throwing_constructor(): void
+    {
+        $diagnostic = PassthruAutoInstantiationDiagnostic::constructionFailed('ConcreteLogger', new \RuntimeException('boom'));
+
+        $this->assertMatchesGolden('passthru-auto-instantiation-construction-failed', $this->renderer->render($diagnostic));
     }
 
     public function test_renders_unknown_method(): void

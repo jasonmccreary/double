@@ -20,7 +20,8 @@ final class ExpectationCallLimitExceededException extends TestDoubleException
         string $argumentsDescription,
         int $maximum,
         int $callNumber,
+        bool $fabricated = false,
     ): self {
-        return new self(new CallLimitExceededDiagnostic($label, $method, $argumentsDescription, $maximum, $callNumber));
+        return new self(new CallLimitExceededDiagnostic($label, $method, $argumentsDescription, $maximum, $callNumber, $fabricated));
     }
 }

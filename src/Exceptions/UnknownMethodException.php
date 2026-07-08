@@ -12,8 +12,8 @@ use JMac\Testing\Diagnostics\UnknownMethodDiagnostic;
  */
 final class UnknownMethodException extends TestDoubleException
 {
-    public static function forMethod(string $target, string $method): self
+    public static function forMethod(string $target, string $method, bool $fabricated = false): self
     {
-        return new self(new UnknownMethodDiagnostic($target, $method));
+        return new self(new UnknownMethodDiagnostic($target, $method, $fabricated));
     }
 }

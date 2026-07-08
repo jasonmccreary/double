@@ -1,1 +1,0 @@
-Test double "BookRepository" matched a call to "count" that has no configured returns()/throws()/returnsUsing(). Automatic safe-default return values are not implemented until M4 (see ARCHITECTURE.md) — configure an explicit return for this expectation for now.

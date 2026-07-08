@@ -21,11 +21,11 @@ final class DoubleStateTest extends TestCase
         $this->assertSame('BookRepositoryInterface', $state->label());
     }
 
-    public function test_mode_defaults_to_strict_when_unset(): void
+    public function test_mode_defaults_to_loose_when_unset(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
 
-        $this->assertSame(Mode::Strict, $state->mode());
+        $this->assertSame(Mode::Loose, $state->mode());
     }
 
     public function test_set_mode_can_only_happen_once(): void
@@ -76,5 +76,58 @@ final class DoubleStateTest extends TestCase
         $state->registerExpectation($unmet);
 
         $this->assertSame([$unmet], $state->unmetExpectations());
+    }
+
+    public function test_a_freshly_created_double_is_not_fabricated(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $this->assertFalse($state->isFabricated());
+        $this->assertSame(0, $state->fabricationDepth());
+    }
+
+    public function test_mark_fabricated_records_the_depth(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $state->markFabricated(2);
+
+        $this->assertTrue($state->isFabricated());
+        $this->assertSame(2, $state->fabricationDepth());
+    }
+
+    public function test_target_candidates_is_a_single_element_list_for_an_ordinary_double(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $this->assertSame([BookRepositoryInterface::class], $state->targetCandidates());
+    }
+
+    public function test_target_candidates_splits_an_intersection_target_on_ampersand(): void
+    {
+        $state = new DoubleState('Fillable&Sized', 'Fillable&Sized');
+
+        $this->assertSame(['Fillable', 'Sized'], $state->targetCandidates());
+    }
+
+    public function test_configure_passthru_sets_the_mode_and_stores_the_real_instance(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+        $real = new \stdClass;
+
+        $state->configurePassthru($real);
+
+        $this->assertSame(Mode::Passthru, $state->mode());
+        $this->assertSame($real, $state->passthruTarget());
+    }
+
+    public function test_configure_passthru_cannot_run_twice(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+        $state->configurePassthru(new \stdClass);
+
+        $this->expectException(ModeConfigurationException::class);
+
+        $state->configurePassthru(new \stdClass);
     }
 }

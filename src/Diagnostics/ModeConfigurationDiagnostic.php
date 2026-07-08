@@ -15,5 +15,6 @@ final class ModeConfigurationDiagnostic implements Diagnostic
         public readonly string $label,
         public readonly string $current,
         public readonly string $attempted,
+        public readonly bool $fabricated = false,
     ) {}
 }

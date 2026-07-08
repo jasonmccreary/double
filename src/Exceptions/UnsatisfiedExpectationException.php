@@ -19,8 +19,8 @@ final class UnsatisfiedExpectationException extends TestDoubleException
     /**
      * @param  list<UnsatisfiedExpectation>  $expectations
      */
-    public static function forUnmet(string $label, array $expectations): self
+    public static function forUnmet(string $label, array $expectations, bool $fabricated = false): self
     {
-        return new self(new UnsatisfiedExpectationsDiagnostic($label, $expectations));
+        return new self(new UnsatisfiedExpectationsDiagnostic($label, $expectations, $fabricated));
     }
 }

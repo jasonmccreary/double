@@ -7,7 +7,6 @@ namespace JMac\Testing\Tests\Engine;
 use JMac\Testing\Engine\TestDouble;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
-use JMac\Testing\Exceptions\UnconfiguredReturnException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
@@ -172,15 +171,6 @@ final class TestDoubleTest extends TestCase
         $double->count();
     }
 
-    public function test_an_unconfigured_double_behaves_as_strict_in_m1(): void
-    {
-        $double = TestDouble::for(BookRepositoryInterface::class);
-
-        $this->expectException(UnexpectedCallException::class);
-
-        $double->count();
-    }
-
     public function test_mode_can_only_be_set_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class)->strict();
@@ -198,26 +188,6 @@ final class TestDoubleTest extends TestCase
         $this->expectExceptionMessage('bogus');
 
         $double->expects('bogus');
-    }
-
-    public function test_a_matched_call_with_no_configured_return_fails_loudly_instead_of_silently_returning_null(): void
-    {
-        $double = TestDouble::for(BookRepositoryInterface::class);
-        $double->allows('count');
-
-        $this->expectException(UnconfiguredReturnException::class);
-
-        $double->count();
-    }
-
-    public function test_passthru_is_not_implemented_yet(): void
-    {
-        $double = TestDouble::for(BookRepositoryInterface::class);
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('M4');
-
-        $double->passthru();
     }
 
     public function test_received_is_not_implemented_yet(): void

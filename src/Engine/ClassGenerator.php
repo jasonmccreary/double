@@ -51,74 +51,145 @@ final class ClassGenerator
             throw InvalidDoubleTargetException::isFinal($target);
         }
 
-        $this->assertNoReservedNameCollisions($target, $reflection);
+        $keyword = $reflection->isInterface() ? 'implements' : 'extends';
 
-        $className = $this->generateClassName($reflection);
+        return $this->generateFromReflections([$reflection], [$target], $keyword);
+    }
 
-        eval($this->buildSource($className, $target, $reflection));
+    /**
+     * @internal used only by SafeDefaultResolver/TestDouble::fabricateIntersection()
+     * to fabricate a stand-in for an intersection-typed return. Intersection
+     * members are always interfaces in PHP, so — unlike generate() — this
+     * never needs the extends-vs-implements branching a single class/interface
+     * target requires.
+     *
+     * @param  list<string>  $targets
+     */
+    public function generateForIntersection(array $targets): string
+    {
+        $reflections = array_map(
+            static fn (string $target): \ReflectionClass => new \ReflectionClass($target),
+            $targets,
+        );
+
+        return $this->generateFromReflections($reflections, $targets, 'implements');
+    }
+
+    /**
+     * @param  list<\ReflectionClass>  $reflections
+     * @param  list<string>  $targets
+     */
+    private function generateFromReflections(array $reflections, array $targets, string $keyword): string
+    {
+        $this->assertNoReservedNameCollisions($targets, $reflections);
+
+        $className = $this->generateClassName($reflections);
+
+        eval($this->buildSource($className, $keyword, $targets, $reflections));
 
         return $className;
     }
 
-    private function assertNoReservedNameCollisions(string $target, \ReflectionClass $reflection): void
+    /**
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoReservedNameCollisions(array $targets, array $reflections): void
     {
-        $declared = array_map(
-            static fn (\ReflectionMethod $method): string => $method->getName(),
-            $reflection->getMethods(\ReflectionMethod::IS_PUBLIC),
-        );
+        $declared = [];
 
-        $collisions = array_values(array_intersect(self::RESERVED_METHODS, $declared));
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+                $declared[] = $method->getName();
+            }
+        }
+
+        $collisions = array_values(array_unique(array_intersect(self::RESERVED_METHODS, $declared)));
 
         if ($collisions !== []) {
-            throw ReservedNameCollisionException::forCollisions($target, $collisions);
+            throw ReservedNameCollisionException::forCollisions(implode('&', $targets), $collisions);
         }
     }
 
-    private function generateClassName(\ReflectionClass $reflection): string
+    /**
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function generateClassName(array $reflections): string
     {
-        $short = preg_replace('/[^A-Za-z0-9_]/', '_', $reflection->getShortName());
+        $short = implode('_', array_map(
+            static fn (\ReflectionClass $reflection): string => preg_replace('/[^A-Za-z0-9_]/', '_', $reflection->getShortName()),
+            $reflections,
+        ));
 
         return sprintf('JMac\Testing\\Engine\\Generated\\%s_%d', $short, ++self::$counter);
     }
 
-    private function buildSource(string $fqcn, string $target, \ReflectionClass $reflection): string
+    /**
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function buildSource(string $fqcn, string $keyword, array $targets, array $reflections): string
     {
         $position = strrpos($fqcn, '\\');
         $namespace = substr($fqcn, 0, $position);
         $shortName = substr($fqcn, $position + 1);
 
-        $keyword = $reflection->isInterface() ? 'implements' : 'extends';
+        $parents = implode(', ', array_map(
+            static fn (string $target): string => '\\'.ltrim($target, '\\'),
+            $targets,
+        ));
+
         $methods = implode("\n", array_map(
             $this->buildMethod(...),
-            $this->overridableMethods($reflection),
+            $this->overridableMethods($reflections),
         ));
 
         return sprintf(
-            "namespace %s;\n\nfinal class %s %s \\%s\n{\n    use \\%s;\n\n%s\n}\n",
+            "namespace %s;\n\nfinal class %s %s %s\n{\n    use \\%s;\n\n%s\n}\n",
             $namespace,
             $shortName,
             $keyword,
-            ltrim($target, '\\'),
+            $parents,
             DoubleControlMethods::class,
             $methods,
         );
     }
 
     /**
+     * Merges overridable methods across every target, keyed by name — the
+     * first reflection to declare a given method wins. Only relevant for
+     * intersection fabrication (a single-target call only ever has one
+     * reflection); PHP's own intersection-type rules already require
+     * compatible signatures across constituents, so any occurrence's
+     * signature is a valid one to emit.
+     *
+     * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>
      */
-    private function overridableMethods(\ReflectionClass $reflection): array
+    private function overridableMethods(array $reflections): array
     {
-        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED);
+        $methods = [];
 
-        return array_values(array_filter(
-            $methods,
-            static fn (\ReflectionMethod $method): bool => ! $method->isFinal()
-                && ! $method->isStatic()
-                && ! $method->isConstructor()
-                && ! $method->isDestructor()
-                && ! str_starts_with($method->getName(), '__'),
-        ));
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
+                if (isset($methods[$method->getName()])) {
+                    continue;
+                }
+
+                if ($method->isFinal()
+                    || $method->isStatic()
+                    || $method->isConstructor()
+                    || $method->isDestructor()
+                    || str_starts_with($method->getName(), '__')
+                ) {
+                    continue;
+                }
+
+                $methods[$method->getName()] = $method;
+            }
+        }
+
+        return array_values($methods);
     }
 
     private function buildMethod(\ReflectionMethod $method): string
@@ -136,9 +207,8 @@ final class ClassGenerator
         $isVoid = $returnType !== null && $this->stringifyType($returnType) === 'void';
 
         $call = sprintf(
-            '\\%s::intercept(\\%s::stateFor($this), %s, func_get_args())',
+            '\\%s::intercept($this, %s, func_get_args())',
             ProxyBehavior::class,
-            TestDouble::class,
             var_export($name, true),
         );
 

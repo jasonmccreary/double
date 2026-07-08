@@ -16,5 +16,6 @@ final class UnsatisfiedExpectationsDiagnostic implements Diagnostic
     public function __construct(
         public readonly string $label,
         public readonly array $expectations,
+        public readonly bool $fabricated = false,
     ) {}
 }

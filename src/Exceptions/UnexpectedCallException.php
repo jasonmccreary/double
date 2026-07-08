@@ -14,8 +14,8 @@ use JMac\Testing\Diagnostics\UnexpectedCallDiagnostic;
  */
 final class UnexpectedCallException extends TestDoubleException
 {
-    public static function forCall(string $label, string $method, string $argumentsDescription): self
+    public static function forCall(string $label, string $method, string $argumentsDescription, bool $fabricated = false): self
     {
-        return new self(new UnexpectedCallDiagnostic($label, $method, $argumentsDescription));
+        return new self(new UnexpectedCallDiagnostic($label, $method, $argumentsDescription, $fabricated));
     }
 }

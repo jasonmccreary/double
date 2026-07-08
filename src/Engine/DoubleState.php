@@ -25,6 +25,10 @@ final class DoubleState
 
     private ?Mode $mode = null;
 
+    private ?object $passthruTarget = null;
+
+    private int $fabricationDepth = 0;
+
     public function __construct(
         private readonly string $target,
         private readonly string $label,
@@ -35,29 +39,86 @@ final class DoubleState
         return $this->target;
     }
 
+    /**
+     * Almost always a single-element list ([target()]). An intersection-typed
+     * fabrication (see TestDouble::fabricateIntersection()) stores its
+     * constituent interfaces joined with "&" in $target purely for display —
+     * PHP class/interface names can never contain "&", so splitting on it is
+     * unambiguous — this is how callers that need to reflect a method (e.g.
+     * SafeDefaultResolver) or check it exists (TestDouble::registerExpectation)
+     * find which constituent actually declares it.
+     *
+     * @return list<string>
+     */
+    public function targetCandidates(): array
+    {
+        return explode('&', $this->target);
+    }
+
     public function label(): string
     {
         return $this->label;
     }
 
     /**
-     * M1 stand-in: Loose is the architected default (see ARCHITECTURE.md's
-     * "Sensible defaults" table) but isn't implemented until M4, so an
-     * unset mode currently behaves as Strict. This is the only place that
-     * decision lives — flip the `??` fallback to Mode::Loose when M4 lands.
+     * Loose is the architected default (see ARCHITECTURE.md's "Sensible
+     * defaults" table) — reachable only implicitly, since there's
+     * deliberately no ->loose() verb (see ARCHITECTURE.md, "Modes: Loose,
+     * Strict, Passthru").
      */
     public function mode(): Mode
     {
-        return $this->mode ?? Mode::Strict;
+        return $this->mode ?? Mode::Loose;
     }
 
     public function setMode(Mode $mode): void
     {
         if ($this->mode !== null) {
-            throw ModeConfigurationException::alreadyConfigured($this->label, $this->mode->name, $mode->name);
+            throw ModeConfigurationException::alreadyConfigured($this->label, $this->mode->name, $mode->name, $this->isFabricated());
         }
 
         $this->mode = $mode;
+    }
+
+    /**
+     * ->passthru($realInstance) sets the mode and stores the delegation
+     * target together, so the two can never end up out of sync (see
+     * ARCHITECTURE.md, "Passthru").
+     */
+    public function configurePassthru(object $realInstance): void
+    {
+        $this->setMode(Mode::Passthru);
+        $this->passthruTarget = $realInstance;
+    }
+
+    /**
+     * Only ever called from the Mode::Passthru fallback branch, which is
+     * unreachable unless configurePassthru() already ran.
+     */
+    public function passthruTarget(): object
+    {
+        /** @var object $target */
+        $target = $this->passthruTarget;
+
+        return $target;
+    }
+
+    /**
+     * @internal used only by TestDouble::fabricate()/fabricateIntersection()
+     */
+    public function markFabricated(int $depth): void
+    {
+        $this->fabricationDepth = $depth;
+    }
+
+    public function fabricationDepth(): int
+    {
+        return $this->fabricationDepth;
+    }
+
+    public function isFabricated(): bool
+    {
+        return $this->fabricationDepth > 0;
     }
 
     public function registerExpectation(MethodExpectation $expectation): void

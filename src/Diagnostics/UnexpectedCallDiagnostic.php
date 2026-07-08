@@ -14,5 +14,6 @@ final class UnexpectedCallDiagnostic implements Diagnostic
         public readonly string $label,
         public readonly string $method,
         public readonly string $argumentsDescription,
+        public readonly bool $fabricated = false,
     ) {}
 }
