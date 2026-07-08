@@ -79,26 +79,28 @@ final class TestDouble
         $state = self::stateFor($double);
         $unmet = $state->unmetExpectations();
 
-        if ($unmet !== []) {
-            throw new UnsatisfiedExpectationException(
-                $state->label(),
-                array_map(
-                    static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(
-                        method: $expectation->method(),
-                        description: $expectation->describe(),
-                        expectedMin: $expectation->minimumCalls(),
-                        expectedMax: $expectation->maximumCalls(),
-                        timesCalled: $expectation->timesMatched(),
-                        otherObservedCalls: array_map(
-                            ArgumentFormatter::describe(...),
-                            $state->callsFor($expectation->method()),
-                        ),
-                    ),
-                    $unmet,
-                ),
-                $state->isFabricated(),
-            );
+        if ($unmet === []) {
+            return;
         }
+
+        throw new UnsatisfiedExpectationException(
+            $state->label(),
+            array_map(
+                static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(
+                    method: $expectation->method(),
+                    description: $expectation->describe(),
+                    expectedMin: $expectation->minimumCalls(),
+                    expectedMax: $expectation->maximumCalls(),
+                    timesCalled: $expectation->timesMatched(),
+                    otherObservedCalls: array_map(
+                        ArgumentFormatter::describe(...),
+                        $state->callsFor($expectation->method()),
+                    ),
+                ),
+                $unmet,
+            ),
+            $state->isFabricated(),
+        );
     }
 
     /**
@@ -122,15 +124,7 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        $declared = false;
-        foreach ($state->targetCandidates() as $candidate) {
-            if (method_exists($candidate, $method)) {
-                $declared = true;
-                break;
-            }
-        }
-
-        if (! $declared) {
+        if ($state->declaringCandidate($method) === null) {
             throw new UnknownMethodException($state->target(), $method, $state->isFabricated());
         }
 

@@ -148,7 +148,7 @@ final class MethodExpectation
             return false;
         }
 
-        foreach (array_values($this->argumentConstraints) as $index => $matcher) {
+        foreach ($this->argumentConstraints as $index => $matcher) {
             if (! $matcher->matches($arguments[$index])) {
                 return false;
             }

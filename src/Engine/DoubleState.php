@@ -44,15 +44,30 @@ final class DoubleState
      * fabrication (see TestDouble::fabricateIntersection()) stores its
      * constituent interfaces joined with "&" in $target purely for display —
      * PHP class/interface names can never contain "&", so splitting on it is
-     * unambiguous — this is how callers that need to reflect a method (e.g.
-     * SafeDefaultResolver) or check it exists (TestDouble::registerExpectation)
-     * find which constituent actually declares it.
+     * unambiguous.
      *
      * @return list<string>
      */
     public function targetCandidates(): array
     {
         return explode('&', $this->target);
+    }
+
+    /**
+     * The first target candidate (see targetCandidates()) that declares the
+     * given method, or null if none does. Used by callers that need to
+     * reflect a method (e.g. SafeDefaultResolver) or check it exists
+     * (TestDouble::registerExpectation).
+     */
+    public function declaringCandidate(string $method): ?string
+    {
+        foreach ($this->targetCandidates() as $candidate) {
+            if (method_exists($candidate, $method)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     public function label(): string

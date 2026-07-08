@@ -52,13 +52,7 @@ final class SafeDefaultResolver
 
     public static function resolveForMethod(DoubleState $state, string $method, object $double): mixed
     {
-        $declaringTarget = null;
-        foreach ($state->targetCandidates() as $candidate) {
-            if (method_exists($candidate, $method)) {
-                $declaringTarget = $candidate;
-                break;
-            }
-        }
+        $declaringTarget = $state->declaringCandidate($method);
 
         $reflectionMethod = $declaringTarget !== null ? new \ReflectionMethod($declaringTarget, $method) : null;
 
@@ -132,35 +126,35 @@ final class SafeDefaultResolver
         $name = $type->getName();
         $lower = strtolower($name);
 
-        if (! $type->isBuiltin()) {
-            if (in_array($lower, ['self', 'static'], true)
-                || ($declaringClass !== null && $lower === strtolower(ltrim($declaringClass, '\\')))) {
-                return $double;
-            }
-
-            if (enum_exists($name)) {
-                return (new \ReflectionEnum($name))->getCases()[0]->getValue();
-            }
-
-            if ($depth >= self::MAX_FABRICATION_DEPTH && self::satisfies($double, [$name])) {
-                return $double;
-            }
-
-            return TestDouble::fabricate($name, $depth + 1);
+        if ($type->isBuiltin()) {
+            return match ($lower) {
+                'bool' => false,
+                'int' => 0,
+                'float' => 0.0,
+                'string' => '',
+                'array', 'iterable' => [],
+                // 'object', 'callable', 'false', 'true', 'never' aren't in
+                // ARCHITECTURE.md's safe-default table — null is a documented
+                // best-effort gap for these. void/mixed/null never reach here
+                // (already handled by the allowsNull() check above).
+                default => null,
+            };
         }
 
-        return match ($lower) {
-            'bool' => false,
-            'int' => 0,
-            'float' => 0.0,
-            'string' => '',
-            'array', 'iterable' => [],
-            // 'object', 'callable', 'false', 'true', 'never' aren't in
-            // ARCHITECTURE.md's safe-default table — null is a documented
-            // best-effort gap for these. void/mixed/null never reach here
-            // (already handled by the allowsNull() check above).
-            default => null,
-        };
+        if (in_array($lower, ['self', 'static'], true)
+            || ($declaringClass !== null && $lower === strtolower(ltrim($declaringClass, '\\')))) {
+            return $double;
+        }
+
+        if (enum_exists($name)) {
+            return (new \ReflectionEnum($name))->getCases()[0]->getValue();
+        }
+
+        if ($depth >= self::MAX_FABRICATION_DEPTH && self::satisfies($double, [$name])) {
+            return $double;
+        }
+
+        return TestDouble::fabricate($name, $depth + 1);
     }
 
     /**

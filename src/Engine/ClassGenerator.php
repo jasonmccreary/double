@@ -104,7 +104,7 @@ final class ClassGenerator
             }
         }
 
-        $collisions = array_values(array_unique(array_intersect(self::RESERVED_METHODS, $declared)));
+        $collisions = array_values(array_intersect(self::RESERVED_METHODS, $declared));
 
         if ($collisions !== []) {
             throw ReservedNameCollisionException::forCollisions(implode('&', $targets), $collisions);
@@ -203,8 +203,9 @@ final class ClassGenerator
         ));
 
         $returnType = $method->getReturnType();
-        $returnDeclaration = $returnType !== null ? ': '.$this->stringifyType($returnType) : '';
-        $isVoid = $returnType !== null && $this->stringifyType($returnType) === 'void';
+        $returnTypeString = $returnType !== null ? $this->stringifyType($returnType) : null;
+        $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
+        $isVoid = $returnTypeString === 'void';
 
         $call = sprintf(
             '\\%s::intercept($this, %s, func_get_args())',
