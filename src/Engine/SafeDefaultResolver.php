@@ -13,12 +13,25 @@ namespace JMac\Testing\Engine;
  * missing an explicit ->returns()/->throws()/->returnsUsing(), via the same
  * resolveForMethod() entry point (see ProxyBehavior).
  *
- * Recursive fabrication for a non-nullable class/interface return is capped
- * at MAX_FABRICATION_DEPTH (ARCHITECTURE.md: "proposed default 2,
- * configurable — not yet validated against real domain object graphs;
- * treat as a starting point to tune, not a settled constant") to stop an
- * unbounded chain — e.g. a self-referential interface — from recursing
- * forever.
+ * A non-nullable return typed as `self`, `static`, or literally the same
+ * class/interface that declares the method (e.g. NodeInterface::next():
+ * NodeInterface) always resolves to the current double itself — the third
+ * case is folded into the same rule as `self` rather than kept distinct.
+ * PHP 8.5 changed ReflectionNamedType::getName() to resolve a `self` return
+ * type to its actual class/interface name, making it reflectively
+ * indistinguishable from an explicit same-named return type (confirmed on
+ * PHP 8.5.8: both report `==`-equal ReflectionNamedType values). Treating
+ * the two the same everywhere — rather than trying to recover a distinction
+ * PHP itself no longer exposes — keeps this resolver's behavior identical
+ * across every supported PHP version instead of varying with the running
+ * version's reflection quirks.
+ *
+ * Recursive fabrication for a non-nullable class/interface return whose name
+ * does *not* match the declaring class is still capped at
+ * MAX_FABRICATION_DEPTH (ARCHITECTURE.md: "proposed default 2, configurable
+ * — not yet validated against real domain object graphs; treat as a
+ * starting point to tune, not a settled constant") to stop an unbounded
+ * chain from recursing forever.
  *
  * Past the cap, null is NOT a viable fallback the way it is for every other
  * row of the safe-default table: the generated method's return type is
@@ -26,11 +39,10 @@ namespace JMac\Testing\Engine;
  * that boundary — this resolver can't paper over that with a "safe" value
  * that isn't actually one. Instead, at the cap, the current double is
  * reused as the return value whenever it already satisfies the required
- * type (always true for a directly self-referential interface like the
- * fixture this cap exists for) — closing the cycle instead of fabricating
- * forever. If it doesn't satisfy the type (a deep but non-cyclic graph),
- * fabrication proceeds one level further anyway, since an honestly-typed
- * value beats a cap enforced by crashing.
+ * type — closing the cycle instead of fabricating forever. If it doesn't
+ * satisfy the type (a deep but non-cyclic graph), fabrication proceeds one
+ * level further anyway, since an honestly-typed value beats a cap enforced
+ * by crashing.
  */
 final class SafeDefaultResolver
 {
@@ -43,28 +55,31 @@ final class SafeDefaultResolver
             static fn (string $candidate): bool => method_exists($candidate, $method),
         );
 
-        $type = $declaringTarget !== null
-            ? (new \ReflectionMethod($declaringTarget, $method))->getReturnType()
-            : null;
+        $reflectionMethod = $declaringTarget !== null ? new \ReflectionMethod($declaringTarget, $method) : null;
 
-        return self::resolve($type, $double, $state->fabricationDepth());
+        return self::resolve(
+            $reflectionMethod?->getReturnType(),
+            $double,
+            $state->fabricationDepth(),
+            $reflectionMethod?->getDeclaringClass()->getName(),
+        );
     }
 
-    private static function resolve(?\ReflectionType $type, object $double, int $depth): mixed
+    private static function resolve(?\ReflectionType $type, object $double, int $depth, ?string $declaringClass): mixed
     {
         if ($type === null || $type->allowsNull()) {
             return null;
         }
 
         if ($type instanceof \ReflectionUnionType) {
-            return self::resolveUnion($type, $double, $depth);
+            return self::resolveUnion($type, $double, $depth, $declaringClass);
         }
 
         if ($type instanceof \ReflectionIntersectionType) {
             return self::resolveIntersection($type, $double, $depth);
         }
 
-        return self::resolveNamed($type, $double, $depth);
+        return self::resolveNamed($type, $double, $depth, $declaringClass);
     }
 
     /**
@@ -76,7 +91,7 @@ final class SafeDefaultResolver
      * reflected back out as `string` then `int`), so there is no other
      * order available to prefer.
      */
-    private static function resolveUnion(\ReflectionUnionType $type, object $double, int $depth): mixed
+    private static function resolveUnion(\ReflectionUnionType $type, object $double, int $depth, ?string $declaringClass): mixed
     {
         foreach ($type->getTypes() as $member) {
             if ($member instanceof \ReflectionNamedType && strtolower($member->getName()) === 'null') {
@@ -88,7 +103,7 @@ final class SafeDefaultResolver
 
         return $first instanceof \ReflectionIntersectionType
             ? self::resolveIntersection($first, $double, $depth)
-            : self::resolveNamed($first, $double, $depth);
+            : self::resolveNamed($first, $double, $depth, $declaringClass);
     }
 
     private static function resolveIntersection(\ReflectionIntersectionType $type, object $double, int $depth): mixed
@@ -107,13 +122,14 @@ final class SafeDefaultResolver
         return TestDouble::fabricateIntersection($names, $depth + 1);
     }
 
-    private static function resolveNamed(\ReflectionNamedType $type, object $double, int $depth): mixed
+    private static function resolveNamed(\ReflectionNamedType $type, object $double, int $depth, ?string $declaringClass): mixed
     {
         $name = $type->getName();
         $lower = strtolower($name);
 
         if (! $type->isBuiltin()) {
-            if (in_array($lower, ['self', 'static'], true)) {
+            if (in_array($lower, ['self', 'static'], true)
+                || ($declaringClass !== null && $lower === strtolower(ltrim($declaringClass, '\\')))) {
                 return $double;
             }
 

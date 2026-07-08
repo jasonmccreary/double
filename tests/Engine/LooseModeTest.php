@@ -141,41 +141,23 @@ final class LooseModeTest extends TestCase
         $this->assertSame(0, $double->count());
     }
 
-    public function test_a_non_nullable_interface_return_fabricates_a_recursive_stand_in(): void
+    public function test_a_self_referential_interface_return_defaults_to_the_double_itself(): void
     {
+        // next(): NodeInterface names the same interface that declares it —
+        // reflectively indistinguishable from `self` as of PHP 8.5 (see
+        // SafeDefaultResolver's class docblock), so it resolves the same way:
+        // the current double, not a distinct fabricated stand-in.
         $double = TestDouble::for(NodeInterface::class);
 
-        $level1 = $double->next();
-        $this->assertInstanceOf(NodeInterface::class, $level1);
-        $this->assertTrue(TestDouble::stateFor($level1)->isFabricated());
-        $this->assertSame(1, TestDouble::stateFor($level1)->fabricationDepth());
-
-        $level2 = $level1->next();
-        $this->assertInstanceOf(NodeInterface::class, $level2);
-        $this->assertSame(2, TestDouble::stateFor($level2)->fabricationDepth());
-    }
-
-    public function test_recursive_fabrication_stops_at_the_depth_cap_by_closing_the_cycle(): void
-    {
-        // Past the depth cap, null isn't viable — next(): NodeInterface is
-        // non-nullable, and PHP would throw a TypeError the instant a safe
-        // default tried to return null there. Instead, the double at the
-        // cap (level2) is reused to close the cycle rather than fabricating
-        // a distinct level3 (see SafeDefaultResolver's class docblock).
-        $double = TestDouble::for(NodeInterface::class);
-
-        $level1 = $double->next();
-        $level2 = $level1->next();
-        $level3 = $level2->next();
-
-        $this->assertSame($level2, $level3);
+        $this->assertSame($double, $double->next());
+        $this->assertSame($double, $double->next()->next()->next());
     }
 
     public function test_verify_failure_on_a_fabricated_double_notes_its_provenance(): void
     {
-        $double = TestDouble::for(NodeInterface::class);
-        $fabricated = $double->next();
-        $fabricated->expects('next')->returns($fabricated);
+        $double = TestDouble::for(IntersectionReturnInterface::class);
+        $fabricated = $double->make();
+        $fabricated->expects('fill')->returns(true);
 
         try {
             TestDouble::verify($fabricated);
