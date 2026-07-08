@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * TestMatch::any() — matches every value, including null. Useful for
+ * Argument::any() — matches every value, including null. Useful for
  * pinning down one argument position while leaving the rest of a with()
  * call unconstrained.
  */

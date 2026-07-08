@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * TestMatch::type($class) — matches any instance of the given class or
+ * Argument::type($class) — matches any instance of the given class or
  * interface. See ARCHITECTURE.md's example:
- * `TestMatch::type(Book::class)`.
+ * `Argument::type(Book::class)`.
  */
 final class TypeMatcher implements Matcher
 {

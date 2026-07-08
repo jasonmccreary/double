@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * The argument-matcher facade, named to echo TestDouble itself (see
- * ARCHITECTURE.md, "Verb lineage"). Starting matcher set only — any(),
- * type(), that() — deliberately minimal for v1; more get added once real
- * usage shows what's actually needed, rather than porting a full matcher
- * catalog speculatively.
+ * The argument-matcher facade (see ARCHITECTURE.md, "Verb lineage").
+ * Starting matcher set only — any(), type(), that() — deliberately minimal
+ * for v1; more get added once real usage shows what's actually needed,
+ * rather than porting a full matcher catalog speculatively.
  */
-final class TestMatch
+final class Argument
 {
     private function __construct() {}
 

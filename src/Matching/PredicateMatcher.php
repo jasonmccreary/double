@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * TestMatch::that($predicate) — matches any value for which the given
+ * Argument::that($predicate) — matches any value for which the given
  * callable returns a truthy result. See ARCHITECTURE.md's example:
- * `TestMatch::that(fn ($id) => $id > 100)`.
+ * `Argument::that(fn ($id) => $id > 100)`.
  */
 final class PredicateMatcher implements Matcher
 {

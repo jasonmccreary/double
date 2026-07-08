@@ -6,7 +6,7 @@ namespace JMac\Testing\Matching;
 
 /**
  * See ARCHITECTURE.md, "Matcher." Every argument constraint — a literal
- * value, TestMatch::any(), a predicate closure, and any future matcher —
+ * value, Argument::any(), a predicate closure, and any future matcher —
  * implements this one interface. Zero dependencies on the rest of the
  * library (see "Module boundaries"): a matcher only ever sees the value
  * it's being compared against, never Engine or Diagnostics types.

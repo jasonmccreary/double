@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\MethodExpectation;
-use JMac\Testing\Matching\TestMatch;
+use JMac\Testing\Matching\Argument;
 use JMac\Testing\Tests\Fixtures\Book;
 use PHPUnit\Framework\TestCase;
 
@@ -139,7 +139,7 @@ final class MethodExpectationTest extends TestCase
     public function test_with_accepts_a_matcher_alongside_bare_literals(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
-            ->with(TestMatch::any(), 'two');
+            ->with(Argument::any(), 'two');
 
         $this->assertTrue($expectation->matchesArguments([1, 'two']));
         $this->assertTrue($expectation->matchesArguments(['anything', 'two']));
@@ -149,7 +149,7 @@ final class MethodExpectationTest extends TestCase
     public function test_with_type_matcher_constrains_to_instances_of_the_given_class(): void
     {
         $expectation = (new MethodExpectation('save', required: false))
-            ->with(TestMatch::type(Book::class));
+            ->with(Argument::type(Book::class));
 
         $this->assertTrue($expectation->matchesArguments([new Book('Some Title')]));
         $this->assertFalse($expectation->matchesArguments(['not a book']));
@@ -158,7 +158,7 @@ final class MethodExpectationTest extends TestCase
     public function test_with_predicate_matcher_constrains_by_a_callable(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
-            ->with(TestMatch::that(fn (int $id): bool => $id > 100));
+            ->with(Argument::that(fn (int $id): bool => $id > 100));
 
         $this->assertTrue($expectation->matchesArguments([101]));
         $this->assertFalse($expectation->matchesArguments([100]));
@@ -167,7 +167,7 @@ final class MethodExpectationTest extends TestCase
     public function test_describe_renders_matcher_descriptions(): void
     {
         $expectation = (new MethodExpectation('find', required: true))
-            ->with(TestMatch::any());
+            ->with(Argument::any());
 
         $this->assertSame('find(any()) — expected exactly 1 time(s), called 0 time(s)', $expectation->describe());
     }
