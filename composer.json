@@ -1,10 +1,13 @@
 {
     "name": "jasonmccreary/test-double",
-    "type": "vendor",
+    "description": "A modern, human-friendly PHP test double library.",
+    "type": "library",
     "keywords": [
         "testing",
-        "mockery",
-        "mock"
+        "test double",
+        "mock",
+        "stub",
+        "spy"
     ],
     "license": "MIT",
     "authors": [
@@ -20,16 +23,17 @@
         "phpunit/phpunit": "^12.0"
     },
     "autoload": {
-        "files": [
-            "src/helpers.php"
-        ],
         "psr-4": {
-          "JMac\\Testing\\": "src/"
+            "TestDouble\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "TestDouble\\Tests\\": "tests/"
         }
-    }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
 }
