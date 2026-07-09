@@ -20,20 +20,32 @@ class ExpectationCallLimitExceededException extends TestDoubleException
         public readonly int $callNumber,
         public readonly bool $fabricated = false,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $maximum, $callNumber, $fabricated));
     }
 
-    private function render(): string
-    {
+    /**
+     * Static (not just private) so PHPUnitExpectationCallLimitExceededException
+     * — which cannot extend this class, see ARCHITECTURE.md's "PHPUnit
+     * integration" — renders byte-identical prose without duplicating the
+     * sprintf.
+     */
+    public static function renderMessage(
+        string $label,
+        string $method,
+        string $argumentsDescription,
+        int $maximum,
+        int $callNumber,
+        bool $fabricated,
+    ): string {
         return sprintf(
             'Test double "%s" received call #%d to "%s(%s)", but the matching expectation '
             .'allows at most %d call(s).%s',
-            $this->label,
-            $this->callNumber,
-            $this->method,
-            $this->argumentsDescription,
-            $this->maximum,
-            $this->fabricatedNote($this->fabricated),
+            $label,
+            $callNumber,
+            $method,
+            $argumentsDescription,
+            $maximum,
+            self::fabricatedNote($fabricated),
         );
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
-use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 use JMac\Testing\Tests\Fixtures\Fillable;
@@ -162,7 +162,7 @@ final class LooseModeTest extends TestCase
         try {
             TestDouble::verify($fabricated);
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
-        } catch (UnsatisfiedExpectationException $exception) {
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
             $this->assertStringContainsString('auto-fabricated', $exception->getMessage());
         }
     }

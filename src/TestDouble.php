@@ -8,9 +8,9 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Engine\ArgumentFormatter;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
+use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Exceptions\UnknownMethodException;
-use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 
 /**
  * The public facade and the library's sole entry point — deliberately a
@@ -83,7 +83,7 @@ final class TestDouble
             return;
         }
 
-        throw new UnsatisfiedExpectationException(
+        throw ExceptionFactory::unsatisfiedExpectation(
             $state->label(),
             array_map(
                 static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(

@@ -27,9 +27,13 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
      * fabricated stand-in (see ARCHITECTURE.md, "Modes: Loose, Strict,
      * Passthru" — "mandatory provenance tagging on every fabricated
      * object"). Returns '' when not fabricated so every render() can
-     * unconditionally splice this into its sprintf.
+     * unconditionally splice this into its sprintf. Static (not just
+     * protected) so the PHPUnit-specific exception variants under
+     * Integrations\PHPUnit — which cannot extend these classes, see
+     * ARCHITECTURE.md's "PHPUnit integration" — can reuse the exact same
+     * note without duplicating it.
      */
-    final protected function fabricatedNote(bool $fabricated): string
+    final public static function fabricatedNote(bool $fabricated): string
     {
         if (! $fabricated) {
             return '';

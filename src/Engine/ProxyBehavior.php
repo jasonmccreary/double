@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
-use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
-use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\TestDouble;
 
 /**
@@ -43,7 +41,7 @@ final class ProxyBehavior
         $expectation->recordMatch();
 
         if ($expectation->exceedsMaximum()) {
-            throw new ExpectationCallLimitExceededException(
+            throw ExceptionFactory::expectationCallLimitExceeded(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),
@@ -76,7 +74,7 @@ final class ProxyBehavior
     private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed
     {
         return match ($state->mode()) {
-            Mode::Strict => throw new UnexpectedCallException(
+            Mode::Strict => throw ExceptionFactory::unexpectedCall(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),

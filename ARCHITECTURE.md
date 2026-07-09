@@ -600,51 +600,121 @@ subclass couldn't be written.
 ### PHPUnit integration — built in, `require-dev` only
 
 Originally planned as a separate package/repo; changed to built-in, same
-repo, same release. `phpunit/phpunit` goes in `require-dev` — needed to
-develop and typecheck the integration classes, never pulled in transitively
-for a consumer who isn't using PHPUnit.
+repo, same release. `phpunit/phpunit` goes in `require-dev`, constrained to
+`^11.0 || ^12.0` — needed to develop and typecheck the integration classes,
+never pulled in transitively for a consumer who isn't using PHPUnit. Both
+majors are supported deliberately, not just whatever's newest: this
+library's own PHP floor is 8.3, and PHPUnit 11 (PHP ^8.2) is still a real,
+currently-supported choice for a consumer on that floor who hasn't moved to
+PHPUnit 12 (PHP ^8.3) yet — there's no reason to narrow their options when
+the two AssertionFailedError/SelfDescribing surface below is identical
+between them. Proven, not assumed: the CI matrix crosses every supported PHP
+version with both PHPUnit majors (`phpunit/phpunit` pinned explicitly per
+job, not left to `composer update`'s latest-allowed default), since neither
+PHPUnit major declares an upper PHP-version bound and there was no technical
+reason to test only one PHPUnit version per PHP version.
 
-PHPUnit only counts a thrown exception as a *failure* (not a different
-bucket, "error") if it extends `PHPUnit\Framework\AssertionFailedError`, and
-it renders an automatic diff if the exception exposes
-`getComparisonFailure(): ?ComparisonFailure`:
+**PHPUnit only counts a thrown exception as a *failure* (not a different
+bucket, "error") if it extends `PHPUnit\Framework\AssertionFailedError`.**
+This turned out to be in direct tension with an earlier draft of this
+section, which sketched `PHPUnitUnexpectedCallException extends
+UnexpectedCallException` so the PHPUnit variant would stay catchable as the
+plain one. PHP has no multiple inheritance — a class cannot extend both
+`UnexpectedCallException` (which extends `TestDoubleException` /
+`RuntimeException`) and PHPUnit's `AssertionFailedError` at once. **Resolved
+in favor of `AssertionFailedError`:** correct failure/error bucketing is the
+entire reason this integration exists, so it wins over preserving `instanceof
+UnexpectedCallException` under PHPUnit. Concretely, this means the three
+exceptions that represent the double actually misbehaving *during* a
+test — the ones `verify()`/`ProxyBehavior` can throw mid-test, as opposed to
+setup-time misconfiguration — each got a PHPUnit-specific sibling under
+`JMac\Testing\Integrations\PHPUnit\*`:
 
 ```php
-final class PHPUnitUnexpectedCallException
-    extends UnexpectedCallException
-    implements PHPUnit\Framework\SelfDescribing
+final class PHPUnitUnexpectedCallException extends \PHPUnit\Framework\AssertionFailedError
+    implements \JMac\Testing\Diagnostics\Diagnostic
 {
-    public function getComparisonFailure(): ?ComparisonFailure
-    {
-        // read directly off $this->method / $this->argumentsDescription /
-        // etc. — no separate Diagnostic object to reach through anymore.
-        // NOTE: today's fields are pre-formatted strings
-        // (argumentsDescription is already joined), not the structured
-        // expected/actual values a real diff wants — widening that shape
-        // is likely M5 work in its own right, not just wiring this method up.
+    public function __construct(
+        public readonly string $label,
+        public readonly string $method,
+        public readonly string $argumentsDescription,
+        public readonly bool $fabricated = false,
+    ) {
+        // Same prose as the plain exception, without extending it — see
+        // UnexpectedCallException::renderMessage(), a public static method
+        // that both classes call so the message text has exactly one
+        // source of truth.
+        parent::__construct(UnexpectedCallException::renderMessage(
+            $label, $method, $argumentsDescription, $fabricated,
+        ));
     }
+
+    public function getDiagnostic(): Diagnostic { return $this; }
 }
 ```
 
-`TestDouble::for()`/`verify()` pick which exception to throw via
-`class_exists(\PHPUnit\Framework\TestCase::class)` at runtime.
+`ExpectationCallLimitExceededException` and `UnsatisfiedExpectationException`
+get the identical treatment (`PHPUnitExpectationCallLimitExceededException`,
+`PHPUnitUnsatisfiedExpectationException`), each calling its plain
+counterpart's `renderMessage()`. Setup-time exceptions
+(`UnknownMethodException`, `ModeConfigurationException`,
+`InvalidDoubleTargetException`, `PassthruAutoInstantiationException`,
+`ReservedNameCollisionException`) deliberately do **not** get a PHPUnit
+sibling — a misconfigured double is legitimately a PHPUnit "error," not a
+test "failure," so the default `RuntimeException`/`LogicException`
+bucketing they already get is correct as-is.
+
+**`SelfDescribing` needs no separate `implements`:** `AssertionFailedError`
+already implements it and supplies `toString(): string { return
+$this->getMessage(); }` itself, non-`final`, so extending
+`AssertionFailedError` is sufficient on its own.
+
+**`getComparisonFailure(): ?ComparisonFailure` diff integration, dropped
+from scope, not deferred:** this section's original sketch assumed any
+exception exposing that method would get PHPUnit's automatic diff output.
+Checked against real PHPUnit source (11.x and 12.x): the diff renderer
+(`Util\ThrowableToStringMapper`) only calls `getComparisonFailure()` after an
+explicit `instanceof \PHPUnit\Framework\ExpectationFailedException` check —
+a `final` class. There's no way to become one by subclassing, and no other
+generic hook. Duck-typing a same-named method onto our own exceptions would
+be dead code: it would never be called by anything, since nothing checks
+for the method, only for that exact final type. If diffing is wanted later,
+the honest path is constructing a real `ExpectationFailedException`
+(composition, not inheritance) and deciding what that does to the
+catchable-type story above — a fresh design question, not "wire up the
+method that's already there."
+
+`ProxyBehavior` and `TestDouble::verify()` pick which exception to throw via
+`Engine\ExceptionFactory`, an `@internal` class whose only job is the
+`class_exists(\PHPUnit\Framework\TestCase::class)` branch — this keeps that
+check in exactly one place and keeps `ProxyBehavior`/`TestDouble` themselves
+unaware PHPUnit exists at all.
 
 **Correctness detail specific to this pattern, easy to get almost right:**
-`PHPUnitUnexpectedCallException extends \PHPUnit\Framework\AssertionFailedError`
-means that parent class resolves the moment the file is *autoloaded* — not
-when the exception is instantiated. The whole "optional integration"
-promise depends on this class never being autoloaded unless
-`AssertionFailedError` already exists. A `class_exists()`-guarded `throw`
-is safe; a registry/factory pattern that references the class name
-unconditionally (even just in an array literal at the top of an
-unconditionally-loaded file) breaks the promise silently. Mitigations:
+extending `AssertionFailedError` (or referencing any `Integrations\PHPUnit`
+class) resolves the parent the moment the file is *autoloaded* — not when
+the exception is instantiated. The whole "optional integration" promise
+depends on these classes never being autoloaded unless `AssertionFailedError`
+already exists. A `class_exists()`-guarded `new` (what `ExceptionFactory`
+does) is safe; a registry/factory pattern that references the class name
+unconditionally (e.g. an `extends`/`implements` outside the guarded branch)
+breaks the promise silently. Mitigations in place:
 
-- A comment directly on the class explaining why it must only ever be
-  referenced inside a `class_exists()`-guarded branch.
-- A CI job that runs the test suite with PHPUnit's classes genuinely
-  unavailable (a separate `composer.json` with the dev dependency
-  stripped, run as its own matrix entry) — proving the guard works instead
-  of assuming it does.
+- A comment directly on `ExceptionFactory` and on each `Integrations\PHPUnit`
+  class explaining why it must only ever be referenced inside the
+  `class_exists()`-guarded branch.
+- Existing tests exercise the guarded-true branch for real (this repo's own
+  suite always has PHPUnit installed, so `TestDoubleTest`/`LooseModeTest`'s
+  runtime assertions were updated to expect the `PHPUnitXxxException`
+  variants, not the plain ones — proving the switch fires, not just that the
+  plain classes work in isolation).
+
+**Still open, not yet built:** a CI job that runs the test suite with
+PHPUnit's classes genuinely unavailable (a separate `composer.json` with the
+dev dependency stripped, run as its own matrix entry), proving the
+guarded-false branch instead of just reasoning about it. The `phpunit-11-compat`
+job added alongside this work proves the *version* half of the "optional
+integration" promise; it does not prove the *absent* half.
 
 **Future, additive only:** a PHPUnit extension that auto-verifies doubles
 created during a test at teardown, removing the need for a manual
@@ -696,9 +766,20 @@ created during a test at teardown, removing the need for a manual
    baseline and diagnostics pipeline. Includes the shared
    safe-default-by-return-type resolver used by both Loose's fallback and
    any expectation missing an explicit `->returns()`.
-6. **M5 — PHPUnit integration**, in-repo. `TestDoubleException` →
-   `PHPUnitException` split, `ComparisonFailure`, optional auto-verify
-   extension.
+6. **M5 — PHPUnit integration**, in-repo. Done: the three mid-test
+   exceptions (`UnexpectedCallException`, `ExpectationCallLimitExceededException`,
+   `UnsatisfiedExpectationException`) each gained an `Integrations\PHPUnit`
+   sibling extending `AssertionFailedError`, picked at throw time by
+   `Engine\ExceptionFactory`'s `class_exists()` check; PHPUnit 11 and 12 both
+   supported and proven in CI. **Revised, not built as originally sketched:**
+   the siblings extend `AssertionFailedError` rather than the plain
+   exception (PHP's single inheritance forced a choice — see "PHPUnit
+   integration" for why), and the `ComparisonFailure`/diff hook was dropped
+   entirely rather than wired up, since PHPUnit's real diff renderer only
+   fires for its own `final` `ExpectationFailedException`, not a
+   duck-typed method. Still open: the auto-verify PHPUnit extension (always
+   framed as "future, additive" — not started), and the guarded-false
+   ("PHPUnit genuinely absent") CI job.
 7. **M6 — Docs and first release.** Cookbook-style task docs, the Mockery/
    PHPUnit rosetta-stone migration table, the two contributor walkthroughs
    ("add a matcher," "improve a message"), freeze `Matcher` and `Diagnostic`

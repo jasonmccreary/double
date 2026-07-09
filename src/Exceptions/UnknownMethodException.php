@@ -24,7 +24,7 @@ class UnknownMethodException extends TestDoubleException
             'Cannot configure "%s" on a test double of "%s": no such method is declared there.%s',
             $this->method,
             $this->target,
-            $this->fabricatedNote($this->fabricated),
+            self::fabricatedNote($this->fabricated),
         );
     }
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests;
 
-use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
-use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
-use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\Book;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
@@ -62,7 +62,7 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
-        $this->expectException(UnsatisfiedExpectationException::class);
+        $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/delete\(any arguments\).*exactly 1 time\(s\), called 0 time\(s\)/s');
 
         TestDouble::verify($double);
@@ -75,7 +75,7 @@ final class TestDoubleTest extends TestCase
 
         $double->delete(1);
 
-        $this->expectException(ExpectationCallLimitExceededException::class);
+        $this->expectException(PHPUnitExpectationCallLimitExceededException::class);
 
         $double->delete(1);
     }
@@ -132,7 +132,7 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
         $double->allows('delete')->never();
 
-        $this->expectException(ExpectationCallLimitExceededException::class);
+        $this->expectException(PHPUnitExpectationCallLimitExceededException::class);
 
         $double->delete(1);
     }
@@ -166,7 +166,7 @@ final class TestDoubleTest extends TestCase
     {
         $double = TestDouble::for(BookRepositoryInterface::class)->strict();
 
-        $this->expectException(UnexpectedCallException::class);
+        $this->expectException(PHPUnitUnexpectedCallException::class);
 
         $double->count();
     }
@@ -219,7 +219,7 @@ final class TestDoubleTest extends TestCase
         try {
             TestDouble::verify($double);
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
-        } catch (UnsatisfiedExpectationException $exception) {
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
             $message = $exception->getMessage();
 
             $this->assertStringContainsString('find(123) — expected exactly 1 time(s), called 0 time(s)', $message);

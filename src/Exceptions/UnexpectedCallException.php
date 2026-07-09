@@ -19,18 +19,25 @@ class UnexpectedCallException extends TestDoubleException
         public readonly string $argumentsDescription,
         public readonly bool $fabricated = false,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $fabricated));
     }
 
-    private function render(): string
+    /**
+     * Static (not just private) so PHPUnitUnexpectedCallException — which
+     * cannot extend this class, since it must extend PHPUnit's
+     * AssertionFailedError instead, see ARCHITECTURE.md's "PHPUnit
+     * integration" — renders byte-identical prose without duplicating the
+     * sprintf.
+     */
+    public static function renderMessage(string $label, string $method, string $argumentsDescription, bool $fabricated): string
     {
         return sprintf(
             'Unexpected call to "%s(%s)" on test double "%s": no configured expects()/allows() '
             .'matches this call, and the double is in Strict mode.%s',
-            $this->method,
-            $this->argumentsDescription,
-            $this->label,
-            $this->fabricatedNote($this->fabricated),
+            $method,
+            $argumentsDescription,
+            $label,
+            self::fabricatedNote($fabricated),
         );
     }
 }

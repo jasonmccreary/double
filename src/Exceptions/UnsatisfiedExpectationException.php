@@ -23,28 +23,36 @@ class UnsatisfiedExpectationException extends TestDoubleException
         public readonly array $expectations,
         public readonly bool $fabricated = false,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::renderMessage($label, $expectations, $fabricated));
     }
 
-    private function render(): string
+    /**
+     * Static (not just private) so PHPUnitUnsatisfiedExpectationException —
+     * which cannot extend this class, see ARCHITECTURE.md's "PHPUnit
+     * integration" — renders byte-identical prose without duplicating this
+     * logic.
+     *
+     * @param  list<UnsatisfiedExpectation>  $expectations
+     */
+    public static function renderMessage(string $label, array $expectations, bool $fabricated): string
     {
-        $blocks = array_map($this->renderOne(...), $this->expectations);
+        $blocks = array_map(self::renderOne(...), $expectations);
 
         $message = sprintf(
             "%d expectation(s) were not satisfied on test double \"%s\":\n\n%s",
-            count($this->expectations),
-            $this->label,
+            count($expectations),
+            $label,
             implode("\n\n", $blocks),
         );
 
-        if ($this->fabricated) {
-            $message .= "\n\n".trim($this->fabricatedNote(true));
+        if ($fabricated) {
+            $message .= "\n\n".trim(self::fabricatedNote(true));
         }
 
         return $message;
     }
 
-    private function renderOne(UnsatisfiedExpectation $expectation): string
+    private static function renderOne(UnsatisfiedExpectation $expectation): string
     {
         $lines = ['    '.$expectation->description];
 

@@ -29,7 +29,7 @@ class ModeConfigurationException extends TestDoubleException
             $this->label,
             $this->current,
             $this->attempted,
-            $this->fabricatedNote($this->fabricated),
+            self::fabricatedNote($this->fabricated),
         );
     }
 }

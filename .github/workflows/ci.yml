@@ -7,24 +7,45 @@ on:
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} / PHPUnit ${{ matrix.phpunit }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.allow-failure == true }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # Full PHP x PHPUnit cross product on the supported PHP versions —
+          # neither PHPUnit 11 nor 12 declares an upper PHP-version bound
+          # (11.5.56's own composer.json just says "php >=8.2"), so there's
+          # no technical reason to test only one PHPUnit major per PHP
+          # version. See ARCHITECTURE.md, "PHPUnit integration."
           - php: '8.3'
+            phpunit: '^11.0'
+            allow-failure: false
+          - php: '8.3'
+            phpunit: '^12.0'
             allow-failure: false
           - php: '8.4'
+            phpunit: '^11.0'
+            allow-failure: false
+          - php: '8.4'
+            phpunit: '^12.0'
             allow-failure: false
           - php: '8.5'
+            phpunit: '^11.0'
+            allow-failure: false
+          - php: '8.5'
+            phpunit: '^12.0'
             allow-failure: false
           # ClassGenerator's reflection-based codegen is the part of this
           # codebase most likely to break on a new PHP version. Catching
           # that against 8.6 nightlies now is worth the extra job, even
-          # this far ahead of 8.6's own release.
+          # this far ahead of 8.6's own release. Paired with PHPUnit 12 only
+          # (not also 11) — a second test runner's own bleeding-edge-PHP
+          # support is a much weaker signal than this library's, and doubling
+          # the nightly job for it isn't worth the runner time.
           - php: '8.6'
+            phpunit: '^12.0'
             allow-failure: true
 
     steps:
@@ -37,8 +58,8 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Install dependencies
-        run: composer update --prefer-dist --no-progress --no-interaction
+      - name: Install dependencies (PHPUnit ${{ matrix.phpunit }})
+        run: composer require --dev "phpunit/phpunit:${{ matrix.phpunit }}" --with-all-dependencies --prefer-dist --no-progress --no-interaction
 
       - name: Run tests
         run: vendor/bin/phpunit
