@@ -127,13 +127,77 @@ $repo->received('save')->never();
 // and Argument was chosen instead
 $repo->allows('find')->with(Argument::any())->returns($book);
 $repo->allows('save')->with(Argument::type(Book::class))->returns(true);
-$repo->allows('find')->with(Argument::that(fn ($id) => $id > 100))->returns($book);
+$repo->allows('find')->with(Argument::satisfies(fn ($id) => $id > 100))->returns($book);
 ```
 
 Starting matcher set: `Argument::any()`, `Argument::type($class)`,
-`Argument::that($predicate)`. Deliberately minimal for v1 — add more once
-real usage shows what's actually needed, rather than porting RSpec/Mockery's
-full matcher catalog speculatively.
+`Argument::satisfies($predicate)`. Deliberately minimal for v1 — add more
+once real usage shows what's actually needed, rather than porting
+RSpec/Mockery's full matcher catalog speculatively.
+
+### Argument::satisfies()
+
+Started as `that()` (matching Prophecy's own name for this matcher — see
+"Argument matcher facade naming" above). Revisited: read backwards, `any()`
+and `capture()` both form a complete, self-explanatory two-word phrase —
+"any argument," "capture argument" — with nothing implied. `that()` doesn't;
+"that argument" reads as pointing at a specific argument, not "an argument
+such that a condition holds," which is what the method actually means.
+`type()` has the same gap ("type argument" needs an implied "of") but
+wasn't revisited here, since a class-instance check reads unambiguously
+enough at the call site regardless.
+
+Candidates considered and rejected: `on()` (Mockery's name for this,
+rejected on principle — see `CONTRIBUTING.md`'s no-familiarity-aliasing
+policy); `matches()` (collides with `Matcher::matches()`, the method every
+matcher — including this one's own instance — already implements, so the
+same word would mean two different things one line apart); `check()`,
+`vet()`, `screen()`, `qualify()`, `accept()`, `confirm()`, `validate()`,
+`ensure()` (each either too technical/assertion-flavored, implied a
+throw/rejection this matcher doesn't do, or just didn't read naturally
+in place).
+
+**Decision: `satisfies()`.** Matches RSpec's own generic predicate matcher
+(`expect(value).to satisfy { |v| ... }`) — consistent with this document's
+existing use of RSpec as prior art elsewhere (see the `expects()`
+default-to-once behavior in "Sensible defaults"). Reads correctly in the
+order it's written, no reversal needed: `Argument::satisfies($predicate)`
+is literally "the argument satisfies this predicate."
+
+`Argument::capture(&$reference)` is the first post-v1 addition, once real
+usage showed up — this library's maintainer co-authored the equivalent
+`Mockery::capture()` feature upstream, so it's adopted directly as the
+closest, most relevant prior art rather than reinvented. Like `any()`, it
+matches any value; unlike `any()`, it also writes the value into
+`$reference` once its expectation is confirmed as the real match:
+
+```php
+$captured = null;
+$repo->allows('save')->with(Argument::capture($captured))->returns(true);
+
+$repo->save($book);
+
+$this->assertSame($book, $captured);
+```
+
+`$reference` only ever holds the most recently matched call's value — it's
+overwritten each time, there's no history of earlier calls. Matches
+Mockery's documented behavior (no multi-call retrieval), and keeps the
+return type `Matcher`, same as `any()`/`type()`/`satisfies()`, since the caller
+never needs to hold onto the matcher itself — the reference variable is the
+handle.
+
+**Capturing can't happen inside `matches()`.** `ProxyBehavior::findMatch()`
+calls `matchesArguments()` — and therefore each argument's `matches()` — on
+every candidate expectation it tries, newest first, until one fully
+matches; a candidate that matches on an early position but fails on a later
+one has still had `matches()` called on that early position. If capturing
+were a side effect of `matches()`, a losing candidate could record a value
+for a call it never actually served. So `matches()` stays pure (safe to
+call speculatively, any number of times), and capturing instead happens in
+`MethodExpectation::recordMatch()`, called exactly once, only on the
+expectation `findMatch()` has already confirmed is the real match for this
+call.
 
 ### Argument matcher facade naming
 
@@ -161,6 +225,10 @@ adopting the closest, most relevant prior art available (closer than
 Mockery or RSpec here, since it's specifically about naming an
 argument-matcher facade, not verb choice). `with(Argument::any())` also
 reads as plain English at the call site: "with argument: any."
+
+(The third verb itself later diverged from Prophecy's `that()` — renamed to
+`satisfies()`, see "Argument::satisfies()" below — but the facade name
+decision here is unaffected.)
 
 ### Expectation matching order: last-registered-that-matches wins
 
@@ -208,7 +276,7 @@ correct sentence on its own.** Audited against the full verb set:
 | mode | Loose |
 
 The one real gap this audit found: an expectation that matches but never
-had `->returns()`/`->throws()`/`->returnsUsing()` configured was defaulting
+had `->returns()`/`->throws()`/`->resolves()` configured was defaulting
 to plain `null` unconditionally — the exact same "return type isn't
 nullable, so this is a `TypeError` waiting to happen" problem Loose mode's
 fallback path already had to solve. **Fix: there is only one
@@ -750,7 +818,7 @@ created during a test at teardown, removing the need for a manual
    fabrication, it's the riskiest piece. Include the reserved-name collision
    check from day one, not as a later hardening pass.
 3. **M2 — Matcher contract.** `Matcher` interface, `EqualsMatcher`,
-   `Argument::any()/type()/that()`.
+   `Argument::any()/type()/satisfies()`.
 4. **M3 — Diagnostics pipeline.** `Diagnostic`, `DiagnosticRenderer`,
    `PlainTextRenderer`, golden-file test harness. Top priority within this
    milestone: `UnsatisfiedExpectation`'s call-correlation feature (see

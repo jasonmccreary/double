@@ -38,7 +38,7 @@ final class ProxyBehavior
             return self::handleUnmatchedCall($state, $method, $arguments, $double);
         }
 
-        $expectation->recordMatch();
+        $expectation->recordMatch($arguments);
 
         if ($expectation->exceedsMaximum()) {
             throw ExceptionFactory::expectationCallLimitExceeded(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
 
@@ -31,7 +32,7 @@ final class MethodExpectation
     private ?\Throwable $throwable = null;
 
     /** @var (callable(mixed...): mixed)|null */
-    private $returnsUsing = null;
+    private $resolver = null;
 
     private int $minimumCalls;
 
@@ -76,7 +77,7 @@ final class MethodExpectation
         $this->returnValues = $values;
         $this->hasReturnConfigured = true;
         $this->throwable = null;
-        $this->returnsUsing = null;
+        $this->resolver = null;
 
         return $this;
     }
@@ -86,7 +87,7 @@ final class MethodExpectation
         $this->throwable = $exception;
         $this->hasReturnConfigured = true;
         $this->returnValues = [];
-        $this->returnsUsing = null;
+        $this->resolver = null;
 
         return $this;
     }
@@ -94,9 +95,9 @@ final class MethodExpectation
     /**
      * @param  callable(mixed...): mixed  $resolver
      */
-    public function returnsUsing(callable $resolver): static
+    public function resolves(callable $resolver): static
     {
-        $this->returnsUsing = $resolver;
+        $this->resolver = $resolver;
         $this->hasReturnConfigured = true;
         $this->returnValues = [];
         $this->throwable = null;
@@ -157,9 +158,29 @@ final class MethodExpectation
         return true;
     }
 
-    public function recordMatch(): void
+    /**
+     * @param  list<mixed>  $arguments  The real call arguments, used only to
+     *                                  feed any Argument::capture() matcher
+     *                                  configured via with() — matches()
+     *                                  itself must stay side-effect-free
+     *                                  since it's called speculatively on
+     *                                  losing candidates too (see
+     *                                  ProxyBehavior::findMatch()). Capture
+     *                                  only ever fires here, once, on the
+     *                                  expectation already confirmed to be
+     *                                  the real match.
+     */
+    public function recordMatch(array $arguments = []): void
     {
         $this->timesMatched++;
+
+        if ($this->argumentConstraints !== null) {
+            foreach ($this->argumentConstraints as $index => $matcher) {
+                if ($matcher instanceof CaptureMatcher) {
+                    $matcher->capture($arguments[$index]);
+                }
+            }
+        }
     }
 
     public function timesMatched(): int
@@ -198,8 +219,8 @@ final class MethodExpectation
             throw $this->throwable;
         }
 
-        if ($this->returnsUsing !== null) {
-            return ($this->returnsUsing)(...$arguments);
+        if ($this->resolver !== null) {
+            return ($this->resolver)(...$arguments);
         }
 
         $index = min($this->timesMatched - 1, count($this->returnValues) - 1);

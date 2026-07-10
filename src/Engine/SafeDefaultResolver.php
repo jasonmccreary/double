@@ -12,7 +12,7 @@ use JMac\Testing\TestDouble;
  * The one safe-default-by-return-type resolver ARCHITECTURE.md calls for
  * (see "Sensible defaults" and "Modes: Loose, Strict, Passthru") — used both
  * by Loose mode's unmatched-call fallback and by any matched expectation
- * missing an explicit ->returns()/->throws()/->returnsUsing(), via the same
+ * missing an explicit ->returns()/->throws()/->resolves(), via the same
  * resolveForMethod() entry point (see ProxyBehavior).
  *
  * A non-nullable return typed as `self`, `static`, or literally the same

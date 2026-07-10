@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * Argument::that($predicate) — matches any value for which the given
+ * Argument::satisfies($predicate) — matches any value for which the given
  * callable returns a truthy result. See ARCHITECTURE.md's example:
- * `Argument::that(fn ($id) => $id > 100)`.
+ * `Argument::satisfies(fn ($id) => $id > 100)`.
  */
 final class PredicateMatcher implements Matcher
 {
@@ -26,7 +26,7 @@ final class PredicateMatcher implements Matcher
 
     public function describe(): string
     {
-        return 'that(...)';
+        return 'satisfies(...)';
     }
 
     public function explainMismatch(mixed $actual): ?string

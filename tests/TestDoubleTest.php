@@ -9,6 +9,7 @@ use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
+use JMac\Testing\Matching\Argument;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\Book;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
@@ -118,13 +119,44 @@ final class TestDoubleTest extends TestCase
         $double->find(999);
     }
 
-    public function test_returns_using_computes_the_value_from_the_actual_arguments(): void
+    public function test_resolves_computes_the_value_from_the_actual_arguments(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
 
-        $double->allows('find')->returnsUsing(fn (int $id): Book => new Book("Book #{$id}"));
+        $double->allows('find')->resolves(fn (int $id): Book => new Book("Book #{$id}"));
 
         $this->assertSame('Book #42', $double->find(42)->title);
+    }
+
+    public function test_capture_writes_the_actual_argument_into_the_referenced_variable(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $captured = null;
+        $dune = new Book('Dune');
+
+        $double->allows('save')->with(Argument::capture($captured))->returns(true);
+
+        $double->save($dune);
+
+        $this->assertSame($dune, $captured);
+    }
+
+    public function test_capture_does_not_write_when_its_own_expectation_ends_up_not_matching(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $captured = 'sentinel';
+
+        // Older — checked *after* the expectation below. The capture sits at
+        // position 0 (would match anything), but position 1 requires a Book,
+        // so this expectation still fails to match overall.
+        $double->allows('find')->with(Argument::capture($captured), Argument::type(Book::class))->returns(null);
+        // Newer — checked first, and fails on position 0 before ever reaching
+        // position 1, so the loop falls through to the expectation above.
+        $double->allows('find')->with(999, 'irrelevant')->returns(null);
+
+        $this->assertNull($double->find(1, 'not a book')); // matches neither -> loose default
+
+        $this->assertSame('sentinel', $captured); // unchanged - the capturing expectation never actually matched
     }
 
     public function test_never_forbids_any_call_at_all(): void

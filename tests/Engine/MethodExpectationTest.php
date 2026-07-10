@@ -111,7 +111,7 @@ final class MethodExpectationTest extends TestCase
     public function test_resolve_return_using_passes_the_actual_call_arguments_to_the_resolver(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
-            ->returnsUsing(fn (int $id): string => "id-{$id}");
+            ->resolves(fn (int $id): string => "id-{$id}");
 
         $expectation->recordMatch();
 
@@ -158,7 +158,7 @@ final class MethodExpectationTest extends TestCase
     public function test_with_predicate_matcher_constrains_by_a_callable(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
-            ->with(Argument::that(fn (int $id): bool => $id > 100));
+            ->with(Argument::satisfies(fn (int $id): bool => $id > 100));
 
         $this->assertTrue($expectation->matchesArguments([101]));
         $this->assertFalse($expectation->matchesArguments([100]));

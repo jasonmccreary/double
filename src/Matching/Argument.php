@@ -8,7 +8,8 @@ namespace JMac\Testing\Matching;
  * The argument-matcher facade (see ARCHITECTURE.md, "Verb lineage").
  * Starting matcher set only — any(), type(), that() — deliberately minimal
  * for v1; more get added once real usage shows what's actually needed,
- * rather than porting a full matcher catalog speculatively.
+ * rather than porting a full matcher catalog speculatively. capture() is
+ * the first addition past that starting set.
  */
 final class Argument
 {
@@ -30,8 +31,19 @@ final class Argument
     /**
      * @param  callable(mixed): bool  $predicate
      */
-    public static function that(callable $predicate): Matcher
+    public static function satisfies(callable $predicate): Matcher
     {
         return new PredicateMatcher($predicate);
+    }
+
+    /**
+     * Matches any value, like any(), and writes it into $reference once the
+     * expectation it's attached to is confirmed as the real match for a
+     * call — mirrors Mockery::capture(). $reference only ever holds the
+     * most recently matched call's value.
+     */
+    public static function capture(mixed &$reference): Matcher
+    {
+        return new CaptureMatcher($reference);
     }
 }

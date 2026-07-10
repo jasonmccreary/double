@@ -3,7 +3,7 @@
 ## No aliases (standing policy)
 
 This library has exactly one canonical verb per concept: `expects()` / `allows()`
-for configuration, `returns()` / `throws()` / `returnsUsing()` for outcomes,
+for configuration, `returns()` / `throws()` / `resolves()` for outcomes,
 `with()` for argument constraints, counts (`once()`, `twice()`, `times()`,
 `atLeastOnce()`, `never()`), and `received()` for spy-style assertions. There are
 no aliases for any of these — not for familiarity with Mockery, PHPUnit's native
