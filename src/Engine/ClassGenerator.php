@@ -35,7 +35,7 @@ use JMac\Testing\Exceptions\ReservedNameCollisionException;
  */
 final class ClassGenerator
 {
-    private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received'];
+    private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'verify'];
 
     private static int $counter = 0;
 

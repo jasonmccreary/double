@@ -23,6 +23,7 @@ use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\UnionTypeInterface;
 use JMac\Testing\Tests\Support\VariadicInterface;
+use JMac\Testing\Tests\Support\VerifyCollisionInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -84,6 +85,7 @@ final class ClassGeneratorTest extends TestCase
         yield 'strict' => [StrictCollisionInterface::class, 'strict'];
         yield 'passthru' => [PassthruCollisionInterface::class, 'passthru'];
         yield 'received' => [ReceivedCollisionInterface::class, 'received'];
+        yield 'verify' => [VerifyCollisionInterface::class, 'verify'];
         yield 'AuthorizerInterface allows()' => [AuthorizerInterface::class, 'allows'];
     }
 

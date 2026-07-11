@@ -6,6 +6,7 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
@@ -163,9 +164,22 @@ final class LooseModeTest extends TestCase
         $fabricated->expects('fill')->returns(true);
 
         try {
-            TestDouble::verify($fabricated);
+            $fabricated->verify();
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertStringContainsString('auto-fabricated', $exception->getMessage());
+        }
+    }
+
+    public function test_received_failure_on_a_fabricated_double_notes_its_provenance(): void
+    {
+        $double = TestDouble::for(IntersectionReturnInterface::class);
+        $fabricated = $double->make();
+
+        try {
+            $fabricated->received('fill');
+            $this->fail('Expected UnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
             $this->assertStringContainsString('auto-fabricated', $exception->getMessage());
         }
     }

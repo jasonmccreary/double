@@ -418,12 +418,12 @@ time.
 ## Class surface area — reserved names on the generated double (resolved)
 
 Because configuration verbs live directly on the double itself (fluent,
-Eloquent-style chaining, not a separate facade), five real method names are
+Eloquent-style chaining, not a separate facade), six real method names are
 reserved on every generated double: `expects`, `allows`, `strict`,
-`passthru`, `received`. A target type that happens to declare a real method
-with one of these names collides.
+`passthru`, `received`, `verify`. A target type that happens to declare a
+real method with one of these names collides.
 
-**Decision: keep all five as real instance methods. Do not try to engineer
+**Decision: keep all six as real instance methods. Do not try to engineer
 this risk down to zero.** Two alternatives were seriously considered and
 rejected:
 
@@ -442,7 +442,7 @@ rejected:
   human-readable syntax was judged more important than closing this
   particular gap — a deliberate priority call, not an oversight.
 
-**The risk is real for all five, not just `strict`.** `allows()`
+**The risk is real for all six, not just `strict`.** `allows()`
 specifically is probably the single most likely collision in the entire
 verb set: authorization/policy interfaces routinely declare a real
 `allows($ability, ...$args): bool` method (Laravel's own `Gate` contract
@@ -450,7 +450,9 @@ uses this exact verb), so doubling an `AuthorizerInterface` hits this
 immediately, in a mainstream testing scenario, not an edge case. `received()`
 is plausible in messaging/delivery domains. `expects()` is the least likely
 of the three but not zero (HTTP content-negotiation, e.g. Laravel's own
-`Request::expectsJson()`).
+`Request::expectsJson()`). `verify()` is plausible wherever a target
+implements its own validation contract (e.g. a signature/checksum
+`Verifiable` interface).
 
 **Confirmed via research, not assumed: Mockery already reserves the exact
 same two names.** As of Mockery 1.0.0, `allows()` and `expects()` were
@@ -471,7 +473,7 @@ part of M1, not a later hardening pass.**
 final class ReservedNameCollisionException extends \LogicException {}
 
 // inside ClassGenerator, before generating source:
-$reserved = ['expects', 'allows', 'strict', 'passthru', 'received'];
+$reserved = ['expects', 'allows', 'strict', 'passthru', 'received', 'verify'];
 $collisions = array_intersect($reserved, array_map(
     fn (\ReflectionMethod $m) => $m->getName(),
     $reflection->getMethods(\ReflectionMethod::IS_PUBLIC)
@@ -548,7 +550,7 @@ else, and `TestDouble` — the top-level facade sitting in front of Engine —
 inherits that same allowance.** `TestDouble` itself lives at the root
 namespace (`JMac\Testing\TestDouble`), not nested under `Engine\`: it's the
 one class every consumer of the library touches directly
-(`TestDouble::for()`/`TestDouble::verify()`), so surfacing an internal
+(`TestDouble::for()`/`$double->verify()`), so surfacing an internal
 module name (`Engine`) in its own fully-qualified name would leak an
 implementation detail into the most-seen part of the public API. This is a
 namespace/discoverability change only — `TestDouble` still delegates to
@@ -849,10 +851,17 @@ guarded-false branch instead of just reasoning about it. The `phpunit-11-compat`
 job added alongside this work proves the *version* half of the "optional
 integration" promise; it does not prove the *absent* half.
 
-**Future, additive only:** a PHPUnit extension that auto-verifies doubles
-created during a test at teardown, removing the need for a manual
-`TestDouble::verify($double)` call for PHPUnit users specifically. Manual
-`verify()` remains the baseline contract for every other test runner.
+**Built, not an "Extension":** `Integrations\PHPUnit\VerifiesDoubles`, a
+trait a PHPUnit user adds to a base TestCase, auto-verifies every double
+created during a test via `#[Before]`/`#[After]` hooks — removing the need
+for a manual `$double->verify()` call. Confirmed, by reading the installed
+phpunit/phpunit source, that a PHPUnit "Extension" (the bootstrap/
+event-subscriber mechanism) genuinely cannot do this: `Runner\Extension\Facade`
+only exposes registering event subscribers, which is read-only observability
+— only a `TestCase` lifecycle method running inside `runBare()`'s own
+try/catch can actually fail a test. Manual `verify()` remains the baseline
+contract for every other test runner, and for PHPUnit users who don't opt
+into the trait.
 
 ## Known scaffold-era limitations to design around, not just inherit
 
@@ -910,9 +919,11 @@ created during a test at teardown, removing the need for a manual
    integration" for why), and the `ComparisonFailure`/diff hook was dropped
    entirely rather than wired up, since PHPUnit's real diff renderer only
    fires for its own `final` `ExpectationFailedException`, not a
-   duck-typed method. Still open: the auto-verify PHPUnit extension (always
-   framed as "future, additive" — not started), and the guarded-false
-   ("PHPUnit genuinely absent") CI job.
+   duck-typed method. Also done: `Integrations\PHPUnit\VerifiesDoubles`, the
+   auto-verify trait — built as a `#[Before]`/`#[After]`-hooked trait, not a
+   PHPUnit "Extension" (see "PHPUnit integration" for why an Extension
+   can't actually fail a test). Still open: the guarded-false ("PHPUnit
+   genuinely absent") CI job.
 7. **M6 — Docs and first release.** Cookbook-style task docs, the Mockery/
    PHPUnit rosetta-stone migration table, the two contributor walkthroughs
    ("add a matcher," "improve a message"), freeze `Matcher` and `Diagnostic`

@@ -9,6 +9,7 @@ use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
@@ -39,12 +40,12 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
         $double->allows('save')->returns(true);
 
-        TestDouble::verify($double);
+        $double->verify();
 
         $this->assertTrue($double->save(new Book('Dune')));
         $this->assertTrue($double->save(new Book('Dune Messiah')));
 
-        TestDouble::verify($double);
+        $double->verify();
     }
 
     public function test_expects_defaults_to_exactly_once(): void
@@ -54,7 +55,7 @@ final class TestDoubleTest extends TestCase
 
         $double->delete(1);
 
-        TestDouble::verify($double);
+        $double->verify();
         $this->addToAssertionCount(1);
     }
 
@@ -66,7 +67,7 @@ final class TestDoubleTest extends TestCase
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/delete\(any arguments\).*exactly 1 time, called 0 times/s');
 
-        TestDouble::verify($double);
+        $double->verify();
     }
 
     public function test_expects_throws_when_called_more_times_than_allowed(): void
@@ -178,7 +179,7 @@ final class TestDoubleTest extends TestCase
         $double->delete(2);
         $double->delete(3);
 
-        TestDouble::verify($double);
+        $double->verify();
         $this->addToAssertionCount(1);
     }
 
@@ -190,7 +191,7 @@ final class TestDoubleTest extends TestCase
         $double->delete(1);
         $double->delete(2);
 
-        TestDouble::verify($double);
+        $double->verify();
         $this->addToAssertionCount(1);
     }
 
@@ -222,20 +223,112 @@ final class TestDoubleTest extends TestCase
         $double->expects('bogus');
     }
 
-    public function test_received_is_not_implemented_yet(): void
+    public function test_received_passes_when_the_method_was_called_at_least_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
 
-        $this->expectException(\LogicException::class);
+        $double->delete(1);
+        $double->received('delete');
 
-        $double->received('find');
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_received_fails_when_the_method_was_never_called(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+        $this->expectExceptionMessageMatches('/delete\(any arguments\).*expected at least 1 time, called 0 times/s');
+
+        $double->received('delete');
+    }
+
+    public function test_received_with_passes_when_a_matching_call_was_observed(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $dune = new Book('Dune');
+
+        $double->save($dune);
+        $double->received('save')->with($dune);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_received_with_fails_when_only_a_non_matching_call_was_observed(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->save(new Book('Dune Messiah'));
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+
+        $double->received('save')->with(new Book('Dune'));
+    }
+
+    public function test_received_never_passes_when_the_method_was_not_called(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->received('delete')->never();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_received_never_fails_when_the_method_was_called(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->delete(1);
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+        $this->expectExceptionMessageMatches('/expected exactly 0 times, called 1 time/');
+
+        $double->received('delete')->never();
+    }
+
+    public function test_received_times_requires_the_exact_count(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->delete(1);
+        $double->delete(2);
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+        $this->expectExceptionMessageMatches('/expected exactly 3 times, called 2 times/');
+
+        $double->received('delete')->times(3);
+    }
+
+    public function test_received_composes_with_and_never_to_assert_specific_arguments_were_not_received(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $protected = new Book('Protected');
+
+        $double->save(new Book('Fine to delete'));
+
+        // Composing with()+never() only works because the check happens once,
+        // at chain destruction, not eagerly on with() itself — see
+        // ReceivedAssertion's docblock.
+        $double->received('save')->with($protected)->never();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_received_rejects_an_undeclared_method_name(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('bogus');
+
+        $double->received('bogus');
     }
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
 
-        TestDouble::verify($double);
+        $double->verify();
 
         $this->addToAssertionCount(1);
     }
@@ -249,7 +342,7 @@ final class TestDoubleTest extends TestCase
         $double->find(456);
 
         try {
-            TestDouble::verify($double);
+            $double->verify();
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
             $message = $exception->getMessage();
@@ -258,5 +351,73 @@ final class TestDoubleTest extends TestCase
             $this->assertStringContainsString('"find" was called with different arguments elsewhere in this test:', $message);
             $this->assertStringContainsString('find(456)', $message);
         }
+    }
+
+    public function test_verify_all_passes_when_every_double_created_since_arming_is_satisfied(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $first = TestDouble::for(BookRepositoryInterface::class);
+        $second = TestDouble::for(BookRepositoryInterface::class);
+        $first->expects('delete')->returns(null);
+        $second->allows('save')->returns(true);
+
+        $first->delete(1);
+
+        TestDouble::verifyAll();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $satisfied = TestDouble::for(BookRepositoryInterface::class);
+        $unsatisfied = TestDouble::for(BookRepositoryInterface::class);
+        $satisfied->expects('delete')->returns(null);
+        $unsatisfied->expects('save')->returns(true);
+
+        $satisfied->delete(1);
+
+        $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
+        $this->expectExceptionMessageMatches('/save\(any arguments\).*expected exactly 1 time, called 0 times/s');
+
+        TestDouble::verifyAll();
+    }
+
+    public function test_verify_all_only_covers_doubles_created_after_arming(): void
+    {
+        // Created before arming — verifyAll() must never see this one, even
+        // though it has a real unmet expectation.
+        $before = TestDouble::for(BookRepositoryInterface::class);
+        $before->expects('delete')->returns(null);
+
+        TestDouble::armAutoVerify();
+
+        $after = TestDouble::for(BookRepositoryInterface::class);
+        $after->expects('save')->returns(true);
+        $after->save(new Book('Dune'));
+
+        TestDouble::verifyAll();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_verify_all_drains_pending_doubles_so_a_second_call_is_a_no_op(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+        $double->delete(1);
+
+        TestDouble::verifyAll();
+
+        // $double already left the pending list on the call above, so this
+        // has nothing left to check regardless of $double's own state.
+        TestDouble::verifyAll();
+
+        $this->addToAssertionCount(1);
     }
 }
