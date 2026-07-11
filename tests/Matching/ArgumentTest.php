@@ -27,6 +27,15 @@ final class ArgumentTest extends TestCase
         $this->assertTrue($matcher->matches(new Book('Some Title')));
     }
 
+    public function test_type_produces_a_type_matcher_for_a_builtin_type_name(): void
+    {
+        $matcher = Argument::type('int');
+
+        $this->assertInstanceOf(TypeMatcher::class, $matcher);
+        $this->assertTrue($matcher->matches(42));
+        $this->assertFalse($matcher->matches('42'));
+    }
+
     public function test_satisfies_produces_a_predicate_matcher(): void
     {
         $matcher = Argument::satisfies(fn (int $id): bool => $id > 100);

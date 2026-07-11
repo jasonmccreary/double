@@ -130,10 +130,13 @@ $repo->allows('save')->with(Argument::type(Book::class))->returns(true);
 $repo->allows('find')->with(Argument::satisfies(fn ($id) => $id > 100))->returns($book);
 ```
 
-Starting matcher set: `Argument::any()`, `Argument::type($class)`,
-`Argument::satisfies($predicate)`. Deliberately minimal for v1 — add more
-once real usage shows what's actually needed, rather than porting
-RSpec/Mockery's full matcher catalog speculatively.
+Starting matcher set: `Argument::any()`, `Argument::type($type)` (a
+class/interface name, matched via `instanceof`, or a PHP builtin type name
+like `'int'`, matched via the corresponding `is_*()` — mirrors
+`Mockery::type()`, confirmed against Mockery's own source, which accepts
+both the same way), `Argument::satisfies($predicate)`. Deliberately minimal
+for v1 — add more once real usage shows what's actually needed, rather than
+porting RSpec/Mockery's full matcher catalog speculatively.
 
 ### Argument::satisfies()
 

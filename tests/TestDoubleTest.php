@@ -203,6 +203,16 @@ final class TestDoubleTest extends TestCase
         $this->assertSame('sentinel', $captured); // unchanged - the capturing expectation never actually matched
     }
 
+    public function test_type_matches_a_builtin_php_type_by_name_not_just_a_class(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $book = new Book('Dune');
+
+        $double->allows('find')->with(Argument::type('int'))->returns($book);
+
+        $this->assertSame($book, $double->find(42));
+    }
+
     public function test_never_forbids_any_call_at_all(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);

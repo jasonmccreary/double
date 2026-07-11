@@ -21,7 +21,12 @@ final class Argument
     }
 
     /**
-     * @param  class-string  $type
+     * $type is either a class/interface name (matches via instanceof) or a
+     * PHP builtin type name — 'int', 'float', 'string', 'bool', 'array',
+     * 'object', 'callable', 'iterable', 'null', 'mixed' — matched via the
+     * corresponding is_*() check (see TypeMatcher).
+     *
+     * @param  class-string|string  $type
      */
     public static function type(string $type): Matcher
     {
