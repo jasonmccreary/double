@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing;
 
+use JMac\Testing\Diagnostics\ArgumentFormatter;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
-use JMac\Testing\Engine\ArgumentFormatter;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;

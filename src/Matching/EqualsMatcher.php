@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Matching;
 
+use JMac\Testing\Diagnostics\ValueFormatter;
+
 /**
  * The default a bare literal is wrapped in at the with() boundary (see
  * ARCHITECTURE.md, "Matcher"). Loose value equality (==), matching the

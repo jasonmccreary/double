@@ -558,19 +558,33 @@ Engine's internals exactly as before, and those internals stay `@internal`
 under `JMac\Testing\Engine\*`. Every other module depends only on what's
 strictly beneath it:
 
-- **Matching** — zero dependencies on the rest of the library.
-- **Diagnostics** — zero dependencies on the rest of the library. Shrunk
-  down, on purpose, to just the `Diagnostic` marker interface and
-  `UnsatisfiedExpectation` (a plain list-item value object with no exception
-  of its own — see below). Both still hold plain strings/scalars only, never
-  a `Matcher` reference.
+- **Diagnostics** — zero dependencies on the rest of the library. Originally
+  shrunk down to just the `Diagnostic` marker interface and
+  `UnsatisfiedExpectation`; now also the shared home for rendering logic more
+  than one other module needs — `ValueFormatter`, `ArgumentFormatter`,
+  `Pluralizer`, and the `SelfDiagnosing` trait (`getDiagnostic(): Diagnostic
+  { return $this; }`, needed by every `Integrations\PHPUnit\PHPUnitXxxException`
+  since they can't inherit it from `TestDoubleException`). Grown into this
+  role specifically so that logic has exactly one implementation, not one
+  hand-duplicated per module that happened to need it. `ValueFormatter` and
+  `ArgumentFormatter` stay two classes, not one, even though they're
+  co-located now: unlike the M3-era split (which crossed a module boundary,
+  the actual reason for keeping them apart back then), there's no drift risk
+  today — `ArgumentFormatter` only ever composes `ValueFormatter`, never
+  duplicates it — so the split is just "single value vs. a whole argument
+  list," a distinction worth keeping legible as two small files rather than
+  collapsing for its own sake.
+- **Matching** — depends only on Diagnostics (for `ValueFormatter`, inside
+  `EqualsMatcher`/`PredicateMatcher`'s `describe()`/`explainMismatch()`).
+  Nothing else.
 - **Exceptions** — depends only on Diagnostics.
-- **Integrations\PHPUnit** — a fourth module in this same sense: depends only
-  on Exceptions (to extend `TestDoubleException`) and conditionally on
-  PHPUnit's own classes. Nothing else in the codebase depends on it — Engine
-  picks between "plain exception" and "PHPUnit exception" via a
-  `class_exists` check without needing to know anything about
-  `SelfDescribing` or `ComparisonFailure`.
+- **Integrations\PHPUnit** — a fourth module in this same sense: depends on
+  Exceptions (for each exception's `*Fields` trait — see "PHPUnit
+  integration"), on Diagnostics (for `Diagnostic` and `SelfDiagnosing`), and
+  conditionally on PHPUnit's own classes. Nothing else in the codebase
+  depends on it — Engine picks between "plain exception" and "PHPUnit
+  exception" via a `class_exists` check without needing to know anything
+  about `SelfDescribing` or `ComparisonFailure`.
 
 **Revised (post-M4): no more one `XyzDiagnostic` class per `XyzException`.**
 The original M3 design paired every exception with a same-shaped Diagnostic

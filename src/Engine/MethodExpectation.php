@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
-use JMac\Testing\Exceptions\Pluralizer;
+use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;

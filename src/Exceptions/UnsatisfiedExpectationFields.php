@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Exceptions;
 
+use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 
 /**

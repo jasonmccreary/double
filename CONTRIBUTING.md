@@ -23,9 +23,13 @@ already exists), open an issue to discuss it before sending a PR.
 ## Module boundaries
 
 The codebase is split into `JMac\Testing\Engine`, `JMac\Testing\Matching`,
-`JMac\Testing\Diagnostics`, and `JMac\Testing\Exceptions`. Only `Engine` is allowed
-to depend on the others — `Matching` and `Diagnostics` have zero dependencies on
-the rest of the library, and `Exceptions` depends only on `Diagnostics`. See
-`ARCHITECTURE.md` for the full reasoning. A PR that introduces a dependency
-pointing the wrong direction (e.g. `Matching` referencing `Engine`) will need to
-be restructured before it can be merged.
+`JMac\Testing\Diagnostics`, and `JMac\Testing\Exceptions`. Only `Engine` is
+allowed to depend on the others. `Diagnostics` has zero dependencies on the
+rest of the library — it's the shared home for rendering/formatting logic
+(`ValueFormatter`, `ArgumentFormatter`, `Pluralizer`) that more than one other
+module needs, specifically so that logic has exactly one implementation
+instead of being hand-duplicated per module. `Matching` and `Exceptions` each
+depend only on `Diagnostics`, nothing else. See `ARCHITECTURE.md` for the
+full reasoning. A PR that introduces a dependency pointing the wrong
+direction (e.g. `Matching` referencing `Engine` directly, or `Diagnostics`
+referencing anything) will need to be restructured before it can be merged.

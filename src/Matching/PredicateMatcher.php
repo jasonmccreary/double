@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Matching;
 
+use JMac\Testing\Diagnostics\ValueFormatter;
+
 /**
  * Argument::satisfies($predicate) — matches any value for which the given
  * callable returns a truthy result. See ARCHITECTURE.md's example:

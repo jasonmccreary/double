@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JMac\Testing\Tests\Exceptions;
+namespace JMac\Testing\Tests\Diagnostics;
 
-use JMac\Testing\Exceptions\Pluralizer;
+use JMac\Testing\Diagnostics\Pluralizer;
 use PHPUnit\Framework\TestCase;
 
 final class PluralizerTest extends TestCase
