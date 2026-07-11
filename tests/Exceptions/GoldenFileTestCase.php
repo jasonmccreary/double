@@ -18,7 +18,7 @@ abstract class GoldenFileTestCase extends TestCase
 {
     protected function assertMatchesGolden(string $name, string $actual): void
     {
-        $path = __DIR__.'/__fixtures__/'.$name.'.txt';
+        $path = __DIR__.'/../fixtures/exceptions/'.$name.'.txt';
 
         if (getenv('UPDATE_GOLDEN') !== false) {
             file_put_contents($path, $actual);

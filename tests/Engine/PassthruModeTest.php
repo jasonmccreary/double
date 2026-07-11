@@ -6,9 +6,9 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
 use JMac\Testing\TestDouble;
-use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
-use JMac\Testing\Tests\Fixtures\ConcreteLogger;
-use JMac\Testing\Tests\Fixtures\InstantiableLogger;
+use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\InstantiableLogger;
 use PHPUnit\Framework\TestCase;
 
 final class PassthruModeTest extends TestCase

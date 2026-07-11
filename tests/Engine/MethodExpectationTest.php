@@ -6,7 +6,7 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Matching\Argument;
-use JMac\Testing\Tests\Fixtures\Book;
+use JMac\Testing\Tests\Support\Book;
 use PHPUnit\Framework\TestCase;
 
 final class MethodExpectationTest extends TestCase

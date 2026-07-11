@@ -9,7 +9,7 @@ use JMac\Testing\Matching\Argument;
 use JMac\Testing\Matching\Matcher;
 use JMac\Testing\Matching\PredicateMatcher;
 use JMac\Testing\Matching\TypeMatcher;
-use JMac\Testing\Tests\Fixtures\Book;
+use JMac\Testing\Tests\Support\Book;
 use PHPUnit\Framework\TestCase;
 
 final class ArgumentTest extends TestCase

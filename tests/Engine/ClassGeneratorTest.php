@@ -8,21 +8,21 @@ use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\TestDouble;
-use JMac\Testing\Tests\Fixtures\AllowsCollisionInterface;
-use JMac\Testing\Tests\Fixtures\AuthorizerInterface;
-use JMac\Testing\Tests\Fixtures\Book;
-use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
-use JMac\Testing\Tests\Fixtures\ConcreteLogger;
-use JMac\Testing\Tests\Fixtures\EnumDefaultInterface;
-use JMac\Testing\Tests\Fixtures\ExpectsCollisionInterface;
-use JMac\Testing\Tests\Fixtures\FinalLogger;
-use JMac\Testing\Tests\Fixtures\NullableParamInterface;
-use JMac\Testing\Tests\Fixtures\PassthruCollisionInterface;
-use JMac\Testing\Tests\Fixtures\ReceivedCollisionInterface;
-use JMac\Testing\Tests\Fixtures\StrictCollisionInterface;
-use JMac\Testing\Tests\Fixtures\Suit;
-use JMac\Testing\Tests\Fixtures\UnionTypeInterface;
-use JMac\Testing\Tests\Fixtures\VariadicInterface;
+use JMac\Testing\Tests\Support\AllowsCollisionInterface;
+use JMac\Testing\Tests\Support\AuthorizerInterface;
+use JMac\Testing\Tests\Support\Book;
+use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\EnumDefaultInterface;
+use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
+use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\NullableParamInterface;
+use JMac\Testing\Tests\Support\PassthruCollisionInterface;
+use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
+use JMac\Testing\Tests\Support\StrictCollisionInterface;
+use JMac\Testing\Tests\Support\Suit;
+use JMac\Testing\Tests\Support\UnionTypeInterface;
+use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -66,7 +66,7 @@ final class ClassGeneratorTest extends TestCase
         $this->expectException(InvalidDoubleTargetException::class);
         $this->expectExceptionMessage('no such class or interface exists');
 
-        (new ClassGenerator)->generate('JMac\Testing\Tests\Fixtures\NoSuchThing');
+        (new ClassGenerator)->generate('JMac\Testing\Tests\Support\NoSuchThing');
     }
 
     public function test_rejects_a_final_class(): void

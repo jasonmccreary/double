@@ -7,15 +7,15 @@ namespace JMac\Testing\Tests\Engine;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\TestDouble;
-use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
-use JMac\Testing\Tests\Fixtures\Fillable;
-use JMac\Testing\Tests\Fixtures\FirstLink;
-use JMac\Testing\Tests\Fixtures\IntersectionReturnInterface;
-use JMac\Testing\Tests\Fixtures\NodeInterface;
-use JMac\Testing\Tests\Fixtures\SafeDefaultInterface;
-use JMac\Testing\Tests\Fixtures\SecondLink;
-use JMac\Testing\Tests\Fixtures\Sized;
-use JMac\Testing\Tests\Fixtures\Suit;
+use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\FirstLink;
+use JMac\Testing\Tests\Support\IntersectionReturnInterface;
+use JMac\Testing\Tests\Support\NodeInterface;
+use JMac\Testing\Tests\Support\SafeDefaultInterface;
+use JMac\Testing\Tests\Support\SecondLink;
+use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\Suit;
 use PHPUnit\Framework\TestCase;
 
 final class LooseModeTest extends TestCase

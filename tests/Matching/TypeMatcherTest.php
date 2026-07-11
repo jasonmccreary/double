@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Matching;
 
 use JMac\Testing\Matching\TypeMatcher;
-use JMac\Testing\Tests\Fixtures\Book;
+use JMac\Testing\Tests\Support\Book;
 use PHPUnit\Framework\TestCase;
 
 final class TypeMatcherTest extends TestCase

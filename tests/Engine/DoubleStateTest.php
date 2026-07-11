@@ -8,7 +8,7 @@ use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\Mode;
 use JMac\Testing\Exceptions\ModeConfigurationException;
-use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 
 final class DoubleStateTest extends TestCase

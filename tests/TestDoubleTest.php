@@ -11,8 +11,8 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\TestDouble;
-use JMac\Testing\Tests\Fixtures\Book;
-use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\Book;
+use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 
 final class TestDoubleTest extends TestCase

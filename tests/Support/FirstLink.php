@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JMac\Testing\Tests\Fixtures;
+namespace JMac\Testing\Tests\Support;
 
 /**
  * A genuine non-cyclic, non-self-referential chain (FirstLink ->
