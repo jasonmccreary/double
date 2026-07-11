@@ -30,7 +30,8 @@ final class MethodExpectation
 
     private bool $hasReturnConfigured = false;
 
-    private ?\Throwable $throwable = null;
+    /** @var list<\Throwable> */
+    private array $throwables = [];
 
     /** @var (callable(mixed...): mixed)|null */
     private $resolver = null;
@@ -77,15 +78,28 @@ final class MethodExpectation
 
         $this->returnValues = $values;
         $this->hasReturnConfigured = true;
-        $this->throwable = null;
+        $this->throwables = [];
         $this->resolver = null;
 
         return $this;
     }
 
-    public function throws(\Throwable $exception): static
+    /**
+     * Sequential, same as returns(): the first call throws $exceptions[0],
+     * the second throws $exceptions[1], and so on, holding at the last one
+     * for every call past the end of the list — exactly returns()'s
+     * resolveReturn() indexing, not a separate mechanism. Mirrors Mockery's
+     * own andThrowExceptions(), which (confirmed against Mockery's source)
+     * is implemented as literally the same return-value queue as
+     * andReturn(), just with a "throw instead of return" flag set.
+     */
+    public function throws(\Throwable ...$exceptions): static
     {
-        $this->throwable = $exception;
+        if ($exceptions === []) {
+            throw new \InvalidArgumentException('throws() requires at least one exception.');
+        }
+
+        $this->throwables = $exceptions;
         $this->hasReturnConfigured = true;
         $this->returnValues = [];
         $this->resolver = null;
@@ -101,7 +115,7 @@ final class MethodExpectation
         $this->resolver = $resolver;
         $this->hasReturnConfigured = true;
         $this->returnValues = [];
-        $this->throwable = null;
+        $this->throwables = [];
 
         return $this;
     }
@@ -216,8 +230,10 @@ final class MethodExpectation
 
     public function resolveReturn(array $arguments): mixed
     {
-        if ($this->throwable !== null) {
-            throw $this->throwable;
+        if ($this->throwables !== []) {
+            $index = min($this->timesMatched - 1, count($this->throwables) - 1);
+
+            throw $this->throwables[$index];
         }
 
         if ($this->resolver !== null) {

@@ -163,6 +163,36 @@ final class TestDoubleTest extends TestCase
         $double->find(999);
     }
 
+    public function test_sequential_throws_hold_at_the_last_exception_on_further_calls(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $first = new \OutOfBoundsException('first call fails');
+        $second = new \RuntimeException('second call fails');
+
+        $double->allows('find')->throws($first, $second);
+
+        try {
+            $double->find(1);
+            $this->fail('Expected the first exception to be thrown.');
+        } catch (\OutOfBoundsException $exception) {
+            $this->assertSame($first, $exception);
+        }
+
+        try {
+            $double->find(1);
+            $this->fail('Expected the second exception to be thrown.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame($second, $exception);
+        }
+
+        try {
+            $double->find(1);
+            $this->fail('Expected the second exception to be thrown again.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame($second, $exception);
+        }
+    }
+
     public function test_resolves_computes_the_value_from_the_actual_arguments(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);

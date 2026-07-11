@@ -108,6 +108,60 @@ final class MethodExpectationTest extends TestCase
         $expectation->resolveReturn([]);
     }
 
+    public function test_resolve_return_throws_sequential_exceptions_holding_at_the_last_once_exhausted(): void
+    {
+        $first = new \RuntimeException('first failure');
+        $second = new \LogicException('second failure');
+        $expectation = (new MethodExpectation('find', required: false))->throws($first, $second);
+
+        $expectation->recordMatch();
+        try {
+            $expectation->resolveReturn([]);
+            $this->fail('Expected the first exception to be thrown.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame($first, $exception);
+        }
+
+        $expectation->recordMatch();
+        try {
+            $expectation->resolveReturn([]);
+            $this->fail('Expected the second exception to be thrown.');
+        } catch (\LogicException $exception) {
+            $this->assertSame($second, $exception);
+        }
+
+        // Holds at the last exception once the sequence is exhausted, same
+        // as returns()'s own sequential-value behavior.
+        $expectation->recordMatch();
+        try {
+            $expectation->resolveReturn([]);
+            $this->fail('Expected the second exception to be thrown again.');
+        } catch (\LogicException $exception) {
+            $this->assertSame($second, $exception);
+        }
+    }
+
+    public function test_throws_requires_at_least_one_exception(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->throws();
+    }
+
+    public function test_throws_replaces_a_previously_configured_return(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->returns('a');
+
+        $expectation->throws(new \RuntimeException('boom'));
+        $expectation->recordMatch();
+
+        $this->expectExceptionMessage('boom');
+
+        $expectation->resolveReturn([]);
+    }
+
     public function test_resolve_return_using_passes_the_actual_call_arguments_to_the_resolver(): void
     {
         $expectation = (new MethodExpectation('find', required: false))
