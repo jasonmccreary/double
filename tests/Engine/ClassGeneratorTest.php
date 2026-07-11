@@ -15,10 +15,12 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
+use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
+use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\UnionTypeInterface;
@@ -76,6 +78,38 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage("it's final");
 
         (new ClassGenerator)->generate(FinalLogger::class);
+    }
+
+    public function test_generates_a_class_implementing_multiple_target_interfaces(): void
+    {
+        $generated = (new ClassGenerator)->generateForIntersection([Fillable::class, Sized::class]);
+
+        $this->assertTrue(is_subclass_of($generated, Fillable::class));
+        $this->assertTrue(is_subclass_of($generated, Sized::class));
+    }
+
+    public function test_intersection_rejects_a_non_existent_target(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('no such class or interface exists');
+
+        (new ClassGenerator)->generateForIntersection([Fillable::class, 'JMac\Testing\Tests\Support\NoSuchThing']);
+    }
+
+    public function test_intersection_rejects_a_concrete_class_among_the_targets(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage("it's a class");
+
+        (new ClassGenerator)->generateForIntersection([Fillable::class, ConcreteLogger::class]);
+    }
+
+    public function test_intersection_rejects_the_same_target_passed_twice(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('passed more than once');
+
+        (new ClassGenerator)->generateForIntersection([Fillable::class, Fillable::class]);
     }
 
     public static function reservedNameFixtures(): iterable

@@ -14,6 +14,8 @@ use JMac\Testing\Matching\Argument;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\Sized;
 use PHPUnit\Framework\TestCase;
 
 final class TestDoubleTest extends TestCase
@@ -23,6 +25,47 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $this->assertInstanceOf(BookRepositoryInterface::class, $double);
+    }
+
+    public function test_for_with_multiple_targets_returns_a_double_satisfying_all_of_them(): void
+    {
+        $double = TestDouble::for(Fillable::class, Sized::class);
+
+        $this->assertInstanceOf(Fillable::class, $double);
+        $this->assertInstanceOf(Sized::class, $double);
+    }
+
+    public function test_for_with_multiple_targets_configures_methods_declared_on_either_one(): void
+    {
+        $double = TestDouble::for(Fillable::class, Sized::class);
+
+        $double->allows('fill')->returns(true);
+        $double->allows('size')->returns(3);
+
+        $this->assertTrue($double->fill());
+        $this->assertSame(3, $double->size());
+    }
+
+    public function test_for_with_multiple_targets_uses_a_combined_short_label_in_messages(): void
+    {
+        $double = TestDouble::for(Fillable::class, Sized::class);
+        $double->expects('fill')->returns(true);
+
+        // Regression check: label derivation used to take the short name of
+        // the whole "&"-joined string in one pass, which silently dropped
+        // every candidate but the last (see TestDouble::deriveLabel()) —
+        // this double's label would have rendered as just "Sized".
+        $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
+        $this->expectExceptionMessage('Fillable&Sized');
+
+        $double->verify();
+    }
+
+    public function test_for_with_no_targets_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        TestDouble::for();
     }
 
     public function test_allows_configures_a_return_value_for_a_matching_call(): void

@@ -55,9 +55,26 @@ final class TestDouble
 
     private function __construct() {}
 
-    public static function for(string $target): object
+    /**
+     * A single target creates a normal double; more than one creates a
+     * single double satisfying every target at once (e.g.
+     * TestDouble::for(LoggerInterface::class, FlushableInterface::class)) —
+     * every target beyond the first must be an interface, mirroring PHP's
+     * own intersection-type rule, since a class can extend at most one
+     * parent. This reuses the exact machinery SafeDefaultResolver already
+     * relies on internally to fabricate intersection-typed return values
+     * (see fabricateIntersection()) — it was already there, just never
+     * exposed as something a caller could ask for directly.
+     */
+    public static function for(string ...$targets): object
     {
-        return self::fabricate($target, depth: 0);
+        if ($targets === []) {
+            throw new \InvalidArgumentException('TestDouble::for() requires at least one target.');
+        }
+
+        return count($targets) === 1
+            ? self::fabricate($targets[0], depth: 0)
+            : self::fabricateIntersection($targets, depth: 0);
     }
 
     /**
@@ -73,8 +90,9 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by SafeDefaultResolver for intersection-typed
-     * fabrication (see ClassGenerator::generateForIntersection()).
+     * @internal used by SafeDefaultResolver (depth>0, fabricating an
+     * intersection-typed return — see ClassGenerator::generateForIntersection())
+     * and by for() itself (depth=0, a direct multi-target double).
      *
      * @param  list<string>  $targets
      */
@@ -235,7 +253,20 @@ final class TestDouble
         return self::$states ??= new \WeakMap;
     }
 
+    /**
+     * $target may be several "&"-joined names for an intersection double
+     * (see targetCandidates()) — each candidate's own short name is derived
+     * independently and rejoined with "&", e.g. "Fillable&Sized", not the
+     * short name of the whole joined string (which would silently collapse
+     * to just the last candidate's name, since it's the last "\" in the
+     * *entire* string that a naive strrpos() would find).
+     */
     private static function deriveLabel(string $target): string
+    {
+        return implode('&', array_map(self::deriveShortName(...), explode('&', $target)));
+    }
+
+    private static function deriveShortName(string $target): string
     {
         $position = strrpos($target, '\\');
 

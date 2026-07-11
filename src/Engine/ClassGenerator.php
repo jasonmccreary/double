@@ -57,22 +57,49 @@ final class ClassGenerator
     }
 
     /**
-     * @internal used only by SafeDefaultResolver/TestDouble::fabricateIntersection()
-     * to fabricate a stand-in for an intersection-typed return. Intersection
+     * @internal used only by SafeDefaultResolver (fabricating an
+     * intersection-typed return) and TestDouble::for() (a direct multi-target
+     * double, e.g. TestDouble::for(Foo::class, Bar::class)). Intersection
      * members are always interfaces in PHP, so — unlike generate() — this
      * never needs the extends-vs-implements branching a single class/interface
-     * target requires.
+     * target requires; it validates every target actually is one instead.
      *
      * @param  list<string>  $targets
      */
     public function generateForIntersection(array $targets): string
     {
+        $this->assertValidIntersectionTargets($targets);
+
         $reflections = array_map(
             static fn (string $target): \ReflectionClass => new \ReflectionClass($target),
             $targets,
         );
 
         return $this->generateFromReflections($reflections, $targets, 'implements');
+    }
+
+    /**
+     * @param  list<string>  $targets
+     */
+    private function assertValidIntersectionTargets(array $targets): void
+    {
+        $seen = [];
+
+        foreach ($targets as $target) {
+            if (isset($seen[$target])) {
+                throw InvalidDoubleTargetException::duplicateTarget($target);
+            }
+
+            $seen[$target] = true;
+
+            if (interface_exists($target)) {
+                continue;
+            }
+
+            throw class_exists($target)
+                ? InvalidDoubleTargetException::mustBeInterface($target)
+                : InvalidDoubleTargetException::doesNotExist($target);
+        }
     }
 
     /**
