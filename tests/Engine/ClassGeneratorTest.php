@@ -72,7 +72,7 @@ final class ClassGeneratorTest extends TestCase
     public function test_rejects_a_final_class(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('declared final');
+        $this->expectExceptionMessage("it's final");
 
         (new ClassGenerator)->generate(FinalLogger::class);
     }

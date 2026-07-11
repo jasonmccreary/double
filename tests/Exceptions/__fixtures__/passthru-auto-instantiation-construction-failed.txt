@@ -1,1 +1,1 @@
-Cannot auto-instantiate a real "ConcreteLogger" to passthru to: constructing it threw: boom. Pass an existing instance instead: ->passthru($existingInstance).
+Can't auto-instantiate "ConcreteLogger" to passthru to: constructing it threw: boom. Pass an existing instance instead: ->passthru($existingInstance).

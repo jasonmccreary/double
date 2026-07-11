@@ -21,7 +21,7 @@ class UnknownMethodException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Cannot configure "%s" on a test double of "%s": no such method is declared there.%s',
+            'Can\'t configure "%s" on a test double of "%s": no such method there.%s',
             $this->method,
             $this->target,
             self::fabricatedNote($this->fabricated),

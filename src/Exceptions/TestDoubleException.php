@@ -31,7 +31,11 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
      * protected) so the PHPUnit-specific exception variants under
      * Integrations\PHPUnit — which cannot extend these classes, see
      * ARCHITECTURE.md's "PHPUnit integration" — can reuse the exact same
-     * note without duplicating it.
+     * note without duplicating it. Deliberately doesn't cite ARCHITECTURE.md
+     * in the note itself: that document is written for whoever picks up
+     * this library's own implementation, not for someone whose test just
+     * failed — the two have different audiences even though the same
+     * codebase's docblocks cite it constantly.
      */
     final public static function fabricatedNote(bool $fabricated): string
     {
@@ -39,8 +43,25 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
             return '';
         }
 
-        return ' This double was auto-fabricated as a safe-default stand-in by Loose mode, '
-            .'not created directly via TestDouble::for() — see ARCHITECTURE.md\'s '
-            .'"Modes: Loose, Strict, Passthru."';
+        return ' Note: this double was auto-fabricated by Loose mode, not created directly.';
+    }
+
+    /**
+     * A best-effort variable name for a code snippet in a message, derived
+     * from a double's label (e.g. "SecondLink" -> "secondLink"). Labels
+     * aren't always valid identifier fragments — an intersection-typed
+     * fabrication (see DoubleState::targetCandidates()) has a label like
+     * "Fillable&Sized" — so non-identifier characters are stripped rather
+     * than trusted verbatim. This is illustrative code in a message, not
+     * executed, but it should still read as something a person could
+     * plausibly paste in.
+     */
+    final public static function suggestedVariableName(string $label): string
+    {
+        $sanitized = preg_replace('/[^A-Za-z0-9_]/', '', $label) ?? '';
+
+        return $sanitized === '' || preg_match('/^[0-9]/', $sanitized) === 1
+            ? 'double'
+            : lcfirst($sanitized);
     }
 }

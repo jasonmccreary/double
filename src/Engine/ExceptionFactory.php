@@ -7,9 +7,11 @@ namespace JMac\Testing\Engine;
 use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\FabricationLimitExceededException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use PHPUnit\Framework\TestCase;
@@ -76,6 +78,19 @@ final class ExceptionFactory
         }
 
         return new UnsatisfiedExpectationException($label, $expectations, $fabricated);
+    }
+
+    public static function fabricationLimitExceeded(
+        string $label,
+        string $method,
+        string $returnType,
+        int $limit,
+    ): Diagnostic&\Throwable {
+        if (self::phpUnitIsAvailable()) {
+            return new PHPUnitFabricationLimitExceededException($label, $method, $returnType, $limit);
+        }
+
+        return new FabricationLimitExceededException($label, $method, $returnType, $limit);
     }
 
     private static function phpUnitIsAvailable(): bool

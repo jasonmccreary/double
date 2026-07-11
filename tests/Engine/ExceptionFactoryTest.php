@@ -6,6 +6,7 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use PHPUnit\Framework\TestCase;
@@ -39,5 +40,12 @@ final class ExceptionFactoryTest extends TestCase
         $exception = ExceptionFactory::unsatisfiedExpectation('BookRepository', [], false);
 
         $this->assertInstanceOf(PHPUnitUnsatisfiedExpectationException::class, $exception);
+    }
+
+    public function test_fabrication_limit_exceeded_picks_the_phpunit_variant(): void
+    {
+        $exception = ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1);
+
+        $this->assertInstanceOf(PHPUnitFabricationLimitExceededException::class, $exception);
     }
 }

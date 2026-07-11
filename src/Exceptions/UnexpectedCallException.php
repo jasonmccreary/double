@@ -32,11 +32,13 @@ class UnexpectedCallException extends TestDoubleException
     public static function renderMessage(string $label, string $method, string $argumentsDescription, bool $fabricated): string
     {
         return sprintf(
-            'Unexpected call to "%s(%s)" on test double "%s": no configured expects()/allows() '
-            .'matches this call, and the double is in Strict mode.%s',
+            'Test double "%s" got an unexpected call to "%s(%s)" — Strict mode requires every '
+            .'call configured. Add: $%s->allows(\'%s\')->returns(...);%s',
+            $label,
             $method,
             $argumentsDescription,
-            $label,
+            self::suggestedVariableName($label),
+            $method,
             self::fabricatedNote($fabricated),
         );
     }

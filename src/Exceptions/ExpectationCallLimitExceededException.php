@@ -38,8 +38,7 @@ class ExpectationCallLimitExceededException extends TestDoubleException
         bool $fabricated,
     ): string {
         return sprintf(
-            'Test double "%s" received call #%d to "%s(%s)", but the matching expectation '
-            .'allows at most %d call(s).%s',
+            'Test double "%s" got call #%d to "%s(%s)", but the expectation only allows %d.%s',
             $label,
             $callNumber,
             $method,

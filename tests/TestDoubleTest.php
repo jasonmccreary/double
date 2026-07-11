@@ -64,7 +64,7 @@ final class TestDoubleTest extends TestCase
         $double->expects('delete')->returns(null);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
-        $this->expectExceptionMessageMatches('/delete\(any arguments\).*exactly 1 time\(s\), called 0 time\(s\)/s');
+        $this->expectExceptionMessageMatches('/delete\(any arguments\).*exactly 1 time, called 0 times/s');
 
         TestDouble::verify($double);
     }
@@ -254,7 +254,7 @@ final class TestDoubleTest extends TestCase
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
             $message = $exception->getMessage();
 
-            $this->assertStringContainsString('find(123) — expected exactly 1 time(s), called 0 time(s)', $message);
+            $this->assertStringContainsString('find(123) — expected exactly 1 time, called 0 times', $message);
             $this->assertStringContainsString('"find" was called with different arguments elsewhere in this test:', $message);
             $this->assertStringContainsString('find(456)', $message);
         }

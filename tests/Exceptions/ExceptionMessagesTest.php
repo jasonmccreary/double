@@ -31,7 +31,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $expectation = new UnsatisfiedExpectation(
             method: 'bar',
-            description: "bar('baz') — expected exactly 1 time(s), called 0 time(s)",
+            description: "bar('baz') — expected exactly 1 time, called 0 times",
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -46,7 +46,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $expectation = new UnsatisfiedExpectation(
             method: 'delete',
-            description: 'delete(any arguments) — expected exactly 1 time(s), called 0 time(s)',
+            description: 'delete(any arguments) — expected exactly 1 time, called 0 times',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -61,7 +61,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $first = new UnsatisfiedExpectation(
             method: 'save',
-            description: 'save(any arguments) — expected exactly 1 time(s), called 0 time(s)',
+            description: 'save(any arguments) — expected exactly 1 time, called 0 times',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -69,7 +69,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
         $second = new UnsatisfiedExpectation(
             method: 'delete',
-            description: 'delete(any arguments) — expected at least 1 time(s), called 0 time(s)',
+            description: 'delete(any arguments) — expected at least 1 time, called 0 times',
             expectedMin: 1,
             expectedMax: PHP_INT_MAX,
             timesCalled: 0,

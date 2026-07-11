@@ -37,10 +37,12 @@ class UnsatisfiedExpectationException extends TestDoubleException
     public static function renderMessage(string $label, array $expectations, bool $fabricated): string
     {
         $blocks = array_map(self::renderOne(...), $expectations);
+        $count = count($expectations);
 
         $message = sprintf(
-            "%d expectation(s) were not satisfied on test double \"%s\":\n\n%s",
-            count($expectations),
+            "%s %s not satisfied on test double \"%s\":\n\n%s",
+            Pluralizer::pluralize($count, 'expectation', 'expectations'),
+            $count === 1 ? 'was' : 'were',
             $label,
             implode("\n\n", $blocks),
         );

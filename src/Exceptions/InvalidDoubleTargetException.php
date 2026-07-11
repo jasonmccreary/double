@@ -25,13 +25,13 @@ class InvalidDoubleTargetException extends TestDoubleException
 
     public static function isFinal(string $target): self
     {
-        return new self($target, 'it is declared final, so it cannot be doubled by extending it');
+        return new self($target, "it's final, so it can't be extended");
     }
 
     private function render(): string
     {
         return sprintf(
-            'Cannot create a test double for "%s": %s.',
+            'Can\'t create a test double for "%s": %s.',
             $this->target,
             $this->reason,
         );

@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
+use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Fixtures\BookRepositoryInterface;
 use JMac\Testing\Tests\Fixtures\Fillable;
+use JMac\Testing\Tests\Fixtures\FirstLink;
 use JMac\Testing\Tests\Fixtures\IntersectionReturnInterface;
 use JMac\Testing\Tests\Fixtures\NodeInterface;
 use JMac\Testing\Tests\Fixtures\SafeDefaultInterface;
+use JMac\Testing\Tests\Fixtures\SecondLink;
 use JMac\Testing\Tests\Fixtures\Sized;
 use JMac\Testing\Tests\Fixtures\Suit;
 use PHPUnit\Framework\TestCase;
@@ -177,5 +180,32 @@ final class LooseModeTest extends TestCase
         $this->assertInstanceOf(Sized::class, $result);
         $this->assertFalse($result->fill());
         $this->assertSame(0, $result->size());
+    }
+
+    public function test_a_single_unconfigured_fabrication_hop_is_free(): void
+    {
+        $double = TestDouble::for(FirstLink::class);
+
+        $second = $double->toSecond();
+
+        $this->assertInstanceOf(SecondLink::class, $second);
+    }
+
+    public function test_a_second_distinct_fabrication_hop_throws_a_clear_limit_exception(): void
+    {
+        $double = TestDouble::for(FirstLink::class);
+        $second = $double->toSecond();
+
+        try {
+            $second->toThird();
+            $this->fail('Expected PHPUnitFabricationLimitExceededException to be thrown.');
+        } catch (PHPUnitFabricationLimitExceededException $exception) {
+            $this->assertStringContainsString('SecondLink', $exception->getMessage());
+            $this->assertStringContainsString('one call chain deep', $exception->getMessage());
+            $this->assertStringContainsString(
+                "\$secondLink->allows('toThird')->returns(...);",
+                $exception->getMessage(),
+            );
+        }
     }
 }

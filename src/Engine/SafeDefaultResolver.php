@@ -26,29 +26,47 @@ use JMac\Testing\TestDouble;
  * the two the same everywhere — rather than trying to recover a distinction
  * PHP itself no longer exposes — keeps this resolver's behavior identical
  * across every supported PHP version instead of varying with the running
- * version's reflection quirks.
+ * version's reflection quirks. This self/static path never fabricates and
+ * is not subject to the fabrication limit below — a self-referential API
+ * (like NodeInterface::next()) can be called any number of times without
+ * ever hitting it.
  *
  * Recursive fabrication for a non-nullable class/interface return whose name
- * does *not* match the declaring class is still capped at
- * MAX_FABRICATION_DEPTH (ARCHITECTURE.md: "proposed default 2, configurable
- * — not yet validated against real domain object graphs; treat as a
- * starting point to tune, not a settled constant") to stop an unbounded
- * chain from recursing forever.
+ * does *not* match the declaring class is a genuine hard limit, enforced at
+ * MAX_FABRICATION_DEPTH (default **1** — one safely-typed stand-in fabricated
+ * for free, matching the single free hop Mockery's own shouldIgnoreMissing()
+ * fallback gets before it stops being type-aware). This is deliberately not
+ * "configurable" despite an earlier draft of ARCHITECTURE.md describing it
+ * that way — there is no constructor/verb that exposes it, and it is not
+ * planned as one; see ARCHITECTURE.md's "Guardrails on fabrication" for why
+ * a hard, identically-enforced default was chosen over a per-double knob.
  *
- * Past the cap, null is NOT a viable fallback the way it is for every other
- * row of the safe-default table: the generated method's return type is
+ * Past the limit, null is NOT a viable fallback the way it is for every
+ * other row of the safe-default table: the generated method's return type is
  * non-nullable, so PHP itself throws a TypeError the instant `null` crosses
- * that boundary — this resolver can't paper over that with a "safe" value
- * that isn't actually one. Instead, at the cap, the current double is
- * reused as the return value whenever it already satisfies the required
- * type — closing the cycle instead of fabricating forever. If it doesn't
- * satisfy the type (a deep but non-cyclic graph), fabrication proceeds one
- * level further anyway, since an honestly-typed value beats a cap enforced
- * by crashing.
+ * that boundary. Two outcomes are possible once the limit is reached:
+ *
+ * - If the current double already satisfies the required type (a genuine
+ *   cycle — the fabricated object needs to return something of a type it
+ *   already is), it's reused directly, closing the cycle with no new object
+ *   and no error.
+ * - Otherwise — a deep, non-cyclic chain of distinct fabricated types — this
+ *   resolver throws FabricationLimitExceededException rather than
+ *   fabricating further. An earlier version of this resolver fabricated one
+ *   level past the limit "anyway" on the reasoning that an honestly-typed
+ *   value beats a cap enforced by crashing; in practice that made the limit
+ *   not actually a limit; a sufficiently deep unconfigured call chain would
+ *   keep fabricating indefinitely, silently, with a fresh eval()'d class per
+ *   hop (ClassGenerator does not cache generated classes — see its own
+ *   docblock). That is worse than a bare TypeError, not better: it is a
+ *   silent, unbounded cost with no stack trace pointing at the real gap in
+ *   test setup. A clear, named, immediately-thrown exception — the same
+ *   "explain what to do about it" standard every other diagnostic in this
+ *   library is held to — is the correct failure mode here, not silence.
  */
 final class SafeDefaultResolver
 {
-    private const MAX_FABRICATION_DEPTH = 2;
+    private const MAX_FABRICATION_DEPTH = 1;
 
     public static function resolveForMethod(DoubleState $state, string $method, object $double): mixed
     {
@@ -61,24 +79,26 @@ final class SafeDefaultResolver
             $double,
             $state->fabricationDepth(),
             $reflectionMethod?->getDeclaringClass()->getName(),
+            $state->label(),
+            $method,
         );
     }
 
-    private static function resolve(?\ReflectionType $type, object $double, int $depth, ?string $declaringClass): mixed
+    private static function resolve(?\ReflectionType $type, object $double, int $depth, ?string $declaringClass, string $label, string $method): mixed
     {
         if ($type === null || $type->allowsNull()) {
             return null;
         }
 
         if ($type instanceof \ReflectionUnionType) {
-            return self::resolveUnion($type, $double, $depth, $declaringClass);
+            return self::resolveUnion($type, $double, $depth, $declaringClass, $label, $method);
         }
 
         if ($type instanceof \ReflectionIntersectionType) {
-            return self::resolveIntersection($type, $double, $depth);
+            return self::resolveIntersection($type, $double, $depth, $label, $method);
         }
 
-        return self::resolveNamed($type, $double, $depth, $declaringClass);
+        return self::resolveNamed($type, $double, $depth, $declaringClass, $label, $method);
     }
 
     /**
@@ -90,7 +110,7 @@ final class SafeDefaultResolver
      * reflected back out as `string` then `int`), so there is no other
      * order available to prefer.
      */
-    private static function resolveUnion(\ReflectionUnionType $type, object $double, int $depth, ?string $declaringClass): mixed
+    private static function resolveUnion(\ReflectionUnionType $type, object $double, int $depth, ?string $declaringClass, string $label, string $method): mixed
     {
         foreach ($type->getTypes() as $member) {
             if ($member instanceof \ReflectionNamedType && strtolower($member->getName()) === 'null') {
@@ -101,11 +121,11 @@ final class SafeDefaultResolver
         $first = $type->getTypes()[0];
 
         return $first instanceof \ReflectionIntersectionType
-            ? self::resolveIntersection($first, $double, $depth)
-            : self::resolveNamed($first, $double, $depth, $declaringClass);
+            ? self::resolveIntersection($first, $double, $depth, $label, $method)
+            : self::resolveNamed($first, $double, $depth, $declaringClass, $label, $method);
     }
 
-    private static function resolveIntersection(\ReflectionIntersectionType $type, object $double, int $depth): mixed
+    private static function resolveIntersection(\ReflectionIntersectionType $type, object $double, int $depth, string $label, string $method): mixed
     {
         $names = array_map(
             static fn (\ReflectionType $member): string => (string) $member,
@@ -116,12 +136,14 @@ final class SafeDefaultResolver
             if (self::satisfies($double, $names)) {
                 return $double;
             }
+
+            throw self::limitExceeded($label, $method, implode('&', $names));
         }
 
         return TestDouble::fabricateIntersection($names, $depth + 1);
     }
 
-    private static function resolveNamed(\ReflectionNamedType $type, object $double, int $depth, ?string $declaringClass): mixed
+    private static function resolveNamed(\ReflectionNamedType $type, object $double, int $depth, ?string $declaringClass, string $label, string $method): mixed
     {
         $name = $type->getName();
         $lower = strtolower($name);
@@ -150,11 +172,20 @@ final class SafeDefaultResolver
             return (new \ReflectionEnum($name))->getCases()[0]->getValue();
         }
 
-        if ($depth >= self::MAX_FABRICATION_DEPTH && self::satisfies($double, [$name])) {
-            return $double;
+        if ($depth >= self::MAX_FABRICATION_DEPTH) {
+            if (self::satisfies($double, [$name])) {
+                return $double;
+            }
+
+            throw self::limitExceeded($label, $method, $name);
         }
 
         return TestDouble::fabricate($name, $depth + 1);
+    }
+
+    private static function limitExceeded(string $label, string $method, string $returnType): \Throwable
+    {
+        return ExceptionFactory::fabricationLimitExceeded($label, $method, $returnType, self::MAX_FABRICATION_DEPTH);
     }
 
     /**

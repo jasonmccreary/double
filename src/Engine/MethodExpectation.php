@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Exceptions\Pluralizer;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
@@ -235,24 +236,24 @@ final class MethodExpectation
             : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
 
         return sprintf(
-            '%s(%s) — expected %s, called %d time(s)',
+            '%s(%s) — expected %s, called %s',
             $this->method,
             $arguments,
             $this->describeExpectedCount(),
-            $this->timesMatched,
+            Pluralizer::pluralize($this->timesMatched, 'time', 'times'),
         );
     }
 
     private function describeExpectedCount(): string
     {
         if ($this->minimumCalls === $this->maximumCalls) {
-            return sprintf('exactly %d time(s)', $this->minimumCalls);
+            return 'exactly '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
         }
 
         if ($this->maximumCalls === self::UNBOUNDED) {
-            return sprintf('at least %d time(s)', $this->minimumCalls);
+            return 'at least '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
         }
 
-        return sprintf('between %d and %d time(s)', $this->minimumCalls, $this->maximumCalls);
+        return sprintf('between %d and %d times', $this->minimumCalls, $this->maximumCalls);
     }
 }

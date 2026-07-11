@@ -133,7 +133,7 @@ final class MethodExpectationTest extends TestCase
     {
         $expectation = (new MethodExpectation('find', required: true))->with(123);
 
-        $this->assertSame('find(123) — expected exactly 1 time(s), called 0 time(s)', $expectation->describe());
+        $this->assertSame('find(123) — expected exactly 1 time, called 0 times', $expectation->describe());
     }
 
     public function test_with_accepts_a_matcher_alongside_bare_literals(): void
@@ -169,6 +169,6 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))
             ->with(Argument::any());
 
-        $this->assertSame('find(any()) — expected exactly 1 time(s), called 0 time(s)', $expectation->describe());
+        $this->assertSame('find(any()) — expected exactly 1 time, called 0 times', $expectation->describe());
     }
 }

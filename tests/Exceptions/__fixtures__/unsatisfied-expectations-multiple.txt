@@ -1,5 +1,5 @@
-2 expectation(s) were not satisfied on test double "BookRepository":
+2 expectations were not satisfied on test double "BookRepository":
 
-    save(any arguments) — expected exactly 1 time(s), called 0 time(s)
+    save(any arguments) — expected exactly 1 time, called 0 times
 
-    delete(any arguments) — expected at least 1 time(s), called 0 time(s)
+    delete(any arguments) — expected at least 1 time, called 0 times

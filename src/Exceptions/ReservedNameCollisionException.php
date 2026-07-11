@@ -19,10 +19,9 @@ final class ReservedNameCollisionException extends \LogicException
     public static function forCollisions(string $target, array $collisions): self
     {
         return new self(sprintf(
-            'Cannot create a test double for "%s": it declares method(s) %s, '
-            .'which collide with JMac\Testing\'s own control API and cannot be '
-            .'both a real interface method and a configuration verb on the '
-            .'same object.',
+            'Can\'t create a test double for "%s": %s collides with TestDouble\'s own '
+            .'control verbs (expects/allows/strict/passthru/received) — a method can\'t be '
+            .'both a real one and a configuration verb.',
             $target,
             implode(', ', $collisions),
         ));

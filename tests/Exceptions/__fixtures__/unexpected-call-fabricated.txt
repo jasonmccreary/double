@@ -1,1 +1,1 @@
-Unexpected call to "getAuthor()" on test double "Book": no configured expects()/allows() matches this call, and the double is in Strict mode. This double was auto-fabricated as a safe-default stand-in by Loose mode, not created directly via TestDouble::for() — see ARCHITECTURE.md's "Modes: Loose, Strict, Passthru."
+Test double "Book" got an unexpected call to "getAuthor()" — Strict mode requires every call configured. Add: $book->allows('getAuthor')->returns(...); Note: this double was auto-fabricated by Loose mode, not created directly.

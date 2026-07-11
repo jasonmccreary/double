@@ -316,24 +316,89 @@ the method's declared return type (the same resolver described above):
 | enum | first case |
 | union | first branch that resolves cleanly; prefer `null` if present |
 | intersection | a fabricated double implementing all constituent interfaces |
-| **non-nullable class/interface** | **a fresh Loose-mode double of that type, fabricated recursively** |
+| **non-nullable class/interface** | **a fresh Loose-mode double of that type, fabricated once — see the fabrication limit below for what happens past that** |
 
 Guardrails on fabrication, both mandatory:
 
-- **Recursion depth cap**, proposed default **2**, configurable — not yet
-  validated against real domain object graphs; treat as a starting point to
-  tune, not a settled constant.
+- **A real, hard fabrication limit — one free hop, not a "proposed default
+  2, configurable" soft cap.** An earlier draft of this section proposed a
+  depth-2 cap described as "configurable" and, in the first implementation,
+  a depth check that didn't actually stop anything: past the cap, a
+  non-cyclic chain of distinct fabricated types just kept fabricating one
+  level further "anyway," so the limit was cosmetic — a sufficiently deep
+  unconfigured call chain would recurse indefinitely, silently, with a fresh
+  `eval()`'d class per hop (`ClassGenerator` doesn't cache generated
+  classes). That's worse than a bare `TypeError`, not better: an unbounded,
+  silent cost with no diagnostic pointing at the actual gap in test setup —
+  exactly the failure mode this library exists to avoid (see the motivating
+  gripes at the top of this document). **Revised: `MAX_FABRICATION_DEPTH =
+  1`**, matching the single free, safely-typed hop Mockery's own
+  `shouldIgnoreMissing()` fallback gets before *it* stops being type-aware
+  (see the Mockery comparison below) — one unconfigured call may fabricate
+  a correctly-typed stand-in for free, but a second, distinct fabrication
+  needed off of *that* stand-in throws `FabricationLimitExceededException`
+  (a mid-test failure, with a PHPUnit `AssertionFailedError` sibling, same
+  treatment as `UnexpectedCallException`), naming the double and the call
+  that needed to go deeper and telling the person to configure it explicitly
+  — deliberately plain, human prose ("Test double X only fabricates one call
+  chain deep...") over a denser message reciting every internal detail
+  (mode name, the specific type that couldn't be fabricated, the numeric
+  limit) the exception object still carries as fields for anything that
+  wants to inspect it programmatically, just not in the prose itself. Not
+  exposed as a per-double knob — there is no constructor/verb for it, and
+  none is planned; a single, predictable,
+  identically-enforced default was judged more valuable than a tunable one,
+  consistent with this document's broader "no configuration for its own
+  sake" bias.
+  - **Exception, not limit:** a self-referential return (`self`, `static`,
+    or a return type literally naming the method's own declaring
+    class/interface — e.g. `NodeInterface::next(): NodeInterface`) never
+    fabricates at all; it always resolves to the current double itself. This
+    path is unaffected by the limit above and can be called any number of
+    times.
+  - **Cycle-closing, not an exception to the limit:** if, once the limit is
+    reached, the double being asked to return something already satisfies
+    the required type, it's reused directly instead of throwing — a true
+    cycle costs nothing further, only a *distinct*, non-cyclic chain of
+    fabricated types hits the exception.
 - **Mandatory provenance tagging** on every fabricated object, so if
   anything ever inspects one (a failed assertion, a dump), the message
   explains it's a stand-in rather than leaving the person to guess why a
   value looks wrong.
 
-Confirmed during planning: `Mockery::spy()` is `Mockery::mock()->shouldIgnoreMissing()`
-— its fallback is unconditionally `null` regardless of declared return
-type, which is a documented source of real `TypeError`s for Mockery users.
-Mockery's mock-by-default design sidesteps this by throwing before a return
-value is ever needed; the fabrication approach here is more engineering,
-but it's solving a problem Mockery's ecosystem has chosen not to.
+**Confirmed against Mockery's actual source (1.6.x), not assumed:** an
+earlier draft of this section claimed `Mockery::spy()`'s fallback is
+unconditionally `null` regardless of declared return type. That's wrong and
+worth correcting rather than leaving on record. `Mockery::spy()` is
+`Mockery::mock()->shouldIgnoreMissing()`, and `shouldIgnoreMissing()`'s
+default fallback (`Mock::mockery_returnValueForMethod()`) is already
+return-type-aware — `''`/`0`/`0.0`/`false`/`[]`/`void → null`/`static →
+$this`, the same shape as this library's own table, and for a non-nullable
+class/interface return it fabricates a real `Mockery::mock($returnType)`
+rather than `null`. So the first hop doesn't produce a bare-`null`
+`TypeError` the way the earlier draft implied.
+
+**Where Mockery's approach actually differs, and what this library now
+deliberately mirrors:** that fabricated nested mock is a *plain* mock, not
+itself a spy — recursion only continues if `shouldIgnoreMissing($value,
+true)` was called with `$recursive = true`, which `spy()` itself never
+passes, so it defaults to `false`. One hop past the first fabrication, an
+unmatched call throws Mockery's own `BadMethodCallException` ("Received
+`Mockery_X::y()`, but no expectations were specified"). That's a real,
+identifiable failure — just one hop later than a naive reading suggests, and
+via an exception rather than a silent `null`. **This library's revised
+`MAX_FABRICATION_DEPTH = 1` (see "Guardrails on fabrication" above)
+deliberately matches that same one-free-hop boundary**, rather than trying
+to out-engineer it with deeper automatic recursion: the earlier depth-2,
+"fabricate one level further anyway past the cap" design was strictly worse
+than Mockery's simpler model, not better — it recursed further *and* failed
+less legibly when it finally gave up (silent, unbounded `eval()` cost, no
+diagnostic) than Mockery's plain, if terse, exception does. What this
+library keeps as a genuine improvement over Mockery, rather than an
+elaboration on it, is entirely in the message:
+`FabricationLimitExceededException` names the double, the method, the exact
+type that couldn't be fabricated, and what to do about it, versus Mockery's
+generic "no expectations were specified."
 
 ### Strict
 
