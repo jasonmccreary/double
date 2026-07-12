@@ -45,6 +45,24 @@ class InvalidDoubleTargetException extends TestDoubleException
         return new self($target, 'it was passed more than once');
     }
 
+    /**
+     * A static method has no instance to dispatch through, so
+     * ClassGenerator never overrides one — see its own docblock. That's a
+     * silent no-op for a concrete class (the real static implementation
+     * just keeps running, inherited as-is), but an abstract static method
+     * (always abstract on an interface; possibly abstract on an abstract
+     * class too) leaves the generated class with an inherited abstract
+     * method it never implements — a PHP fatal error at eval() time, not a
+     * catchable exception, unless this check catches it first.
+     */
+    public static function hasAbstractStaticMethod(string $target, string $method): self
+    {
+        return new self($target, sprintf(
+            'it declares a static method ("%s") with no implementation to fall back on — static methods can\'t be doubled',
+            $method,
+        ));
+    }
+
     private function render(): string
     {
         return sprintf(

@@ -1,0 +1,1 @@
+Can't configure "make" on a test double of "HasStaticMethod": it's a static method, and test doubles only intercept instance calls.

@@ -6,6 +6,7 @@ namespace JMac\Testing\Tests;
 
 use JMac\Testing\Engine\ReceivedAssertion;
 use JMac\Testing\Exceptions\ModeConfigurationException;
+use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
@@ -17,6 +18,7 @@ use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\TestCase;
@@ -474,6 +476,22 @@ final class TestDoubleTest extends TestCase
         $double->expects('sav');
     }
 
+    /**
+     * "make" genuinely exists on HasStaticMethod, so this must fail with
+     * StaticMethodException specifically, not UnknownMethodException — a
+     * static method is a different problem (unconfigurable) from a typo
+     * (nonexistent).
+     */
+    public function test_expects_rejects_a_static_method(): void
+    {
+        $double = TestDouble::for(HasStaticMethod::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('static method');
+
+        $double->expects('make');
+    }
+
     public function test_received_passes_when_the_method_was_called_at_least_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
@@ -583,6 +601,16 @@ final class TestDoubleTest extends TestCase
         $this->expectExceptionMessage('Did you mean "save"?');
 
         $double->received('sav');
+    }
+
+    public function test_received_rejects_a_static_method(): void
+    {
+        $double = TestDouble::for(HasStaticMethod::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('static method');
+
+        $double->received('make');
     }
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void

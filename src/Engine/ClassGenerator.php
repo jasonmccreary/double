@@ -109,6 +109,7 @@ final class ClassGenerator
     private function generateFromReflections(array $reflections, array $targets, string $keyword): string
     {
         $this->assertNoReservedNameCollisions($targets, $reflections);
+        $this->assertNoAbstractStaticMethods($targets, $reflections);
 
         $className = $this->generateClassName($reflections);
 
@@ -135,6 +136,34 @@ final class ClassGenerator
 
         if ($collisions !== []) {
             throw ReservedNameCollisionException::forCollisions(implode('&', $targets), $collisions);
+        }
+    }
+
+    /**
+     * overridableMethods() below deliberately never overrides a static
+     * method (see its own docblock — there's no instance to dispatch
+     * through). That's harmless for a concrete, already-implemented static
+     * method: the generated subclass just inherits the real one unchanged.
+     * It's fatal for an abstract one — always true of every interface
+     * method, and possible on an abstract class too — since PHP then
+     * requires the generated class to either implement it or be abstract
+     * itself, and this generator only ever emits `final class`. Caught
+     * here, before eval(), as a normal InvalidDoubleTargetException; left
+     * uncaught, PHP raises this as an uncatchable fatal error from inside
+     * the eval()'d source instead, which is a far worse failure mode than
+     * any exception this library throws on purpose.
+     *
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoAbstractStaticMethods(array $targets, array $reflections): void
+    {
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
+                if ($method->isStatic() && $method->isAbstract()) {
+                    throw InvalidDoubleTargetException::hasAbstractStaticMethod(implode('&', $targets), $method->getName());
+                }
+            }
         }
     }
 
@@ -189,6 +218,13 @@ final class ClassGenerator
      * reflection); PHP's own intersection-type rules already require
      * compatible signatures across constituents, so any occurrence's
      * signature is a valid one to emit.
+     *
+     * A static method is always excluded: ProxyBehavior::intercept() takes
+     * $this and dispatches through it, and a static call has no $this to
+     * give it. A concrete static method is simply inherited unoverridden
+     * (harmless — it's real code, just not interceptable); an abstract one
+     * would leave the generated class not actually implementing it, which
+     * assertNoAbstractStaticMethods() rejects before this method ever runs.
      *
      * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>

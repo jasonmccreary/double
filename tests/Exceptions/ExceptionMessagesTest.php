@@ -10,6 +10,7 @@ use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
+use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
@@ -142,6 +143,20 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = InvalidDoubleTargetException::isFinal('FinalLogger');
 
         $this->assertMatchesGolden('invalid-double-target-is-final', $exception->getMessage());
+    }
+
+    public function test_renders_invalid_double_target_has_abstract_static_method(): void
+    {
+        $exception = InvalidDoubleTargetException::hasAbstractStaticMethod('StaticMethodInterface', 'make');
+
+        $this->assertMatchesGolden('invalid-double-target-has-abstract-static-method', $exception->getMessage());
+    }
+
+    public function test_renders_static_method(): void
+    {
+        $exception = new StaticMethodException('HasStaticMethod', 'make');
+
+        $this->assertMatchesGolden('static-method', $exception->getMessage());
     }
 
     public function test_renders_out_of_order_call(): void

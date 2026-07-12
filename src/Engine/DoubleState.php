@@ -91,6 +91,21 @@ final class DoubleState
     }
 
     /**
+     * Whether $method, as declared on $declaringCandidate, is static —
+     * callers already have $declaringCandidate in hand from
+     * declaringCandidate() before they'd ever need this, so it's taken as a
+     * parameter rather than re-deriving it here. Used by
+     * TestDouble::registerExpectation()/received() to reject configuring a
+     * static method the same way an unknown one is rejected — see
+     * StaticMethodException's own docblock for why a static method can
+     * never actually be intercepted regardless.
+     */
+    public function isStatic(string $declaringCandidate, string $method): bool
+    {
+        return (new \ReflectionMethod($declaringCandidate, $method))->isStatic();
+    }
+
+    /**
      * Every method name method_exists() would find on any target candidate —
      * the same existence check declaringCandidate() uses — for
      * UnknownMethodException's "did you mean" suggestion. Reflection's own

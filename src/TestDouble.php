@@ -12,6 +12,7 @@ use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\ReceivedAssertion;
+use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 
 /**
@@ -272,14 +273,7 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        if ($state->declaringCandidate($method) === null) {
-            throw new UnknownMethodException(
-                $state->target(),
-                $method,
-                $state->isFabricated(),
-                DidYouMean::suggest($method, $state->declarableMethodNames()),
-            );
-        }
+        self::assertConfigurable($state, $method);
 
         $expectation = new MethodExpectation($method, $required);
         $state->registerExpectation($expectation);
@@ -305,14 +299,7 @@ final class TestDouble
     {
         $state = self::stateFor($double);
 
-        if ($state->declaringCandidate($method) === null) {
-            throw new UnknownMethodException(
-                $state->target(),
-                $method,
-                $state->isFabricated(),
-                DidYouMean::suggest($method, $state->declarableMethodNames()),
-            );
-        }
+        self::assertConfigurable($state, $method);
 
         $assertion = new ReceivedAssertion($state, $method);
 
@@ -321,6 +308,31 @@ final class TestDouble
         }
 
         return $assertion;
+    }
+
+    /**
+     * Shared by registerExpectation() and received(): both need the same
+     * two checks before they can do anything with $method — that it exists
+     * at all, and that it isn't static (see StaticMethodException's
+     * docblock for why a static method can never be intercepted, so
+     * configuring one could never do anything either verb needs it to do).
+     */
+    private static function assertConfigurable(DoubleState $state, string $method): void
+    {
+        $declaringCandidate = $state->declaringCandidate($method);
+
+        if ($declaringCandidate === null) {
+            throw new UnknownMethodException(
+                $state->target(),
+                $method,
+                $state->isFabricated(),
+                DidYouMean::suggest($method, $state->declarableMethodNames()),
+            );
+        }
+
+        if ($state->isStatic($declaringCandidate, $method)) {
+            throw new StaticMethodException($state->target(), $method, $state->isFabricated());
+        }
     }
 
     private static function states(): \WeakMap

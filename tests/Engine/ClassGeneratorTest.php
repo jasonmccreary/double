@@ -17,10 +17,12 @@ use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
 use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\UnionTypeInterface;
@@ -78,6 +80,34 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage("it's final");
 
         (new ClassGenerator)->generate(FinalLogger::class);
+    }
+
+    /**
+     * Regression check: an interface's methods are all implicitly abstract,
+     * including static ones — before assertNoAbstractStaticMethods()
+     * existed, this crashed with an uncatchable PHP fatal error out of the
+     * eval()'d source ("must therefore be declared abstract or implement
+     * the remaining methods") instead of the library's own exception.
+     */
+    public function test_rejects_a_target_with_an_abstract_static_method(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('static method ("make")');
+
+        (new ClassGenerator)->generate(StaticMethodInterface::class);
+    }
+
+    /**
+     * A static method on a concrete class already has an implementation to
+     * fall back on — the generated class simply inherits it unoverridden
+     * (see overridableMethods()'s docblock), so this is not the same
+     * rejection as the abstract case above.
+     */
+    public function test_does_not_reject_a_concrete_class_with_a_static_method(): void
+    {
+        $generated = (new ClassGenerator)->generate(HasStaticMethod::class);
+
+        $this->assertTrue(class_exists($generated));
     }
 
     public function test_generates_a_class_implementing_multiple_target_interfaces(): void
