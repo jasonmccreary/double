@@ -130,4 +130,22 @@ final class DoubleStateTest extends TestCase
 
         $state->configurePassthru(new \stdClass);
     }
+
+    public function test_known_instance_is_null_until_remembered(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $this->assertNull($state->knownInstance());
+    }
+
+    public function test_remember_real_instance_does_not_change_the_mode(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+        $real = new \stdClass;
+
+        $state->rememberRealInstance($real);
+
+        $this->assertSame($real, $state->knownInstance());
+        $this->assertSame(Mode::Loose, $state->mode());
+    }
 }

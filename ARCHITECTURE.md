@@ -113,11 +113,14 @@ $repo->expects('save')->times(minimum: 2);     // at least 2 (no upper bound)
 $repo->allows('save')->times(maximum: 5);      // at most 5 (no lower bound)
 $repo->allows('save')->never();                // no separate "reject" verb needed
 
-// partial mock — passthru() is Mockery's actual real per-expectation method
-// name for "call the real implementation for this one stub." Reused
-// authentically, not coined.
-$repo->allows('log')->passthru();
+// partial mock — whole-double only, not a per-expectation modifier (see
+// "Passthru is whole-double only" below for why Mockery's per-expectation
+// passthru() doesn't have an equivalent here).
 $fullDouble = TestDouble::for(Logger::class)->passthru($realLogger);
+
+// one specific method delegating to a real object, on an otherwise
+// Strict/Loose double — a resolves() closure, not a separate verb.
+$repo->allows('calculateTax')->resolves(fn (...$args) => $realGateway->calculateTax(...$args));
 
 // spy-style assertion — lives directly on the double (Eloquent-style),
 // not behind a separate TestDouble::assert() facade
@@ -496,6 +499,73 @@ delegated calls are still recorded for spy-style assertions.
 throwing a clear setup-time error suggesting `->passthru($existingInstance)`
 if that fails. Only valid for classes, not interfaces — validated at setup
 time.
+
+**`TestDouble::for($realInstance)` — a real instance in place of a class
+name — remembers that instance for a later `->passthru()` with no
+argument**, so the class name doesn't need to be spelled out twice when you
+already have the instance in hand:
+
+```php
+$double = TestDouble::for($realBook)->passthru();
+// instead of: TestDouble::for(Book::class)->passthru($realBook)
+```
+
+Deliberately *not* auto-wiring — this only accepts an already-built
+instance, never a class name plus constructor arguments for the library to
+construct on your behalf. Considered and rejected: a constructor-args array
+(mirroring `Mockery::mock(Class::class, [$args])`) only covers positional
+constructor arguments, whereas handing over an object already-built covers
+every construction strategy there is — a factory method, a builder, a
+dependency the caller mocked separately, an instance reused from elsewhere
+in the test — with no special-casing needed, and it gets real
+type-checking on the construction itself instead of an untyped args array.
+Only valid for a single target: which real instance a later `->passthru()`
+should fall back to becomes ambiguous the moment more than one target is
+involved (`TestDouble::for($x, SomeInterface::class)`), so that combination
+is rejected rather than guessed at.
+
+Because the derived target is the instance's own concrete class, not an
+interface, the resulting double still satisfies every interface that class
+implements — confirmed directly (not assumed): a class generated as
+`class Generated extends RealLogger` is `instanceof LoggerInterface` purely
+from PHP's own transitive interface inheritance through `extends`, nothing
+this library does specially. So a double built this way can still be bound
+into an IoC/DI container wherever the interface is expected.
+
+**Passthru is whole-double only — deliberately not a per-expectation
+modifier the way Mockery's `passthru()` is.** Considered and rejected, for
+two independent reasons:
+
+- **It isn't portable the way it first looks.** Confirmed against Mockery's
+  own source: Mockery's per-expectation `passthru()` doesn't use a separate
+  real instance at all — `Expectation::verifyCall()` calls
+  `$this->_mock->mockery_callSubjectMethod(...)`, which does
+  `call_user_func_array($this->_mockery_parentClass . '::' . $name, $args)`,
+  i.e. a `parent::` call on the mock object itself. That only produces
+  correct results if the mock's own internal state was properly
+  initialized — which is why Mockery explicitly refuses to allow `passthru()`
+  on a mock that isn't based on a real, loaded class, and why it's only
+  really safe on a mock built with real constructor arguments
+  (`Mockery::mock(Class::class, [$args])`). This library's generated doubles
+  have no equivalent opt-in: `ClassGenerator`'s classes always skip the real
+  constructor (`__td_instantiate()` calls `newInstanceWithoutConstructor()`),
+  with no path to run it instead. A `parent::`-style call here would always
+  be operating on an object whose real properties were never set — so the
+  mechanism Mockery's version actually relies on isn't available at all,
+  not just "not yet built."
+- **A separate real instance would be required either way, and `resolves()`
+  already covers that with no new verb.** Given `parent::` isn't viable, a
+  per-expectation passthru would need the same kind of real instance the
+  whole-double version already uses (auto-instantiated or supplied) — real
+  plumbing (threading the declaring class into `MethodExpectation`, a new
+  auto-instantiate-or-require-explicit design fork). But that instance still
+  has to come from somewhere, usually built by hand for the occasion, and at
+  that point `resolves()` — already shipped, no new concept — does the same
+  job in one line:
+  `$repo->allows('calculateTax')->resolves(fn (...$args) => $realGateway->calculateTax(...$args))`.
+  Delegating to a real object for one specific call isn't a distinct
+  concept needing its own verb; it's one use of "compute the return value
+  however you want," which is exactly what `resolves()` already is.
 
 ## Class surface area — reserved names on the generated double (resolved)
 

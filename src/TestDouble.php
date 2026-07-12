@@ -65,28 +65,54 @@ final class TestDouble
      * relies on internally to fabricate intersection-typed return values
      * (see fabricateIntersection()) — it was already there, just never
      * exposed as something a caller could ask for directly.
+     *
+     * A single target may also be a real instance instead of a class name —
+     * TestDouble::for($realBook) doubles $realBook::class and remembers
+     * $realBook so a later ->passthru() with no argument uses it, instead of
+     * needing ->passthru($realBook) spelled out separately (the class name
+     * is already fully implied by the instance's own type). Only valid for
+     * a single target: which real instance a later ->passthru() should fall
+     * back to becomes ambiguous the moment more than one target is
+     * involved, so a real instance mixed into a multi-target call is
+     * rejected rather than guessing.
      */
-    public static function for(string ...$targets): object
+    public static function for(string|object ...$targets): object
     {
         if ($targets === []) {
             throw new \InvalidArgumentException('TestDouble::for() requires at least one target.');
         }
 
-        return count($targets) === 1
-            ? self::fabricate($targets[0], depth: 0)
-            : self::fabricateIntersection($targets, depth: 0);
+        if (count($targets) > 1) {
+            foreach ($targets as $target) {
+                if (is_object($target)) {
+                    throw new \InvalidArgumentException(
+                        'TestDouble::for() only accepts a real instance as a target when doubling a single target.',
+                    );
+                }
+            }
+
+            return self::fabricateIntersection($targets, depth: 0);
+        }
+
+        $target = $targets[0];
+        $knownInstance = is_object($target) ? $target : null;
+        $targetClass = is_object($target) ? $target::class : $target;
+
+        return self::fabricate($targetClass, depth: 0, knownInstance: $knownInstance);
     }
 
     /**
      * @internal used only by SafeDefaultResolver for recursive Loose-mode
      * fabrication. depth=0 is exactly TestDouble::for()'s own public path —
-     * a depth-0 double is never marked fabricated.
+     * a depth-0 double is never marked fabricated. $knownInstance is only
+     * ever non-null from that same public path (see for()) — recursive
+     * fabrication never has a real instance to remember.
      */
-    public static function fabricate(string $target, int $depth): object
+    public static function fabricate(string $target, int $depth, ?object $knownInstance = null): object
     {
         $generatedClass = (new ClassGenerator)->generate($target);
 
-        return self::create($generatedClass, $target, $depth);
+        return self::create($generatedClass, $target, $depth, $knownInstance);
     }
 
     /**
@@ -103,12 +129,16 @@ final class TestDouble
         return self::create($generatedClass, implode('&', $targets), $depth);
     }
 
-    private static function create(string $generatedClass, string $target, int $depth): object
+    private static function create(string $generatedClass, string $target, int $depth, ?object $knownInstance = null): object
     {
         $state = new DoubleState($target, self::deriveLabel($target));
 
         if ($depth > 0) {
             $state->markFabricated($depth);
+        }
+
+        if ($knownInstance !== null) {
+            $state->rememberRealInstance($knownInstance);
         }
 
         $instance = $generatedClass::__td_instantiate();

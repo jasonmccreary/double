@@ -55,10 +55,16 @@ trait DoubleControlMethods
         return $this;
     }
 
+    /**
+     * $realInstance, if omitted, falls back to whatever TestDouble::for()
+     * already remembered (see DoubleState::knownInstance() — set when for()
+     * was given a real instance instead of a class name), and only then to
+     * reflection-based auto-instantiation.
+     */
     public function passthru(?object $realInstance = null): static
     {
         $state = TestDouble::stateFor($this);
-        $realInstance ??= PassthruInstantiator::autoInstantiate($state->target());
+        $realInstance ??= $state->knownInstance() ?? PassthruInstantiator::autoInstantiate($state->target());
 
         $state->configurePassthru($realInstance);
 

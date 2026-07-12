@@ -9,6 +9,8 @@ use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\InstantiableLogger;
+use JMac\Testing\Tests\Support\LoggerInterface;
+use JMac\Testing\Tests\Support\RealLogger;
 use PHPUnit\Framework\TestCase;
 
 final class PassthruModeTest extends TestCase
@@ -65,5 +67,61 @@ final class PassthruModeTest extends TestCase
         $this->expectExceptionMessage('->passthru($existingInstance)');
 
         $double->passthru();
+    }
+
+    public function test_for_with_a_real_instance_derives_the_double_from_its_class(): void
+    {
+        $real = new InstantiableLogger;
+        $double = TestDouble::for($real);
+
+        $this->assertInstanceOf(InstantiableLogger::class, $double);
+    }
+
+    public function test_for_with_a_real_instance_does_not_change_the_default_mode(): void
+    {
+        $real = new InstantiableLogger;
+        $double = TestDouble::for($real);
+
+        // Loose mode's safe default for a bool return is false — if for()
+        // had silently switched to Passthru mode, this would delegate to
+        // $real->log() instead and return true.
+        $this->assertFalse($double->log('hello'));
+    }
+
+    public function test_for_with_a_real_instance_is_used_by_a_later_passthru_with_no_argument(): void
+    {
+        $real = new InstantiableLogger;
+        $double = TestDouble::for($real)->passthru();
+
+        $this->assertSame($real, TestDouble::stateFor($double)->passthruTarget());
+        $this->assertTrue($double->log('hello'));
+    }
+
+    public function test_passthru_with_an_explicit_instance_overrides_the_one_remembered_from_for(): void
+    {
+        $remembered = new InstantiableLogger;
+        $explicit = new InstantiableLogger;
+        $double = TestDouble::for($remembered)->passthru($explicit);
+
+        $this->assertSame($explicit, TestDouble::stateFor($double)->passthruTarget());
+    }
+
+    public function test_for_with_a_real_instance_still_satisfies_an_interface_the_class_implements(): void
+    {
+        $real = new RealLogger;
+        $double = TestDouble::for($real)->passthru();
+
+        // PHP's own transitive interface inheritance through extends — not
+        // anything this library does specially — so the double can still be
+        // swapped into an IoC container wherever LoggerInterface is bound.
+        $this->assertInstanceOf(LoggerInterface::class, $double);
+        $this->assertTrue($double->log('hello'));
+    }
+
+    public function test_for_rejects_a_real_instance_mixed_into_a_multi_target_call(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        TestDouble::for(new InstantiableLogger, BookRepositoryInterface::class);
     }
 }

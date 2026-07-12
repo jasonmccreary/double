@@ -27,6 +27,17 @@ final class DoubleState
 
     private ?object $passthruTarget = null;
 
+    /**
+     * A real instance supplied directly to TestDouble::for($instance) — see
+     * its docblock. Remembered here independent of mode, so a later
+     * ->passthru() with no argument can use it instead of needing to
+     * auto-instantiate a fresh one. Deliberately a separate field from
+     * $passthruTarget: knowing about a real instance and actually being in
+     * Passthru mode are two different things — this can be set at creation
+     * time, long before (or even if never) ->passthru() is called at all.
+     */
+    private ?object $knownInstance = null;
+
     private int $fabricationDepth = 0;
 
     public function __construct(
@@ -116,6 +127,19 @@ final class DoubleState
         $target = $this->passthruTarget;
 
         return $target;
+    }
+
+    /**
+     * @internal used only by TestDouble::create()
+     */
+    public function rememberRealInstance(object $instance): void
+    {
+        $this->knownInstance = $instance;
+    }
+
+    public function knownInstance(): ?object
+    {
+        return $this->knownInstance;
     }
 
     /**
