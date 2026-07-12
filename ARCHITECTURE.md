@@ -1267,3 +1267,234 @@ identity-vs-equality gap at all.**
 === $actual`. `Argument::same()` is a new one-method addition,
 backed by a new `SameMatcher` class, alongside
 `any()`/`type()`/`satisfies()`/`capture()`/`remaining()`.
+
+## Method-name suggestions on UnknownMethodException (resolved)
+
+A typo in `expects('sav')`/`allows('sav')`/`received('sav')` used to fail
+with a clean "no such method" message and nothing more — every other
+diagnostic in this library is held to "explain what to do about it," and
+this one didn't, despite being one of the most likely mistakes a person
+actually makes.
+
+**Added `Diagnostics\DidYouMean::suggest($needle, $candidates)`:**
+Levenshtein-distance-based, with the threshold scaling to the length of
+the longer string being compared (`distance <= max(1, floor(maxlen / 3))`,
+the same heuristic Symfony Console uses for its own "did you mean"
+suggestions) rather than a flat cap — a flat threshold either over-matches
+short names or under-matches long ones. Returns `null`, not a guess, when
+nothing is close enough: a wrong suggestion is worse than none.
+`DoubleState::declarableMethodNames()` supplies the candidate list via
+`ReflectionClass::getMethods()` (not `get_class_methods()`, which only
+sees public methods from outside the declaring class) so the candidate
+set has exactly the same visibility rules `declaringCandidate()`'s own
+`method_exists()` check already uses.
+
+**Built:** `UnknownMethodException` gained an optional `?string
+$suggestion`, rendered as `Did you mean "save"?` appended to the existing
+sentence. Both throw sites (`TestDouble::registerExpectation()` for
+`expects()`/`allows()`, and `TestDouble::received()`) compute it the same
+way. `expects('bogus')` (nothing close) still renders with no suggestion
+appended — the threshold is deliberately conservative rather than always
+guessing something.
+
+## Unifying received()'s verification with expects()'s auto-verify domain (resolved)
+
+`received()`'s spy-style check originally lived entirely in
+`ReceivedAssertion::__destruct()` — the only way it could support
+`with()` then `never()` composed together (nothing about the mechanism
+could know "the chain is fully composed" any earlier than object
+destruction; a required terminal verb was considered and rejected as
+"easy to forget, silently never asserting," and splitting into a second
+verb the way Mockery has `shouldNotHaveReceived()` alongside
+`shouldHaveReceived()` was rejected on the no-aliases policy). This
+worked correctly for the common case — an unassigned statement destructs
+at the end of that statement, well within the same test — but had a real
+gap: an assertion held somewhere that outlives its own statement (a
+property on the test case, not just a local variable — a local variable
+turns out *not* to reproduce this, since PHP tears down a method's own
+locals the instant the method returns, which is still before
+`VerifiesDoubles`'s `#[After]` hook would ever run) has no guaranteed
+check point at all.
+
+**Confirmed empirically, not just reasoned about:** reverting the fix and
+reproducing with a `ReceivedAssertion` held on a test-case property (not
+a local — see above) didn't just silently pass. It crashed the entire
+PHPUnit run: the object survived all the way to `TestSuite`'s own
+teardown at process end, threw from `__destruct()` at that point, and
+PHPUnit reported it as an unattributed internal error, not a failure on
+any specific test — worse than the "silently passes" framing this gap
+was originally described with.
+
+**Decision: give `received()` the same domain `expects()`/`allows()`
+already has, not a separate mechanism.** `TestDouble::$pendingReceived`
+mirrors `$pending`'s existing role and lifecycle exactly (same
+strong-reference reasoning — an assertion that's purely a local variable
+is already garbage-collected before `#[After]` runs, so the pending list
+needs a real reference to survive the gap; same reset-on-
+`armAutoVerify()`, drain-before-iterate-on-`verifyAll()` pattern).
+`ReceivedAssertion::check()` is idempotent (`$checked` flag) so whichever
+path — `__destruct()` or the `#[After]`-driven `TestDouble::verifyAll()`
+— runs first wins and the other becomes a no-op. `__destruct()` remains
+the *only* mechanism for any non-PHPUnit runner, and for PHPUnit users
+not using `VerifiesDoubles` — the framework-agnostic promise is
+unchanged, this only adds a deterministic backstop for the one setup
+(PHPUnit + the trait) that already has a teardown domain to plug into.
+
+**Built:** `TestDouble::$pendingReceived`, `received()` registers into it
+while auto-verify is armed, `verifyAll()` drains and checks both lists
+from the same call. `ReceivedAssertion::check()` extracted from
+`__destruct()`, public (`@internal`), guarded by `$checked`.
+
+## Static methods: rejected cleanly, not silently or with a crash (resolved)
+
+Static methods were always out of `ClassGenerator`'s scope —
+`overridableMethods()` skips them, since `ProxyBehavior::intercept()`
+dispatches through `$this`, and a static call has no `$this` to give it
+(matches Mockery's own posture here: its answer to static mocking,
+`alias:`-prefixed mocks, is explicitly not recommended even by Mockery's
+own docs, and requires running each such test in its own PHP process
+since aliasing a class name is a one-shot, irreversible operation). That
+scope decision was always correct. What wasn't caught was what happens at
+the two points where a static method actually gets reached, both found by
+testing directly rather than assumed from the scope decision alone:
+
+- **Doubling an interface (or abstract class) with a static method
+  crashed with an uncatchable PHP fatal error**, not one of this
+  library's own exceptions: every interface method is implicitly
+  abstract, including static ones, and PHP requires a non-abstract class
+  to implement every abstract method it inherits — but
+  `overridableMethods()` never emits one for a static method, so the
+  generated `final class` was left silently short one required
+  implementation. `isFinal()` gets a clean, actionable
+  `InvalidDoubleTargetException`; this got nothing, until now.
+- **`expects()`/`allows()`/`received()` on a static method that exists on
+  a concrete class silently no-op'd.** The method-existence check
+  (`declaringCandidate()`) doesn't care about staticness, so the
+  expectation registered without error — but the generated subclass
+  never overrides a static method at all, so the real implementation ran
+  unstubbed regardless of any configured return, and the expectation
+  could never be satisfied. The only symptom was a confusing
+  `UnsatisfiedExpectationException` later, at `verify()` time — "expected
+  exactly 1 time, called 0 times" for a method that genuinely *was*
+  called, just not through the interception layer.
+
+**Built:** `ClassGenerator::assertNoAbstractStaticMethods()` (checked
+before `eval()`) raises `InvalidDoubleTargetException::
+hasAbstractStaticMethod()` for the first case.
+`TestDouble::assertConfigurable()` (shared by `registerExpectation()` and
+`received()`) checks `DoubleState::isStatic()` and raises the new
+`StaticMethodException` for the second, the same way an unknown method
+name already is. Actual static-method *interception* remains out of
+scope, deliberately, for the same reasons Mockery's own `alias:` mocks
+are a documented last resort rather than a first-class feature.
+
+## Second matcher expansion: not(), matches(), contains(), and any(...alternatives) (resolved)
+
+Revisited once `satisfies()` had been in real use long enough to show a
+recurring cost: every time someone reached for it to express "not this
+value," "matches this string format," or "has this element," the
+resulting diagnostic got strictly worse — `PredicateMatcher::describe()`
+can only ever render the opaque `satisfies(...)`, with no way to recover
+what the closure actually checked. That diagnostic-quality regression,
+not speculative catalog-porting, is what motivated this round.
+
+**Benchmarked against Mockery's actual matcher catalog, not assumed —
+confirmed by reading `library/Mockery/Matcher/*.php` and the facade
+methods on `Mockery.php` directly.** Walked the full list (`any`,
+`andAnyOtherArgs`, `type`, `ducktype`, `subset`, `contains`, `hasKey`,
+`hasValue`, `capture`, `on`, `mustBe`, `isEqual`, `isSame`, `not`,
+`anyOf`, `notAnyOf`, `pattern`) to separate "genuinely missing" from
+"reachable through what's already here" or "redundant with a default
+this library already has":
+
+- `on()` → already `satisfies()`, same concept under a different name —
+  not a gap.
+- `mustBe()`/`isEqual()` → already covered by a bare literal's own
+  default equality behavior. Mockery's own `MustBe` is
+  `@deprecated 2.0 Due to ambiguity, use PHPUnit equivalents` — its own
+  maintainers reached the same conclusion, that a dedicated verb here is
+  redundant.
+- `ducktype()` → discussed explicitly (via a multi-select options prompt
+  covering `anyOf`/`notAnyOf`, `subset`/`contains`, `hasKey`/`hasValue`,
+  and `ducktype`) and declined as niche enough that `satisfies()`
+  remains its only path — a deliberate scope decision, not an
+  oversight.
+- `subset()` → **partial, not exact.** Mockery's `subset()` checks that
+  a whole array contains *all* of several given key/value pairs
+  simultaneously (`array_replace_recursive` against the whole
+  structure); `contains()` (below) checks whether *any single*
+  element/pair satisfies one condition — a different shape. Accepted as
+  a deliberate simplification in the interest of keeping the surface
+  small, not a full replacement.
+- `hasKey()`/`hasValue()` → fully reachable via `contains()`'s callback
+  form, with zero information lost.
+- `anyOf()`/`notAnyOf()` → the one genuine remaining gap (see `any()`
+  below) — nothing in the existing set reaches "this scalar equals one
+  of several arbitrary literal values," since every other primitive
+  operates on a different shape (type-membership, object identity,
+  iterable-containment, regex-string).
+
+**`Argument::not($expected)` / `Argument::not()`.** Two shapes,
+disambiguated by `func_num_args()` (not a null-check — `not(null)` is a
+legitimate "not null" literal match, not the zero-arg case): one
+argument negates a bare literal directly; zero arguments returns a
+`NegatedArgument` exposing
+`type()`/`same()`/`satisfies()`/`contains()`/`matches()`/`any()`, so
+negating a *verb* reads left-to-right (`Argument::not()->type('int')`)
+instead of nested inside-out (`Argument::not(Argument::type('int'))`). A
+`Matcher` passed directly to the one-argument form is rejected with a
+clear error pointing at `not()->verb(...)` — exactly one canonical
+spelling per shape, never two ways to negate a matcher, holding the
+no-aliases line even through this expansion. `NegatedArgument`
+deliberately doesn't mirror every `Argument` verb: `capture()` negated
+silently breaks its own capture side-effect (only the top-level matcher
+on an argument position is ever checked via `instanceof CaptureMatcher`
+— wrapped in `NotMatcher`, it no longer is that top-level matcher), and
+`remaining()` is a positional `with()` marker, not a per-value check, so
+negating it doesn't mean anything. Confirmed against Mockery's own `Not`
+matcher: it only ever compares by identity against one fixed value and
+can't wrap another matcher at all — this library's version composes,
+Mockery's doesn't.
+
+**`Argument::matches($pattern)`** is `PatternMatcher` under the hood,
+matching a string (or `Stringable`) argument against a PCRE pattern.
+Named `matches()`, not `pattern()`: the regular expression already *is*
+the pattern, so the verb should name the action (matching against it),
+not restate the noun a second time. Validated at construction time so a
+malformed pattern fails loudly at configuration time rather than as a
+silent `preg_match()` warning buried inside call matching later.
+Non-string, non-`Stringable` values are a straightforward non-match, not
+an uncontrolled `(string)` cast the way Mockery's own `Pattern` matcher
+does — an array argument there raises a PHP warning and silently
+matches against the literal string `"Array"`.
+
+**`Argument::contains($needle)`** covers what Mockery splits across
+`contains()`/`hasKey()`/`hasValue()` (and partially `subset()`, see
+above) in one verb: a `Matcher` (true if any element matches it), a
+plain callable invoked as `($value, $key)` per element (mirroring
+Laravel `Collection::contains()`'s callback form and the `(value, key)`
+convention from underscore/lodash-style iteration), or a bare literal
+(wrapped in `EqualsMatcher`, same rule as `with()` itself).
+
+**`Argument::any()` widened, not a new `anyOf()`/`notAnyOf()` verb
+pair.** No arguments still means "unconstrained, matches everything"
+(unchanged, `AnyMatcher`); one or more arguments narrows the domain to
+those alternatives (`AnyOfMatcher`, each slot Matcher-or-literal, same
+rule as everywhere else). Considered and initially rejected overloading
+`any()` on the concern that "matches anything" and "matches any of
+these specific things" read as opposite meanings depending on arg count;
+revisited and accepted once framed correctly — "any" already means "any
+element of a domain that defaults to everything" in plain English, the
+same "arity changes the entry point, concept stays the same" pattern
+`not()` already established, not an unrelated second meaning bolted onto
+the same word. `Argument::not()->any($a, $b)` gives `notAnyOf` semantics
+for free through the exact same composition every other `NegatedArgument`
+verb already gets — no second verb needed for the negated case either.
+Confirmed against Mockery's own `AnyOf`: literal-only, always strict
+`===`, no nested-matcher support — this library's version composes and
+lets each alternative be its own matcher.
+
+**Built:** `NotMatcher`, `NegatedArgument`, `PatternMatcher`,
+`ContainsMatcher`, `AnyOfMatcher`, plus
+`Argument::not()`/`matches()`/`contains()`, and `Argument::any()`
+widened to variadic.
