@@ -6,6 +6,15 @@ written for whoever picks up implementation next (including an AI coding
 agent), so it includes not just *what* was decided but *why*, and flags what
 is still explicitly open.
 
+**This is a living record of reasoning, not a spec.** It evolves alongside
+the code — when the two disagree, the code is current and this document is
+stale, not the other way around; update it to match rather than treating it
+as something the code must conform to. The same goes for any claim in here
+about a third-party library's behavior (Mockery, RSpec, PHPUnit, etc.):
+these were true when checked against that library's real source at the
+time, not guaranteed evergreen — re-verify before relying on one, don't
+cite this document as proof on its own.
+
 ## Motivating gripes (the whole reason this project exists)
 
 1. Mockery's syntax leads with a taxonomy (Mock vs Spy vs Partial Mock) that
