@@ -40,6 +40,15 @@ final class DoubleState
 
     private int $fabricationDepth = 0;
 
+    /**
+     * The furthest slot reached so far by an inOrder()-marked call — see
+     * orderedExpectations() and ARCHITECTURE.md, "Call-order enforcement".
+     * 0 is a safe starting sentinel: the first inOrder()-marked
+     * expectation's own slot is always index 0, and comparing a slot against
+     * itself never counts as a regression.
+     */
+    private int $orderCursor = 0;
+
     public function __construct(
         private readonly string $target,
         private readonly string $label,
@@ -201,5 +210,33 @@ final class DoubleState
             $this->expectations,
             static fn (MethodExpectation $expectation): bool => ! $expectation->isSatisfied(),
         ));
+    }
+
+    /**
+     * Every inOrder()-marked expectation registered on this double, in
+     * registration order — see ARCHITECTURE.md, "Call-order enforcement".
+     * An expectation's position in this list is its slot for call-order
+     * enforcement (see ProxyBehavior); no separate slot-numbering
+     * bookkeeping is needed since $expectations is already
+     * registration-ordered.
+     *
+     * @return list<MethodExpectation>
+     */
+    public function orderedExpectations(): array
+    {
+        return array_values(array_filter(
+            $this->expectations,
+            static fn (MethodExpectation $expectation): bool => $expectation->isOrdered(),
+        ));
+    }
+
+    public function orderCursor(): int
+    {
+        return $this->orderCursor;
+    }
+
+    public function advanceOrderCursor(int $slot): void
+    {
+        $this->orderCursor = $slot;
     }
 }

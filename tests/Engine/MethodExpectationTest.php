@@ -357,4 +357,23 @@ final class MethodExpectationTest extends TestCase
 
         $this->assertSame('find(any()) — expected exactly 1 time, called 0 times', $expectation->describe());
     }
+
+    public function test_is_ordered_is_false_until_in_order_is_called(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->assertFalse($expectation->isOrdered());
+
+        $expectation->inOrder();
+
+        $this->assertTrue($expectation->isOrdered());
+    }
+
+    public function test_in_order_is_chainable(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->inOrder();
+
+        $this->assertInstanceOf(MethodExpectation::class, $expectation);
+        $this->assertTrue($expectation->isOrdered());
+    }
 }

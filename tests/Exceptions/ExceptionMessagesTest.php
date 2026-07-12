@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
+use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
@@ -134,5 +135,12 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = InvalidDoubleTargetException::isFinal('FinalLogger');
 
         $this->assertMatchesGolden('invalid-double-target-is-final', $exception->getMessage());
+    }
+
+    public function test_renders_out_of_order_call(): void
+    {
+        $exception = new OutOfOrderCallException('Connection', 'open', 'close');
+
+        $this->assertMatchesGolden('out-of-order-call', $exception->getMessage());
     }
 }

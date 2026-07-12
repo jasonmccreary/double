@@ -1098,26 +1098,125 @@ into the trait.
 Ship `0.x` throughout M1–M5 specifically so early shape mistakes in
 `Matcher` or `Diagnostic` aren't breaking changes yet.
 
-## Next milestones (flagged, not yet built)
+## Call-order enforcement (resolved)
 
-One item raised in review, deliberately parked before implementation —
-recorded here with where the thinking currently stands, so picking it back
-up doesn't start from zero.
+Mockery's `ordered()`/`globally()` — asserting that calls across one or more
+expectations happen in a specific relative sequence — has no equivalent
+here today, and unlike the other gaps found against Mockery (`atMost`/
+`between`, exception sequencing, trailing argument matching), there was no
+existing primitive this could be folded into; it's a genuinely new
+capability. The concern originally flagged here — that it has to interact
+carefully with the "last-registered-that-matches wins" rule this library
+deliberately chose over Mockery's own first-registered-wins matching order
+(see "Sensible defaults" and the `byDefault()` comparison) — turned out to
+have a clean answer once checked against real prior art rather than assumed:
 
-**Call-order enforcement.** Mockery's `ordered()`/`globally()` — asserting
-that calls across one or more expectations happen in a specific relative
-sequence — has no equivalent here at all today, and unlike the other gaps
-found against Mockery (`atMost`/`between`, exception sequencing, trailing
-argument matching), there's no existing primitive this could be folded
-into; it's a genuinely new capability, not an extension of one that already
-exists. Flagged as more architecturally involved than the recent additions
-specifically because it has to interact carefully with the "last-registered-
--that-matches wins" rule this library deliberately chose over Mockery's own
-first-registered-wins matching order (see "Sensible defaults" and the
-`byDefault()` comparison) — call order and match-selection order are
-different concerns, but a design here needs to be explicit about how they
-coexist rather than quietly assuming they don't interact. Design discussion
-intentionally not started yet.
+**Confirmed against Mockery's own source, not assumed:** `Expectation::
+verifyCall()` calls `validateOrder()` *after* an expectation has already
+been selected as the match for a call (`Mock::__call()` finds the
+expectation first via the existing selection logic; ordering is checked
+only once that selection has already happened). Order enforcement in
+Mockery was never part of match selection — it's a check layered on top of
+whichever expectation got picked. **Call order and match-selection order
+don't need to interact at all, and this design keeps them fully separate**:
+last-registered-that-matches-wins is untouched by any of what follows.
+
+**Decision: the verb is `inOrder()`, not `ordered()`.** `ordered()` (Mockery
+and RSpec's shared name) only reads correctly if the reader already knows
+the convention it's borrowed from — the same trap this document's motivating
+gripe #1 calls out in Mockery generally ("leads with a taxonomy that only
+makes sense to someone who already understands test doubles"). `inOrder()`
+reads as a complete English phrase with no prior knowledge required:
+`expects('open')->inOrder()` = "expects open, in order." A deliberate
+one-time exception to preferring single-word modifiers, not a precedent for
+compounding names elsewhere — weighed and picked for its own sake, not
+because a single word wasn't tried. Single-word alternatives considered and
+rejected: `sequenced()` (collides with this document's own already-named
+"sequential returns" feature — same word, unrelated concept, exactly the
+kind of collision `satisfies()` was picked to avoid against `Matcher::
+matches()`); `serially()` (no existing modifier uses an `-ly` shape, and
+"serial" carries the wrong connotation); `consecutive()` (implies
+back-to-back with nothing interleaved, which isn't the real semantics —
+unrelated calls may legitimately happen in between); `queued()` (reads as
+deferral/scheduling, not an order constraint, and brushes against
+"sequential returns" again).
+
+**Decision: scoped per-double, not global.** Mockery defaults to per-mock
+ordering (`globally()` opts into one shared cross-mock sequence). RSpec
+defaults the other way — confirmed against its docs, not assumed: a single
+global sequence across every double in the example, no opt-in verb needed,
+with its own docs cautioning the feature is "not generally recommended...
+would make your spec brittle, but occasionally useful." This design picks
+Mockery's per-double default specifically because it fits this library's
+existing architecture with zero new shared state: `DoubleState` is already
+fully self-contained per double, and no other feature in the codebase needs
+a cross-double registry (see "Module boundaries"). A global-by-default
+scope would mean introducing shared mutable state across separate
+`TestDouble::for()` calls purely for this one feature.
+
+**Not building an equivalent to `globally()` or named/numbered
+`ordered($group)` for v1.** Both exist in Mockery to relax a default this
+design is already choosing the more conservative version of. Deliberately
+minimal starting surface — add a way to relax the per-double default only
+once real usage shows a genuine need, the same policy already applied to
+the starting matcher set.
+
+**Mechanism, as built.** `MethodExpectation::inOrder()` is a pure flag
+(`isOrdered(): bool`) — no slot number, no back-reference to `DoubleState`.
+`MethodExpectation` stays a self-contained value object with zero knowledge
+of the double it's registered against (confirmed against its own test
+suite, which constructs it standalone with no `DoubleState` in sight).
+`DoubleState::orderedExpectations()` derives the ordered subsequence on
+demand by filtering the already registration-ordered `$expectations` list —
+an expectation's *slot* is simply its position (`array_search()`, strict) in
+that filtered list, so no separate numbering bookkeeping exists anywhere.
+`DoubleState` also holds one `int $orderCursor` (starts at `0`, the same
+sentinel Mockery's own `$_mockery_currentOrder` uses, for the same reason:
+the first ordered slot is index `0`, and a slot compared against itself is
+never a regression). `ProxyBehavior::enforceOrder()` — a new private method,
+separate from `findMatch()` and called only after a match has already been
+selected and recorded — is where the actual check lives: a no-op unless the
+matched expectation `isOrdered()`; otherwise its slot is looked up and
+compared against the cursor, throwing on regression (`slot < cursor`) and
+advancing the cursor (`slot >= cursor`) otherwise. Available uniformly on
+both `expects()` and `allows()` — no special-casing between them, matching
+how every other modifier already applies to both verbs.
+
+**New `OutOfOrderCallException`**, following the exact pattern the other
+three mid-test exceptions already use: a plain exception plus a
+`PHPUnitOutOfOrderCallException` sibling, picked at throw time by `Engine\
+ExceptionFactory`'s existing `class_exists()` check. Names the double, the
+offending method, and which already-ordered method it's now behind, e.g.:
+`Test double "Connection" received "open()" out of order: "close()" already
+happened, and inOrder() requires this to happen no later than that.`
+
+**Terminology note for whoever implements this:** "order" already names a
+different concept earlier in this document — "Expectation matching order:
+last-registered-that-matches wins" is about declaration order deciding which
+expectation gets *selected*. `inOrder()` governs a separate concern: which
+already-selected calls are allowed to *happen* in what sequence. Don't
+conflate the two in docs or test names for this feature.
+
+**Real-world scope this is for, not a general recommendation:** stateful
+protocol boundaries where the order itself is the contract —
+`beginTransaction()`/`commit()`, `open()`/`write()`/`close()` on a
+connection, "acknowledge before dequeuing the next." Both Mockery's and
+RSpec's own source/docs concede this is a common source of brittle tests
+when used to pin down incidental implementation order rather than a real
+protocol constraint — worth a line in whatever user-facing docs cover this
+feature, not just this internal note.
+
+**Built:** `MethodExpectation::inOrder()`/`isOrdered()`,
+`DoubleState::orderedExpectations()`/`orderCursor()`/`advanceOrderCursor()`,
+`ProxyBehavior::enforceOrder()`, `Exceptions\OutOfOrderCallException` (+
+`OutOfOrderCallFields` trait) and its `Integrations\PHPUnit` sibling, and
+`ExceptionFactory::outOfOrderCall()`. Covered end-to-end in
+`TestDoubleTest` (in-declared-order success, out-of-order regression,
+unordered expectations freely interleaved, forward skips allowed, per-double
+scoping across two doubles, and parity between `expects()`/`allows()`), plus
+unit coverage in `MethodExpectationTest`, `DoubleStateTest`,
+`ExceptionFactoryTest`, `PHPUnitExceptionsTest`, and a golden-file message
+test in `ExceptionMessagesTest`.
 
 ## Strict-by-default scalar/array matching, loose objects, explicit object identity (resolved)
 

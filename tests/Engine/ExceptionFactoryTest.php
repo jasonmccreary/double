@@ -7,6 +7,7 @@ namespace JMac\Testing\Tests\Engine;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use PHPUnit\Framework\TestCase;
@@ -47,5 +48,12 @@ final class ExceptionFactoryTest extends TestCase
         $exception = ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1);
 
         $this->assertInstanceOf(PHPUnitFabricationLimitExceededException::class, $exception);
+    }
+
+    public function test_out_of_order_call_picks_the_phpunit_variant(): void
+    {
+        $exception = ExceptionFactory::outOfOrderCall('BookRepository', 'find', 'delete', false);
+
+        $this->assertInstanceOf(PHPUnitOutOfOrderCallException::class, $exception);
     }
 }

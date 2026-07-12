@@ -7,10 +7,12 @@ namespace JMac\Testing\Tests\Integrations\PHPUnit;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
+use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use PHPUnit\Framework\AssertionFailedError;
@@ -64,6 +66,16 @@ final class PHPUnitExceptionsTest extends TestCase
     {
         $plain = new FabricationLimitExceededException('SecondLink', 'toThird', 'ThirdLink', 1);
         $phpunit = new PHPUnitFabricationLimitExceededException('SecondLink', 'toThird', 'ThirdLink', 1);
+
+        $this->assertInstanceOf(AssertionFailedError::class, $phpunit);
+        $this->assertSame($plain->getMessage(), $phpunit->getMessage());
+        $this->assertSame($phpunit, $phpunit->getDiagnostic());
+    }
+
+    public function test_out_of_order_call_variant_is_an_assertion_failure_with_identical_prose(): void
+    {
+        $plain = new OutOfOrderCallException('BookRepository', 'find', 'delete');
+        $phpunit = new PHPUnitOutOfOrderCallException('BookRepository', 'find', 'delete');
 
         $this->assertInstanceOf(AssertionFailedError::class, $phpunit);
         $this->assertSame($plain->getMessage(), $phpunit->getMessage());

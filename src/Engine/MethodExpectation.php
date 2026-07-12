@@ -43,6 +43,8 @@ final class MethodExpectation
 
     private int $timesMatched = 0;
 
+    private bool $ordered = false;
+
     public function __construct(
         private readonly string $method,
         bool $required,
@@ -192,6 +194,28 @@ final class MethodExpectation
     public function never(): static
     {
         return $this->times(0);
+    }
+
+    /**
+     * Marks this expectation as participating in call-order enforcement —
+     * see ARCHITECTURE.md, "Call-order enforcement." Deliberately just a
+     * flag: this class stays a self-contained value object with zero
+     * knowledge of the double it's registered against or of any other
+     * expectation (see ARCHITECTURE.md, "Module boundaries"). The actual
+     * slot bookkeeping and violation check live in DoubleState/ProxyBehavior,
+     * which already have registration-order visibility across every
+     * expectation on a double — this class doesn't need to.
+     */
+    public function inOrder(): static
+    {
+        $this->ordered = true;
+
+        return $this;
+    }
+
+    public function isOrdered(): bool
+    {
+        return $this->ordered;
     }
 
     public function matchesArguments(array $arguments): bool

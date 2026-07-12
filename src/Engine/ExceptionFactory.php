@@ -8,11 +8,13 @@ use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
+use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
@@ -93,6 +95,19 @@ final class ExceptionFactory
         }
 
         return new FabricationLimitExceededException($label, $method, $returnType, $limit);
+    }
+
+    public static function outOfOrderCall(
+        string $label,
+        string $method,
+        string $alreadyOccurredMethod,
+        bool $fabricated,
+    ): Diagnostic&\Throwable {
+        if (self::phpUnitIsAvailable()) {
+            return new PHPUnitOutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
+        }
+
+        return new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
     }
 
     public static function unsatisfiedReceivedAssertion(

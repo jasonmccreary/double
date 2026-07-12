@@ -41,6 +41,8 @@ final class ProxyBehavior
 
         $expectation->recordMatch($arguments);
 
+        self::enforceOrder($state, $expectation);
+
         if ($expectation->exceedsMaximum()) {
             throw ExceptionFactory::expectationCallLimitExceeded(
                 $state->label(),
@@ -70,6 +72,38 @@ final class ProxyBehavior
         }
 
         return null;
+    }
+
+    /**
+     * Orthogonal to findMatch() above, not part of it — see
+     * ARCHITECTURE.md, "Call-order enforcement". Only ever runs against
+     * whichever expectation findMatch() already selected; never changes
+     * that selection. A no-op unless $expectation itself was marked
+     * inOrder(). Rejects only regression (a slot behind the furthest one
+     * already reached) — reaching a later slot without every slot in
+     * between having fired is allowed, mirroring Mockery's own
+     * validateOrder(); a skipped required step still surfaces separately,
+     * via the ordinary unmet-expectation check at verify() time.
+     */
+    private static function enforceOrder(DoubleState $state, MethodExpectation $expectation): void
+    {
+        if (! $expectation->isOrdered()) {
+            return;
+        }
+
+        $ordered = $state->orderedExpectations();
+        $slot = array_search($expectation, $ordered, true);
+
+        if ($slot < $state->orderCursor()) {
+            throw ExceptionFactory::outOfOrderCall(
+                $state->label(),
+                $expectation->method(),
+                $ordered[$state->orderCursor()]->method(),
+                $state->isFabricated(),
+            );
+        }
+
+        $state->advanceOrderCursor($slot);
     }
 
     private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed

@@ -7,6 +7,7 @@ namespace JMac\Testing\Tests;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
@@ -137,6 +138,102 @@ final class TestDoubleTest extends TestCase
 
         $this->assertSame($specific, $double->find(123));
         $this->assertSame($default, $double->find(456));
+    }
+
+    public function test_in_order_calls_made_in_declared_order_succeed(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('find')->inOrder();
+        $double->allows('save')->inOrder();
+        $double->allows('delete')->inOrder();
+
+        $double->find(1);
+        $double->save(new Book('Dune'));
+        $double->delete(1);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_in_order_calls_out_of_declared_order_throw_immediately(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('find')->inOrder();
+        $double->allows('save')->inOrder();
+
+        $double->save(new Book('Dune'));
+
+        $this->expectException(PHPUnitOutOfOrderCallException::class);
+        $this->expectExceptionMessage('received "find()" out of order: "save()" already happened');
+
+        // find() is earlier in the declared sequence than save(), which
+        // already happened — calling it now is a regression.
+        $double->find(1);
+    }
+
+    public function test_in_order_ignores_calls_to_expectations_not_themselves_marked_in_order(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('find')->inOrder();
+        $double->allows('delete')->inOrder();
+        $double->allows('save')->returns(true); // not ordered
+
+        $double->find(1);
+        $double->save(new Book('Dune')); // unordered — freely interleaved
+        $double->delete(1);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_in_order_allows_skipping_ahead_without_every_step_occurring(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('find')->inOrder();
+        $double->allows('save')->inOrder();
+        $double->allows('delete')->inOrder();
+
+        // save() (the middle step) never happens — jumping straight from
+        // find() to delete() is a forward skip, not a regression, and is
+        // allowed (mirrors Mockery's own validateOrder() — see
+        // ARCHITECTURE.md, "Call-order enforcement"). A skipped required
+        // step still surfaces separately, via the ordinary
+        // unmet-expectation check at verify() time.
+        $double->find(1);
+        $double->delete(1);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_in_order_is_scoped_per_double_not_across_doubles(): void
+    {
+        $first = TestDouble::for(BookRepositoryInterface::class);
+        $second = TestDouble::for(BookRepositoryInterface::class);
+
+        $first->allows('find')->inOrder();
+        $first->allows('save')->inOrder();
+        $second->allows('delete')->inOrder();
+        $second->allows('count')->inOrder();
+
+        // Interleaved across two doubles — each double's own declared
+        // sequence is independent, so this is a violation on neither.
+        $second->delete(1);
+        $first->find(1);
+        $second->count();
+        $first->save(new Book('Dune'));
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_in_order_works_with_expects_as_well_as_allows(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->expects('find')->returns(null)->inOrder();
+        $double->expects('save')->returns(true)->inOrder();
+
+        $double->find(1);
+        $double->save(new Book('Dune'));
+
+        $double->verify();
+        $this->addToAssertionCount(1);
     }
 
     public function test_sequential_returns_hold_at_the_last_value_on_further_calls(): void

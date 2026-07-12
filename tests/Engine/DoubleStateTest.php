@@ -148,4 +148,29 @@ final class DoubleStateTest extends TestCase
         $this->assertSame($real, $state->knownInstance());
         $this->assertSame(Mode::Loose, $state->mode());
     }
+
+    public function test_ordered_expectations_filters_to_only_those_marked_in_order_and_preserves_registration_order(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+        $find = (new MethodExpectation('find', required: false))->inOrder();
+        $save = new MethodExpectation('save', required: false);
+        $delete = (new MethodExpectation('delete', required: false))->inOrder();
+
+        $state->registerExpectation($find);
+        $state->registerExpectation($save);
+        $state->registerExpectation($delete);
+
+        $this->assertSame([$find, $delete], $state->orderedExpectations());
+    }
+
+    public function test_order_cursor_starts_at_zero_and_advances_explicitly(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $this->assertSame(0, $state->orderCursor());
+
+        $state->advanceOrderCursor(2);
+
+        $this->assertSame(2, $state->orderCursor());
+    }
 }
