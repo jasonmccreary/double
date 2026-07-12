@@ -450,6 +450,16 @@ final class TestDoubleTest extends TestCase
         $double->expects('bogus');
     }
 
+    public function test_expects_suggests_the_closest_declared_method_name_for_a_likely_typo(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('Did you mean "save"?');
+
+        $double->expects('sav');
+    }
+
     public function test_received_passes_when_the_method_was_called_at_least_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
@@ -549,6 +559,16 @@ final class TestDoubleTest extends TestCase
         $this->expectExceptionMessage('bogus');
 
         $double->received('bogus');
+    }
+
+    public function test_received_suggests_the_closest_declared_method_name_for_a_likely_typo(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('Did you mean "save"?');
+
+        $double->received('sav');
     }
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void

@@ -116,6 +116,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unknown-method', $exception->getMessage());
     }
 
+    public function test_renders_unknown_method_with_a_suggestion(): void
+    {
+        $exception = new UnknownMethodException('BookRepositoryInterface', 'sav', suggestion: 'save');
+
+        $this->assertMatchesGolden('unknown-method-with-suggestion', $exception->getMessage());
+    }
+
     public function test_renders_mode_configuration(): void
     {
         $exception = new ModeConfigurationException('BookRepository', 'Strict', 'Strict');

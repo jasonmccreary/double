@@ -90,6 +90,29 @@ final class DoubleState
         return null;
     }
 
+    /**
+     * Every method name method_exists() would find on any target candidate —
+     * the same existence check declaringCandidate() uses — for
+     * UnknownMethodException's "did you mean" suggestion. Reflection's own
+     * getMethods() (not get_class_methods(), which only sees public methods
+     * from outside the declaring class) so this stays exactly as permissive
+     * as declaringCandidate() about visibility.
+     *
+     * @return list<string>
+     */
+    public function declarableMethodNames(): array
+    {
+        $names = [];
+
+        foreach ($this->targetCandidates() as $candidate) {
+            foreach ((new \ReflectionClass($candidate))->getMethods() as $method) {
+                $names[$method->getName()] = true;
+            }
+        }
+
+        return array_keys($names);
+    }
+
     public function label(): string
     {
         return $this->label;

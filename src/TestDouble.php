@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing;
 
 use JMac\Testing\Diagnostics\ArgumentFormatter;
+use JMac\Testing\Diagnostics\DidYouMean;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
@@ -248,7 +249,12 @@ final class TestDouble
         $state = self::stateFor($double);
 
         if ($state->declaringCandidate($method) === null) {
-            throw new UnknownMethodException($state->target(), $method, $state->isFabricated());
+            throw new UnknownMethodException(
+                $state->target(),
+                $method,
+                $state->isFabricated(),
+                DidYouMean::suggest($method, $state->declarableMethodNames()),
+            );
         }
 
         $expectation = new MethodExpectation($method, $required);
@@ -272,7 +278,12 @@ final class TestDouble
         $state = self::stateFor($double);
 
         if ($state->declaringCandidate($method) === null) {
-            throw new UnknownMethodException($state->target(), $method, $state->isFabricated());
+            throw new UnknownMethodException(
+                $state->target(),
+                $method,
+                $state->isFabricated(),
+                DidYouMean::suggest($method, $state->declarableMethodNames()),
+            );
         }
 
         return new ReceivedAssertion($state, $method);
