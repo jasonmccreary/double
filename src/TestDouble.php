@@ -52,6 +52,21 @@ final class TestDouble
      */
     private static array $pending = [];
 
+    /**
+     * Same strong-reference reasoning as $pending, same lifecycle
+     * (armAutoVerify() resets it, verifyAll() drains it) — the received()
+     * counterpart to $pending's expects()/allows() tracking, so both verbs
+     * get checked from the exact same #[After] hook instead of received()
+     * relying solely on ReceivedAssertion's own __destruct() timing. See
+     * ReceivedAssertion's docblock for why that destructor path still has
+     * to exist independently of this list (the framework-agnostic
+     * fallback), not why this list exists (that's here and in $pending's
+     * docblock).
+     *
+     * @var list<ReceivedAssertion>
+     */
+    private static array $pendingReceived = [];
+
     private static bool $autoVerifyArmed = false;
 
     private function __construct() {}
@@ -195,35 +210,44 @@ final class TestDouble
 
     /**
      * @internal used only by Integrations\PHPUnit\VerifiesDoubles's #[Before]
-     * hook. Arms $pending tracking (idempotent — safe to call every test,
-     * not just once) and resets it fresh, so a prior test that somehow
-     * skipped its own #[After] (e.g. a fatal error mid-test that bypassed
-     * normal lifecycle hooks entirely) can never leak stale entries into
-     * this one.
+     * hook. Arms $pending/$pendingReceived tracking (idempotent — safe to
+     * call every test, not just once) and resets both fresh, so a prior
+     * test that somehow skipped its own #[After] (e.g. a fatal error
+     * mid-test that bypassed normal lifecycle hooks entirely) can never
+     * leak stale entries into this one.
      */
     public static function armAutoVerify(): void
     {
         self::$autoVerifyArmed = true;
         self::$pending = [];
+        self::$pendingReceived = [];
     }
 
     /**
      * @internal used only by Integrations\PHPUnit\VerifiesDoubles's #[After]
      * hook — see its docblock for why an automatic hook has to live there
-     * and can't be a PHPUnit "Extension" instead. Verifies, then discards,
-     * every double created since the last call (armAutoVerify() resets this
+     * and can't be a PHPUnit "Extension" instead. Verifies/checks, then
+     * discards, every expects()/allows() expectation and every received()
+     * assertion made since the last call (armAutoVerify() resets both lists
      * at the start of every test, so this is always exactly "this test's
-     * doubles"). Drained up front, before iterating, so a verify() failure
-     * partway through never leaves stale entries to leak into whichever
-     * test's #[After] runs next.
+     * doubles"). Both lists are drained up front, before iterating, so a
+     * failure partway through never leaves stale entries to leak into
+     * whichever test's #[After] runs next.
      */
     public static function verifyAll(): void
     {
         $pending = self::$pending;
         self::$pending = [];
 
+        $pendingReceived = self::$pendingReceived;
+        self::$pendingReceived = [];
+
         foreach ($pending as $state) {
             self::verifyState($state);
+        }
+
+        foreach ($pendingReceived as $assertion) {
+            $assertion->check();
         }
     }
 
@@ -272,6 +296,10 @@ final class TestDouble
      * — but, unlike registerExpectation(), never registers anything on
      * DoubleState: the returned ReceivedAssertion checks already-recorded
      * calls, it never participates in live matching or verify().
+     *
+     * Registered into $pendingReceived while auto-verify is armed, same as
+     * create() does into $pending for expects()/allows() — see
+     * ReceivedAssertion's docblock for why.
      */
     public static function received(object $double, string $method): ReceivedAssertion
     {
@@ -286,7 +314,13 @@ final class TestDouble
             );
         }
 
-        return new ReceivedAssertion($state, $method);
+        $assertion = new ReceivedAssertion($state, $method);
+
+        if (self::$autoVerifyArmed) {
+            self::$pendingReceived[] = $assertion;
+        }
+
+        return $assertion;
     }
 
     private static function states(): \WeakMap

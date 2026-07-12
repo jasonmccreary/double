@@ -27,8 +27,9 @@ use JMac\Testing\TestDouble;
  * supported way to call either.
  *
  * received() itself just returns a ReceivedAssertion — see its docblock for
- * why the actual spy-style check happens in that object's __destruct()
- * rather than here.
+ * why the actual spy-style check happens there rather than here, and for
+ * how that check reaches TestDouble::verifyAll() (via $pendingReceived)
+ * instead of only ever firing from that object's own __destruct().
  */
 trait DoubleControlMethods
 {

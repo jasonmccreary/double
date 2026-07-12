@@ -10,10 +10,14 @@ use PHPUnit\Framework\Attributes\Before;
 
 /**
  * Opt-in auto-verification for PHPUnit users: add `use VerifiesDoubles;` to
- * a base TestCase once, and every expects() expectation on every double
- * created anywhere during a test gets checked automatically — no manual
- * $double->verify() call needed. Mirrors what Mockery's own
- * MockeryPHPUnitIntegration trait does for Mockery::close().
+ * a base TestCase once, and every expects() expectation, and every
+ * received() assertion, on every double created anywhere during a test
+ * gets checked automatically — no manual $double->verify() call, and no
+ * reliance on a received() chain's own __destruct() timing, needed. Mirrors
+ * what Mockery's own MockeryPHPUnitIntegration trait does for
+ * Mockery::close(), extended to cover received()'s spy-style checks through
+ * the same hook rather than a second, destructor-based mechanism — see
+ * ReceivedAssertion's docblock.
  *
  * Hooks PHPUnit's #[Before]/#[After] lifecycle attributes rather than
  * overriding setUp()/tearDown(): those methods run regardless of whatever

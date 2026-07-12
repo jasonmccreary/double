@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests;
 
+use JMac\Testing\Engine\ReceivedAssertion;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
@@ -22,6 +23,19 @@ use PHPUnit\Framework\TestCase;
 
 final class TestDoubleTest extends TestCase
 {
+    /**
+     * Deliberately a property, not a local variable, for the
+     * $pendingReceived tests below: PHP tears down a method's own locals
+     * the instant that method returns — before verifyAll() could ever be
+     * invoked from a separate #[After] hook the way VerifiesDoubles really
+     * uses it — so a local variable can't actually reproduce the gap
+     * $pendingReceived closes. A property on $this survives past the test
+     * method's own return (this TestCase instance isn't destroyed until
+     * well after its own #[After] hooks would run), which is what makes
+     * these tests a real reproduction instead of a false positive.
+     */
+    private ?ReceivedAssertion $heldAssertion = null;
+
     public function test_for_returns_an_instance_of_the_target(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
@@ -663,6 +677,59 @@ final class TestDoubleTest extends TestCase
 
         // $double already left the pending list on the call above, so this
         // has nothing left to check regardless of $double's own state.
+        TestDouble::verifyAll();
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * The scenario ReceivedAssertion's docblock describes: a received()
+     * chain stored somewhere that outlives the statement that created it
+     * (here, $this->heldAssertion — see that property's own docblock for
+     * why it has to be a property, not a local, to actually prove this),
+     * so it can't have reached its own __destruct() by the time verifyAll()
+     * runs. Before $pendingReceived existed, verifyAll() had no way to know
+     * this assertion existed at all and would pass regardless of whether
+     * "save" was ever actually called.
+     */
+    public function test_verify_all_checks_a_received_assertion_held_past_the_test_method(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $this->heldAssertion = $double->received('save');
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+
+        TestDouble::verifyAll();
+    }
+
+    public function test_verify_all_passes_a_satisfied_received_assertion_held_past_the_test_method(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->save(new Book('Dune'));
+        $this->heldAssertion = $double->received('save');
+
+        TestDouble::verifyAll();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_verify_all_drains_pending_received_assertions_so_a_second_call_is_a_no_op(): void
+    {
+        TestDouble::armAutoVerify();
+
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->save(new Book('Dune'));
+        $this->heldAssertion = $double->received('save');
+
+        TestDouble::verifyAll();
+
+        // $this->heldAssertion already left the pending list and was
+        // checked on the call above, so this has nothing left to check
+        // regardless of its own state.
         TestDouble::verifyAll();
 
         $this->addToAssertionCount(1);

@@ -22,28 +22,42 @@ namespace JMac\Testing\Engine;
  * call matching (ProxyBehavior) or verify()'s unmet-expectations list, only
  * in this class's own after-the-fact check.
  *
- * Checked exactly once, from __destruct(), when the fluent chain's last
- * reference is discarded (an unassigned statement like
- * `$double->received('save')->with($book)->never();` is destroyed by PHP's
- * refcounting at the end of that statement, well within the normal flow a
- * test framework's try/catch already wraps around the test method). This
- * is what makes composing constraints possible — e.g. with() then never()
- * ("assert this was never called with these specific args") — since no
- * single fluent method can know whether another one is coming after it,
- * only the final accumulated state at destruction time.
+ * Checked lazily — never eagerly on with()/times()/atLeastOnce()/never()
+ * themselves — because no single fluent method can know whether another one
+ * is coming after it; only the final accumulated state, once the chain is
+ * done being composed, means anything. That's what makes with() then
+ * never() possible ("assert this was never called with these specific
+ * args") as one composed check, the way Mockery needs a second verb
+ * (shouldNotHaveReceived()) to express instead.
  *
- * Known, deliberate trade-off: relying on __destruct() timing means a
- * chain assigned to a variable that outlives the statement (e.g. held in a
- * loop or passed around) won't assert until that variable actually goes
- * out of scope — later than the call site suggests, though still normally
- * within the same test. This was chosen over adding a required terminal
- * verb (composable but easy to forget, silently never asserting) or
- * restricting received() to non-composable single-constraint chains (safe
- * but couldn't express with()+never() together at all).
+ * Two paths converge on the same check() (idempotent via $checked, so
+ * whichever path runs first wins and the other becomes a no-op):
+ *
+ * - __destruct(), when the fluent chain's last reference is discarded — an
+ *   unassigned statement like `$double->received('save')->with($book)->never();`
+ *   is destroyed by PHP's refcounting at the end of that statement. This is
+ *   the only path for any test runner besides PHPUnit, and for PHPUnit
+ *   users not using Integrations\PHPUnit\VerifiesDoubles — see that
+ *   trait's docblock; there is deliberately no framework-agnostic
+ *   equivalent of it, so this is the fallback that keeps received()
+ *   working with zero setup everywhere else.
+ * - TestDouble::$pendingReceived, when VerifiesDoubles is active: registered
+ *   at construction (see TestDouble::received()), same strong-reference
+ *   reasoning as TestDouble::$pending for expects() (see that field's
+ *   docblock) — a chain assigned to a variable that outlives its statement
+ *   would otherwise not assert until that variable happens to go out of
+ *   scope, which is a different, harder-to-predict mechanism than
+ *   verify()'s "every expects() gets checked at the same #[After] hook."
+ *   Registering it there means both verbs are checked from the exact same
+ *   place, at the exact same time, once VerifiesDoubles is in play — the
+ *   destructor becomes purely the non-PHPUnit fallback, not a second
+ *   competing mechanism for PHPUnit users.
  */
 final class ReceivedAssertion
 {
     private readonly MethodExpectation $expectation;
+
+    private bool $checked = false;
 
     public function __construct(
         private readonly DoubleState $state,
@@ -82,6 +96,22 @@ final class ReceivedAssertion
 
     public function __destruct()
     {
+        $this->check();
+    }
+
+    /**
+     * @internal used only by TestDouble::verifyAll() — see this class's own
+     * docblock for why that path and __destruct() both lead here, and why
+     * $checked makes running it twice safe.
+     */
+    public function check(): void
+    {
+        if ($this->checked) {
+            return;
+        }
+
+        $this->checked = true;
+
         foreach ($this->state->callsFor($this->method) as $call) {
             if ($this->expectation->matchesArguments($call)) {
                 $this->expectation->recordMatch($call);
