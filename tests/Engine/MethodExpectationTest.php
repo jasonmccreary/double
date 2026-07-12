@@ -59,6 +59,51 @@ final class MethodExpectationTest extends TestCase
         $this->assertFalse($expectation->matchesArguments([1]));
     }
 
+    public function test_with_remaining_constrains_only_the_leading_arguments(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->with(1, 2, Argument::remaining());
+
+        $this->assertTrue($expectation->matchesArguments([1, 2]));
+        $this->assertTrue($expectation->matchesArguments([1, 2, 3]));
+        $this->assertTrue($expectation->matchesArguments([1, 2, 3, 4, 5]));
+    }
+
+    public function test_with_remaining_still_requires_the_leading_arguments_to_match(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->with(1, 2, Argument::remaining());
+
+        $this->assertFalse($expectation->matchesArguments([1, 99, 3]));
+        $this->assertFalse($expectation->matchesArguments([1]));
+        $this->assertFalse($expectation->matchesArguments([]));
+    }
+
+    public function test_with_remaining_alone_matches_any_arguments_including_none(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->with(Argument::remaining());
+
+        $this->assertTrue($expectation->matchesArguments([]));
+        $this->assertTrue($expectation->matchesArguments([1, 2, 3]));
+    }
+
+    public function test_with_rejects_remaining_anywhere_but_last(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->with(Argument::remaining(), 2);
+    }
+
+    public function test_describe_renders_remaining_as_an_ellipsis(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with(1, 2, Argument::remaining());
+
+        $this->assertSame(
+            'find(1, 2, ...) — expected exactly 1 time, called 0 times',
+            $expectation->describe(),
+        );
+    }
+
     public function test_never_sets_maximum_to_zero(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->never();
@@ -81,6 +126,79 @@ final class MethodExpectationTest extends TestCase
 
         $expectation->recordMatch();
         $this->assertTrue($expectation->exceedsMaximum());
+    }
+
+    public function test_times_with_two_positional_arguments_sets_a_between_range(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(1, 3);
+
+        $this->assertSame(1, $expectation->minimumCalls());
+        $this->assertSame(3, $expectation->maximumCalls());
+    }
+
+    public function test_times_with_named_minimum_sets_an_open_ended_lower_bound(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(minimum: 2);
+
+        $expectation->recordMatch();
+        $this->assertFalse($expectation->isSatisfied());
+
+        $expectation->recordMatch();
+        $this->assertTrue($expectation->isSatisfied());
+
+        for ($i = 0; $i < 50; $i++) {
+            $expectation->recordMatch();
+        }
+        $this->assertFalse($expectation->exceedsMaximum());
+    }
+
+    public function test_times_with_named_maximum_sets_a_zero_floor(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(maximum: 2);
+
+        $this->assertTrue($expectation->isSatisfied());
+
+        $expectation->recordMatch();
+        $expectation->recordMatch();
+        $this->assertFalse($expectation->exceedsMaximum());
+
+        $expectation->recordMatch();
+        $this->assertTrue($expectation->exceedsMaximum());
+    }
+
+    public function test_times_with_named_minimum_and_maximum_matches_the_positional_between_form(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(minimum: 1, maximum: 3);
+
+        $this->assertSame(1, $expectation->minimumCalls());
+        $this->assertSame(3, $expectation->maximumCalls());
+    }
+
+    public function test_times_rejects_a_positional_count_combined_with_a_named_minimum(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->times(3, minimum: 1);
+    }
+
+    public function test_times_rejects_being_called_with_no_bounds_at_all(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->times();
+    }
+
+    public function test_times_rejects_a_minimum_greater_than_the_maximum(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->times(minimum: 5, maximum: 2);
     }
 
     public function test_resolve_return_holds_at_the_last_value_once_sequential_returns_are_exhausted(): void
@@ -188,6 +306,20 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))->with(123);
 
         $this->assertSame('find(123) — expected exactly 1 time, called 0 times', $expectation->describe());
+    }
+
+    public function test_describe_renders_at_most_for_a_zero_floor_maximum(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(maximum: 3);
+
+        $this->assertSame('find(any arguments) — expected at most 3 times, called 0 times', $expectation->describe());
+    }
+
+    public function test_describe_renders_between_for_a_two_sided_range(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->times(1, 3);
+
+        $this->assertSame('find(any arguments) — expected between 1 and 3 times, called 0 times', $expectation->describe());
     }
 
     public function test_with_accepts_a_matcher_alongside_bare_literals(): void

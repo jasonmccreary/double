@@ -16,6 +16,7 @@ use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\TestCase;
 
 final class TestDoubleTest extends TestCase
@@ -243,6 +244,27 @@ final class TestDoubleTest extends TestCase
         $this->assertSame($book, $double->find(42));
     }
 
+    public function test_with_remaining_constrains_only_the_leading_arguments_end_to_end(): void
+    {
+        $double = TestDouble::for(VariadicInterface::class);
+
+        $double->allows('combine')->with('-', Argument::remaining())->returns('stubbed');
+
+        $this->assertSame('stubbed', $double->combine('-', 'a'));
+        $this->assertSame('stubbed', $double->combine('-', 'a', 'b', 'c'));
+    }
+
+    public function test_received_with_remaining_composes_the_same_way_as_expects(): void
+    {
+        $double = TestDouble::for(VariadicInterface::class);
+
+        $double->combine('-', 'a', 'b', 'c');
+
+        $double->received('combine')->with('-', Argument::remaining());
+
+        $this->addToAssertionCount(1);
+    }
+
     public function test_never_forbids_any_call_at_all(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
@@ -276,6 +298,31 @@ final class TestDoubleTest extends TestCase
 
         $double->verify();
         $this->addToAssertionCount(1);
+    }
+
+    public function test_times_with_a_range_requires_a_call_count_within_bounds(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null)->times(1, 3);
+
+        $double->delete(1);
+        $double->delete(2);
+
+        $double->verify();
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_times_with_a_named_maximum_fails_once_exceeded(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->allows('delete')->returns(null)->times(maximum: 2);
+
+        $double->delete(1);
+        $double->delete(2);
+
+        $this->expectException(PHPUnitExpectationCallLimitExceededException::class);
+
+        $double->delete(3);
     }
 
     public function test_strict_mode_throws_immediately_on_an_unmatched_call(): void

@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
+use JMac\Testing\Matching\RemainingMatcher;
 
 /**
  * One configured expects()/allows() entry. See ARCHITECTURE.md's "Verb
@@ -62,10 +63,20 @@ final class MethodExpectation
 
     public function with(mixed ...$arguments): static
     {
-        $this->argumentConstraints = array_map(
+        $constraints = array_map(
             static fn (mixed $argument): Matcher => $argument instanceof Matcher ? $argument : new EqualsMatcher($argument),
             $arguments,
         );
+
+        foreach ($constraints as $index => $matcher) {
+            if ($matcher instanceof RemainingMatcher && $index !== array_key_last($constraints)) {
+                throw new \InvalidArgumentException(
+                    'Argument::remaining() can only be the last argument passed to with().',
+                );
+            }
+        }
+
+        $this->argumentConstraints = $constraints;
 
         return $this;
     }
@@ -120,38 +131,67 @@ final class MethodExpectation
         return $this;
     }
 
-    public function once(): static
+    /**
+     * The one count verb, overloaded rather than split across atLeast()/
+     * atMost()/between() the way Mockery needs three separate verbs for
+     * this (confirmed against Mockery's source: Expectation::between() is
+     * literally atLeast()->times($min)->atMost()->times($max), three verbs
+     * standing in for one range) — no aliases policy, one word, still
+     * covers every bound shape:
+     *
+     *   times(3)                    exactly 3        min=3,   max=3
+     *   times(1, 3)                 between 1 and 3  min=1,   max=3
+     *   times(minimum: 1)           at least 1       min=1,   max=∞
+     *   times(maximum: 3)           at most 3        min=0,   max=3
+     *   times(minimum: 1, maximum: 3)  same as times(1, 3)
+     *
+     * $count is the positional slot: alone, it's the exact count; paired
+     * with $maximum, it's the lower bound of a range (so times(1, 3) and
+     * times(minimum: 1, maximum: 3) resolve identically). $minimum exists
+     * only so "at least" can be expressed without also implying an exact
+     * upper bound — supplying both $count and $minimum is rejected as
+     * ambiguous (they're both trying to set the same lower bound).
+     */
+    public function times(?int $count = null, ?int $maximum = null, ?int $minimum = null): static
     {
-        return $this->times(1);
-    }
+        if ($count !== null && $minimum !== null) {
+            throw new \InvalidArgumentException(
+                'times() cannot take both a positional count and a named minimum — use one or the other.',
+            );
+        }
 
-    public function twice(): static
-    {
-        return $this->times(2);
-    }
+        $resolvedMinimum = $minimum ?? $count;
+        $resolvedMaximum = $maximum ?? $count;
 
-    public function times(int $count): static
-    {
-        $this->minimumCalls = $count;
-        $this->maximumCalls = $count;
+        if ($resolvedMinimum === null && $resolvedMaximum === null) {
+            throw new \InvalidArgumentException('times() requires a count, a minimum, or a maximum.');
+        }
+
+        $resolvedMinimum ??= 0;
+        $resolvedMaximum ??= self::UNBOUNDED;
+
+        if ($resolvedMinimum > $resolvedMaximum) {
+            throw new \InvalidArgumentException(sprintf(
+                'times(): minimum (%d) cannot be greater than maximum (%d).',
+                $resolvedMinimum,
+                $resolvedMaximum,
+            ));
+        }
+
+        $this->minimumCalls = $resolvedMinimum;
+        $this->maximumCalls = $resolvedMaximum;
 
         return $this;
     }
 
     public function atLeastOnce(): static
     {
-        $this->minimumCalls = 1;
-        $this->maximumCalls = self::UNBOUNDED;
-
-        return $this;
+        return $this->times(minimum: 1);
     }
 
     public function never(): static
     {
-        $this->minimumCalls = 0;
-        $this->maximumCalls = 0;
-
-        return $this;
+        return $this->times(0);
     }
 
     public function matchesArguments(array $arguments): bool
@@ -160,11 +200,23 @@ final class MethodExpectation
             return true;
         }
 
-        if (count($this->argumentConstraints) !== count($arguments)) {
+        $constraints = $this->argumentConstraints;
+
+        // Argument::remaining() as the trailing constraint means "however
+        // many further arguments there are, they're unconstrained" — drop
+        // it and require only a minimum count instead of an exact one.
+        // with() already guarantees it can only ever be the last element.
+        $matchesRemaining = $constraints !== [] && end($constraints) instanceof RemainingMatcher;
+
+        if ($matchesRemaining) {
+            array_pop($constraints);
+        }
+
+        if ($matchesRemaining ? count($arguments) < count($constraints) : count($constraints) !== count($arguments)) {
             return false;
         }
 
-        foreach ($this->argumentConstraints as $index => $matcher) {
+        foreach ($constraints as $index => $matcher) {
             if (! $matcher->matches($arguments[$index])) {
                 return false;
             }
@@ -264,6 +316,10 @@ final class MethodExpectation
     {
         if ($this->minimumCalls === $this->maximumCalls) {
             return 'exactly '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
+        }
+
+        if ($this->minimumCalls === 0 && $this->maximumCalls !== self::UNBOUNDED) {
+            return 'at most '.Pluralizer::pluralize($this->maximumCalls, 'time', 'times');
         }
 
         if ($this->maximumCalls === self::UNBOUNDED) {

@@ -6,10 +6,11 @@ namespace JMac\Testing\Matching;
 
 /**
  * The argument-matcher facade (see ARCHITECTURE.md, "Verb lineage").
- * Starting matcher set only — any(), type(), that() — deliberately minimal
+ * Starting matcher set — any(), type(), satisfies() — deliberately minimal
  * for v1; more get added once real usage shows what's actually needed,
- * rather than porting a full matcher catalog speculatively. capture() is
- * the first addition past that starting set.
+ * rather than porting a full matcher catalog speculatively. capture() and
+ * remaining() are later additions past that starting set, added once a
+ * concrete need showed up rather than speculatively.
  */
 final class Argument
 {
@@ -50,5 +51,16 @@ final class Argument
     public static function capture(mixed &$reference): Matcher
     {
         return new CaptureMatcher($reference);
+    }
+
+    /**
+     * A trailing with() marker: everything from this position to the end
+     * of the actual call's arguments is unconstrained, however many there
+     * turn out to be — see RemainingMatcher. Only valid as the last
+     * argument passed to with(); with() throws otherwise.
+     */
+    public static function remaining(): Matcher
+    {
+        return new RemainingMatcher;
     }
 }

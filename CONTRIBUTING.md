@@ -4,10 +4,17 @@
 
 This library has exactly one canonical verb per concept: `expects()` / `allows()`
 for configuration, `returns()` / `throws()` / `resolves()` for outcomes,
-`with()` for argument constraints, counts (`once()`, `twice()`, `times()`,
-`atLeastOnce()`, `never()`), and `received()` for spy-style assertions. There are
-no aliases for any of these — not for familiarity with Mockery, PHPUnit's native
+`with()` for argument constraints, counts (`times()`, `atLeastOnce()`,
+`never()`), and `received()` for spy-style assertions. There are no aliases
+for any of these — not for familiarity with Mockery, PHPUnit's native
 mocks, Prophecy, or Phake, and not ever.
+
+Counts specifically: `times()` is overloaded (`times(3)` exact,
+`times(1, 3)` between, `times(minimum: 2)` at least, `times(maximum: 5)` at
+most) rather than growing into `once()`/`twice()`/`atMost()`/`between()` as
+separate words — see ARCHITECTURE.md's "Overloading times() instead of
+adding count verbs" for the full reasoning, including why `never()` is the
+one exception kept as its own verb rather than folded into `times(0)`.
 
 A PR that adds a convenience alias (e.g. `andReturn()` next to `returns()`, or
 `shouldReceive()` next to `expects()`) will be declined, even though "add a

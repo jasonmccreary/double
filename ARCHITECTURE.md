@@ -71,7 +71,7 @@ documentation rosetta-stone table, not in the API surface:
 
 | Mockery | PHPUnit native | This library |
 |---|---|---|
-| `shouldReceive('foo')->once()->andReturn($x)` | `expects($this->once())->method('foo')->willReturn($x)` | `expects('foo')->returns($x)->once()` |
+| `shouldReceive('foo')->once()->andReturn($x)` | `expects($this->once())->method('foo')->willReturn($x)` | `expects('foo')->returns($x)` (exactly-once is expects()'s own default — see below) |
 | `shouldReceive('foo')->andReturn($x)` | `method('foo')->willReturn($x)` | `allows('foo')->returns($x)` |
 | `shouldHaveReceived('foo')` (spy) | — | `$double->received('foo')` |
 
@@ -90,7 +90,7 @@ $repo = TestDouble::for(BookRepository::class);
 // expects()/allows() are literally RSpec's expect().to receive() /
 // allow().to receive(), folded into one verb since PHP has no block syntax
 // to hang ".to receive()" off of.
-$repo->expects('find')->with(123)->returns($book)->once();
+$repo->expects('find')->with(123)->returns($book);   // exactly once by default
 $repo->allows('save')->returns(true);
 
 // sequential returns on repeated identical calls — RSpec's and_return(1, 2, 3)
@@ -102,12 +102,16 @@ $repo->allows('find')->with(1)->returns($first, $second);
 
 $repo->allows('find')->with(999)->throws(new NotFoundException());
 
-// counts, unchanged from RSpec/Mockery
-$repo->expects('save')->once();      // also the DEFAULT for expects() — see below
-$repo->expects('save')->twice();
-$repo->expects('save')->times(3);
+// counts — one overloaded verb, not once()/twice()/atMost()/between() as
+// separate words (see "Overloading times() instead of adding count verbs"
+// below for why once()/twice() were dropped and Mockery's three-verb
+// atLeast()/atMost()/between() collapse into this one).
+$repo->expects('save')->times(3);              // exactly 3
+$repo->expects('save')->times(1, 3);           // between 1 and 3
 $repo->expects('save')->atLeastOnce();
-$repo->allows('save')->never();      // no separate "reject" verb needed
+$repo->expects('save')->times(minimum: 2);     // at least 2 (no upper bound)
+$repo->allows('save')->times(maximum: 5);      // at most 5 (no lower bound)
+$repo->allows('save')->never();                // no separate "reject" verb needed
 
 // partial mock — passthru() is Mockery's actual real per-expectation method
 // name for "call the real implementation for this one stub." Reused
@@ -137,6 +141,53 @@ like `'int'`, matched via the corresponding `is_*()` — mirrors
 both the same way), `Argument::satisfies($predicate)`. Deliberately minimal
 for v1 — add more once real usage shows what's actually needed, rather than
 porting RSpec/Mockery's full matcher catalog speculatively.
+
+### Overloading times() instead of adding count verbs
+
+Mockery expresses "no more than N" and "between N and M" as two more verbs,
+`atMost()` and `between()` (confirmed against Mockery's own source:
+`Expectation::between($min, $max)` is literally
+`$this->atLeast()->times($min)->atMost()->times($max)` — three verbs
+standing in for one range, not a single primitive). Porting that directly
+would grow the count-verb list from `once()`/`twice()`/`times()`/
+`atLeastOnce()`/`never()` to eight-plus words for what's fundamentally one
+concept: a lower bound and an upper bound.
+
+**Decision: one overloaded `times()`, not new verbs.** `MethodExpectation`
+already stored an arbitrary `$minimumCalls`/`$maximumCalls` pair internally
+— `times(3)`, `never()`, and `atLeastOnce()` were always just three fixed
+points on the same range, so the range-setting primitive already existed;
+only the verbs to reach every point on it didn't.
+
+```php
+$repo->expects('save')->times(3);                  // exactly 3        min=3, max=3
+$repo->expects('save')->times(1, 3);                // between 1 and 3 min=1, max=3
+$repo->expects('save')->times(minimum: 2);          // at least 2      min=2, max=∞
+$repo->allows('save')->times(maximum: 5);           // at most 5       min=0, max=5
+$repo->expects('save')->times(minimum: 1, maximum: 3);  // same as times(1, 3)
+```
+
+`$count` (the positional slot) is the exact value when given alone, and the
+lower bound when paired with `$maximum` — which is why `times(1, 3)` and
+`times(minimum: 1, maximum: 3)` resolve identically. Supplying both `$count`
+and `$minimum` is rejected (`InvalidArgumentException`) as ambiguous — two
+values both trying to set the same lower bound — and so is `times()` with
+nothing at all, and a `$minimum` greater than `$maximum`.
+
+**`once()` and `twice()` are dropped, not just left alongside `times()`.**
+Both were pure aliases for `times(1)`/`times(2)` — the "no aliases" policy
+already argued against keeping them once `times()` reads just as plainly.
+`once()` was additionally redundant for its most common use (`expects()`
+already defaults to exactly-once), which the old rosetta-table example
+above used to demonstrate unintentionally: `expects('foo')->returns($x)`
+and `expects('foo')->returns($x)->once()` were always the same expectation.
+
+**`never()` stays a real, separate verb — not folded into `times(0)` at the
+call site.** Internally `never()` delegates to `times(0)` (one bounds-setting
+code path, not two), but `times(0)` reads as an awkward, easy-to-misread
+call for a person to actually write — `never()` is the one place this audit
+decided the dedicated word earns its keep over the overloaded primitive
+underneath it.
 
 ### Argument::satisfies()
 
@@ -201,6 +252,34 @@ call speculatively, any number of times), and capturing instead happens in
 `MethodExpectation::recordMatch()`, called exactly once, only on the
 expectation `findMatch()` has already confirmed is the real match for this
 call.
+
+`Argument::remaining()` is the next post-v1 addition — Mockery's equivalent
+(`andAnyOtherArgs()`/`withAndOthers()`, confirmed against Mockery's source)
+needed a dedicated matcher class (`AndAnyOtherArgs`, checked specially in
+`Expectation::matchArgs()`) because `with()` otherwise requires an exact
+argument-count match. Not a second sense of `any()`: `any()`'s meaning
+(matches exactly one position) would become ambiguous if it also meant
+"consume every remaining position" when trailing — so this needed its own
+name, not an overload of an existing one. Went through `rest()`/`tail()`/
+`etc()` before landing on `remaining()` as the least likely to make someone
+pause and guess.
+
+```php
+$repo->allows('combine')->with('-', Argument::remaining())->returns('a-b-c');
+
+$repo->combine('-', 'a');           // matches
+$repo->combine('-', 'a', 'b', 'c'); // also matches — any further args are unconstrained
+```
+
+Only valid as the last argument to `with()` — `with(Argument::remaining(), 2)`
+doesn't mean anything coherent, so `with()` throws rather than silently
+picking an interpretation. `MethodExpectation::matchesArguments()` is what
+actually special-cases it (drop the trailing marker, require `count($arguments)
+>= count($remainingConstraints)` instead of an exact match); `RemainingMatcher`
+itself is a plain `Matcher` like every other one, so `with()` needs no special
+casing to accept it. `ReceivedAssertion::with()` gets this for free, with no
+code of its own, since it already delegates straight through to the same
+`MethodExpectation::with()`.
 
 ### Argument matcher facade naming
 

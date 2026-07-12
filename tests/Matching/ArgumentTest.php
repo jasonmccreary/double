@@ -8,6 +8,7 @@ use JMac\Testing\Matching\AnyMatcher;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\Matching\Matcher;
 use JMac\Testing\Matching\PredicateMatcher;
+use JMac\Testing\Matching\RemainingMatcher;
 use JMac\Testing\Matching\TypeMatcher;
 use JMac\Testing\Tests\Support\Book;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +55,11 @@ final class ArgumentTest extends TestCase
         $this->assertTrue($matcher->matches('anything'));
     }
 
+    public function test_remaining_produces_a_remaining_matcher(): void
+    {
+        $this->assertInstanceOf(RemainingMatcher::class, Argument::remaining());
+    }
+
     public function test_every_produced_matcher_implements_the_matcher_contract(): void
     {
         $captured = null;
@@ -62,5 +68,6 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(Matcher::class, Argument::type(Book::class));
         $this->assertInstanceOf(Matcher::class, Argument::satisfies(fn (): bool => true));
         $this->assertInstanceOf(Matcher::class, Argument::capture($captured));
+        $this->assertInstanceOf(Matcher::class, Argument::remaining());
     }
 }

@@ -13,8 +13,8 @@ namespace JMac\Testing\Engine;
  * bulk at verify() time.
  *
  * Reuses MethodExpectation wholesale for the argument-matching and
- * count-bounds machinery (with()/once()/twice()/times()/atLeastOnce()/
- * never(), plus describe()'s "expected X, called Y" rendering) rather than
+ * count-bounds machinery (with()/times()/atLeastOnce()/never(), plus
+ * describe()'s "expected X, called Y" rendering) rather than
  * reimplementing it — a received() assertion is structurally the same
  * bounded-count-plus-argument-matcher shape as an expectation, just checked
  * against the past instead of the future. This internal MethodExpectation
@@ -59,23 +59,9 @@ final class ReceivedAssertion
         return $this;
     }
 
-    public function once(): static
+    public function times(?int $count = null, ?int $maximum = null, ?int $minimum = null): static
     {
-        $this->expectation->once();
-
-        return $this;
-    }
-
-    public function twice(): static
-    {
-        $this->expectation->twice();
-
-        return $this;
-    }
-
-    public function times(int $count): static
-    {
-        $this->expectation->times($count);
+        $this->expectation->times($count, $maximum, $minimum);
 
         return $this;
     }
