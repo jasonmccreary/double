@@ -6,7 +6,10 @@ namespace JMac\Testing\Tests\Matching;
 
 use JMac\Testing\Matching\AnyMatcher;
 use JMac\Testing\Matching\Argument;
+use JMac\Testing\Matching\ContainsMatcher;
 use JMac\Testing\Matching\Matcher;
+use JMac\Testing\Matching\NotMatcher;
+use JMac\Testing\Matching\PatternMatcher;
 use JMac\Testing\Matching\PredicateMatcher;
 use JMac\Testing\Matching\RemainingMatcher;
 use JMac\Testing\Matching\SameMatcher;
@@ -71,6 +74,33 @@ final class ArgumentTest extends TestCase
         $this->assertFalse($matcher->matches(new Book('Some Title')));
     }
 
+    public function test_not_produces_a_not_matcher(): void
+    {
+        $matcher = Argument::not(5);
+
+        $this->assertInstanceOf(NotMatcher::class, $matcher);
+        $this->assertTrue($matcher->matches(6));
+        $this->assertFalse($matcher->matches(5));
+    }
+
+    public function test_matches_produces_a_pattern_matcher(): void
+    {
+        $matcher = Argument::matches('/^\d+$/');
+
+        $this->assertInstanceOf(PatternMatcher::class, $matcher);
+        $this->assertTrue($matcher->matches('123'));
+        $this->assertFalse($matcher->matches('abc'));
+    }
+
+    public function test_contains_produces_a_contains_matcher(): void
+    {
+        $matcher = Argument::contains('draft');
+
+        $this->assertInstanceOf(ContainsMatcher::class, $matcher);
+        $this->assertTrue($matcher->matches(['draft']));
+        $this->assertFalse($matcher->matches(['published']));
+    }
+
     public function test_every_produced_matcher_implements_the_matcher_contract(): void
     {
         $captured = null;
@@ -81,5 +111,9 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(Matcher::class, Argument::capture($captured));
         $this->assertInstanceOf(Matcher::class, Argument::remaining());
         $this->assertInstanceOf(Matcher::class, Argument::same($captured));
+        $this->assertInstanceOf(Matcher::class, Argument::not(5));
+        $this->assertInstanceOf(Matcher::class, Argument::matches('/x/'));
+        $this->assertInstanceOf(Matcher::class, Argument::contains('x'));
+        $this->assertInstanceOf(Matcher::class, Argument::any('x', 'y'));
     }
 }
