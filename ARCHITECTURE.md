@@ -1097,3 +1097,74 @@ into the trait.
 
 Ship `0.x` throughout M1–M5 specifically so early shape mistakes in
 `Matcher` or `Diagnostic` aren't breaking changes yet.
+
+## Next milestones (flagged, not yet built)
+
+One item raised in review, deliberately parked before implementation —
+recorded here with where the thinking currently stands, so picking it back
+up doesn't start from zero.
+
+**Call-order enforcement.** Mockery's `ordered()`/`globally()` — asserting
+that calls across one or more expectations happen in a specific relative
+sequence — has no equivalent here at all today, and unlike the other gaps
+found against Mockery (`atMost`/`between`, exception sequencing, trailing
+argument matching), there's no existing primitive this could be folded
+into; it's a genuinely new capability, not an extension of one that already
+exists. Flagged as more architecturally involved than the recent additions
+specifically because it has to interact carefully with the "last-registered-
+-that-matches wins" rule this library deliberately chose over Mockery's own
+first-registered-wins matching order (see "Sensible defaults" and the
+`byDefault()` comparison) — call order and match-selection order are
+different concerns, but a design here needs to be explicit about how they
+coexist rather than quietly assuming they don't interact. Design discussion
+intentionally not started yet.
+
+## Strict-by-default scalar/array matching, loose objects, explicit object identity (resolved)
+
+Prior behavior: a bare literal passed to `with()` wrapped in `EqualsMatcher`,
+which always compared with `==`, for every type — scalars, arrays, and
+objects alike (matched Mockery's own effective default, confirmed against
+its source: `Expectation::_matchArg()` checks `===` first as a pure
+fast-path, but falls through to `==`, so the *outcome* was always
+equivalent to plain `==`).
+
+**Decision: split the default by whether the type has a meaningful
+identity-vs-equality gap at all.**
+
+- **Scalars and arrays don't** — for values of the *same* type, `===` and
+  `==` never disagree; they only diverge across *differing* types
+  (`'0' == 0` but `'0' !== 0`). So defaulting these to `===` removes a real
+  type-juggling footgun with no downside: it can never reject a legitimate
+  same-type match, only the cross-type surprises. The original case for
+  keeping `==` — that this library's own `declare(strict_types=1)`
+  discipline makes those surprises rare in practice — doesn't hold once you
+  consider that `with()` compares against whatever the *code under test*
+  passes, and that code's own `strict_types` adoption isn't this library's
+  to assume; `strict_types` usage isn't universal across the PHP ecosystem
+  this library gets used against.
+- **Objects do** — `==` means "same class, equal properties," `===` means
+  "the same instance." Both are genuinely useful defaults for different
+  assertions (an equivalent value vs. this exact reference), so this is a
+  real choice worth keeping, not a footgun to eliminate. Kept `==` as the
+  default here specifically because "an equivalent value was passed" is the
+  more common assertion in practice — a strict-by-default `with($book)`
+  would reject plenty of correct tests where the code under test
+  legitimately reconstructs an equivalent value object before the call.
+- For the identity case specifically, a new matcher —
+  `Argument::same($expected)`, backed by `===` — rather than changing what a
+  bare literal does for objects. Considered `identical()` (php.net's own
+  operator-name table calls `==` "Equal" and `===` "Identical") and
+  Laravel's `is()` (rejected on its own — `Argument::type()` already reads as
+  "is this type of thing," and `Argument::is()` sitting one method away for
+  "is this exact instance" would collide the same way `matches()` did against
+  `Matcher::matches()` when `satisfies()` was named, above). **Settled on
+  `same()`**, matching PHPUnit's own `assertSame()` — the more directly
+  relevant prior art, since this library integrates with PHPUnit directly
+  and already carries a PHPUnit rosetta-stone table, stronger precedent here
+  than reaching for the language manual's operator-name table.
+
+**Built:** `EqualsMatcher::matches()` is now
+`is_object($this->expected) ? $this->expected == $actual : $this->expected
+=== $actual`. `Argument::same()` is a new one-method addition,
+backed by a new `SameMatcher` class, alongside
+`any()`/`type()`/`satisfies()`/`capture()`/`remaining()`.

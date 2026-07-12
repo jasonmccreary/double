@@ -8,9 +8,9 @@ namespace JMac\Testing\Matching;
  * The argument-matcher facade (see ARCHITECTURE.md, "Verb lineage").
  * Starting matcher set — any(), type(), satisfies() — deliberately minimal
  * for v1; more get added once real usage shows what's actually needed,
- * rather than porting a full matcher catalog speculatively. capture() and
- * remaining() are later additions past that starting set, added once a
- * concrete need showed up rather than speculatively.
+ * rather than porting a full matcher catalog speculatively. capture(),
+ * remaining(), and same() are later additions past that starting set,
+ * added once a concrete need showed up rather than speculatively.
  */
 final class Argument
 {
@@ -62,5 +62,18 @@ final class Argument
     public static function remaining(): Matcher
     {
         return new RemainingMatcher;
+    }
+
+    /**
+     * Matches only the exact same instance (===), for the one case a bare
+     * literal passed to with() doesn't cover: object identity. A bare
+     * literal object still defaults to == ("an equivalent value") — see
+     * SameMatcher and ARCHITECTURE.md's "Strict-by-default scalar/array
+     * matching, loose objects, explicit object identity." Named after
+     * PHPUnit's own assertSame(), not php.net's operator-name table.
+     */
+    public static function same(mixed $expected): Matcher
+    {
+        return new SameMatcher($expected);
     }
 }

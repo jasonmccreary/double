@@ -9,6 +9,7 @@ use JMac\Testing\Matching\Argument;
 use JMac\Testing\Matching\Matcher;
 use JMac\Testing\Matching\PredicateMatcher;
 use JMac\Testing\Matching\RemainingMatcher;
+use JMac\Testing\Matching\SameMatcher;
 use JMac\Testing\Matching\TypeMatcher;
 use JMac\Testing\Tests\Support\Book;
 use PHPUnit\Framework\TestCase;
@@ -60,6 +61,16 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(RemainingMatcher::class, Argument::remaining());
     }
 
+    public function test_same_produces_a_same_matcher(): void
+    {
+        $book = new Book('Some Title');
+        $matcher = Argument::same($book);
+
+        $this->assertInstanceOf(SameMatcher::class, $matcher);
+        $this->assertTrue($matcher->matches($book));
+        $this->assertFalse($matcher->matches(new Book('Some Title')));
+    }
+
     public function test_every_produced_matcher_implements_the_matcher_contract(): void
     {
         $captured = null;
@@ -69,5 +80,6 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(Matcher::class, Argument::satisfies(fn (): bool => true));
         $this->assertInstanceOf(Matcher::class, Argument::capture($captured));
         $this->assertInstanceOf(Matcher::class, Argument::remaining());
+        $this->assertInstanceOf(Matcher::class, Argument::same($captured));
     }
 }
