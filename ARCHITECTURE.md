@@ -293,6 +293,45 @@ casing to accept it. `ReceivedAssertion::with()` gets this for free, with no
 code of its own, since it already delegates straight through to the same
 `MethodExpectation::with()`.
 
+`Argument::none()` is the next post-v1 addition, prompted by comparing
+against Mockery's `withNoArgs()`. That comparison turned up that bare
+`->with()` — no arguments at all — already asserts a zero-argument call:
+`$argumentConstraints` becomes `[]` rather than staying `null`, so the
+existing `count($constraints) !== count($arguments)` check in
+`matchesArguments()` already requires exactly zero real arguments. Correct,
+but entirely an emergent side effect of the general count-match rule, not a
+designed feature — nothing distinguishes it from "forgot to pass args" at
+the call site, and refactoring `->with($a, $b)` down to `->with()` mid-edit
+silently flips a specific-arguments assertion into a zero-arguments
+assertion, the opposite of what a stripped-down `with()` implies to a
+reader.
+
+Rejected a top-level `withNoArguments()`: not a real-world-common-enough
+case to earn a new domain verb the way `remaining()` was, and it would
+still leave the ambiguous bare-`with()` behavior sitting there unexplained.
+Also considered a class constant, `Argument::None`, for a lighter call site
+than a method call — rejected on a hard technical constraint, not taste:
+PHP forbids `new` in class constant initializers (confirmed directly
+against this project's PHP 8.4: `New expressions are not supported in this
+context`), so `Argument::None` can't hold an actual `Matcher` instance,
+only a sentinel value that `with()` would then need to special-case
+*before* its existing bare-literal-to-`EqualsMatcher` wrap step — more code
+than the method form, and the one constant on a facade where every other
+verb is a method.
+
+**Decision: `Argument::none()`**, returning `NoneMatcher`, must be the only
+argument passed to `with()` — `with(Argument::none(), 2)` doesn't mean
+anything coherent, same reasoning `remaining()`'s last-position-only rule
+already established, so `with()` throws rather than guess.
+`MethodExpectation::matchesArguments()` special-cases it the same way it
+special-cases `RemainingMatcher`: short-circuits to `$arguments === []`
+before the positional count comparison runs, since a single `NoneMatcher`
+constraint isn't a real position to compare a real argument against. Bare
+`->with()` keeps matching zero arguments exactly as before — `none()`
+doesn't replace that behavior, it gives the same assertion a name that says
+what it means at the call site instead of relying on a reader already
+knowing the count-match rule.
+
 ### Argument matcher facade naming
 
 The facade started life as `TestMatch`, named (per "Verb lineage" above) to

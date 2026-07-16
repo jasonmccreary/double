@@ -94,6 +94,34 @@ final class MethodExpectationTest extends TestCase
         $expectation->with(Argument::remaining(), 2);
     }
 
+    public function test_with_none_matches_only_a_zero_argument_call(): void
+    {
+        $expectation = (new MethodExpectation('find', required: false))->with(Argument::none());
+
+        $this->assertTrue($expectation->matchesArguments([]));
+        $this->assertFalse($expectation->matchesArguments([1]));
+        $this->assertFalse($expectation->matchesArguments([1, 2]));
+    }
+
+    public function test_with_rejects_none_combined_with_other_arguments(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->with(Argument::none(), 2);
+    }
+
+    public function test_describe_renders_none_as_no_arguments(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with(Argument::none());
+
+        $this->assertSame(
+            'find(no arguments) — expected exactly 1 time, called 0 times',
+            $expectation->describe(),
+        );
+    }
+
     public function test_describe_renders_remaining_as_an_ellipsis(): void
     {
         $expectation = (new MethodExpectation('find', required: true))->with(1, 2, Argument::remaining());

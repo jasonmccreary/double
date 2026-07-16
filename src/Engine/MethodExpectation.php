@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
+use JMac\Testing\Matching\NoneMatcher;
 use JMac\Testing\Matching\RemainingMatcher;
 
 /**
@@ -74,6 +75,12 @@ final class MethodExpectation
             if ($matcher instanceof RemainingMatcher && $index !== array_key_last($constraints)) {
                 throw new \InvalidArgumentException(
                     'Argument::remaining() can only be the last argument passed to with().',
+                );
+            }
+
+            if ($matcher instanceof NoneMatcher && count($constraints) !== 1) {
+                throw new \InvalidArgumentException(
+                    'Argument::none() must be the only argument passed to with().',
                 );
             }
         }
@@ -225,6 +232,13 @@ final class MethodExpectation
         }
 
         $constraints = $this->argumentConstraints;
+
+        // Argument::none() as the sole constraint asserts the call took no
+        // arguments at all — with() already guarantees it can only ever
+        // appear alone, so there's no positional matching left to do here.
+        if ($constraints !== [] && $constraints[0] instanceof NoneMatcher) {
+            return $arguments === [];
+        }
 
         // Argument::remaining() as the trailing constraint means "however
         // many further arguments there are, they're unconstrained" — drop

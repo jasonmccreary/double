@@ -9,7 +9,7 @@ namespace JMac\Testing\Matching;
  * Starting matcher set — any(), type(), satisfies() — deliberately minimal
  * for v1; more get added once real usage shows what's actually needed,
  * rather than porting a full matcher catalog speculatively. capture(),
- * remaining(), same(), not(), matches(), and contains() are later
+ * remaining(), same(), not(), matches(), contains(), and none() are later
  * additions past that starting set, added once a concrete need showed up
  * rather than speculatively. not(), matches(), and contains() specifically
  * close the gap where satisfies() was the only escape hatch for "not this
@@ -86,6 +86,17 @@ final class Argument
     public static function remaining(): Matcher
     {
         return new RemainingMatcher;
+    }
+
+    /**
+     * Asserts the call took no arguments at all — see NoneMatcher and
+     * ARCHITECTURE.md's "Argument::satisfies()" section for why this isn't
+     * a bare with(), and why it isn't a class constant either. Only valid
+     * as the sole argument passed to with(); with() throws otherwise.
+     */
+    public static function none(): Matcher
+    {
+        return new NoneMatcher;
     }
 
     /**

@@ -8,6 +8,7 @@ use JMac\Testing\Matching\AnyMatcher;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\Matching\ContainsMatcher;
 use JMac\Testing\Matching\Matcher;
+use JMac\Testing\Matching\NoneMatcher;
 use JMac\Testing\Matching\NotMatcher;
 use JMac\Testing\Matching\PatternMatcher;
 use JMac\Testing\Matching\PredicateMatcher;
@@ -64,6 +65,11 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(RemainingMatcher::class, Argument::remaining());
     }
 
+    public function test_none_produces_a_none_matcher(): void
+    {
+        $this->assertInstanceOf(NoneMatcher::class, Argument::none());
+    }
+
     public function test_same_produces_a_same_matcher(): void
     {
         $book = new Book('Some Title');
@@ -110,6 +116,7 @@ final class ArgumentTest extends TestCase
         $this->assertInstanceOf(Matcher::class, Argument::satisfies(fn (): bool => true));
         $this->assertInstanceOf(Matcher::class, Argument::capture($captured));
         $this->assertInstanceOf(Matcher::class, Argument::remaining());
+        $this->assertInstanceOf(Matcher::class, Argument::none());
         $this->assertInstanceOf(Matcher::class, Argument::same($captured));
         $this->assertInstanceOf(Matcher::class, Argument::not(5));
         $this->assertInstanceOf(Matcher::class, Argument::matches('/x/'));
