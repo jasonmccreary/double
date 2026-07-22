@@ -59,13 +59,12 @@ use League\CommonMark\Util\HtmlElement;
 use League\CommonMark\Util\Xml;
 
 $docsDir = __DIR__.'/..';
-$assetsDir = __DIR__.'/../assets';
+$assetsDir = __DIR__.'/../templates/assets';
 $siteDir = __DIR__.'/../build';
 
 $siteName = 'Test Double';
 $siteDescription = 'Documentation for Test Double, a modern, human-friendly PHP test double library.';
 $repoUrl = 'https://github.com/jasonmccreary/test-double';
-$packagistUrl = 'https://packagist.org/packages/jasonmccreary/test-double';
 
 $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 
@@ -73,6 +72,17 @@ $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 // theme, and line numbers aren't part of this design.
 $torchlightTheme = 'github-dark';
 $torchlightOptions = ['lineNumbers' => false];
+
+// Algolia DocSearch. The API key here is a search-only key, meant to be
+// public and shipped to the browser — not a secret like TORCHLIGHT_TOKEN.
+$algoliaAppId = getenv('ALGOLIA_APP_ID') ?: null;
+$algoliaApiKey = getenv('ALGOLIA_SEARCH_API_KEY') ?: null;
+$algoliaIndexName = getenv('ALGOLIA_INDEX_NAME') ?: null;
+$algoliaConfigured = $algoliaAppId && $algoliaApiKey && $algoliaIndexName;
+
+if (! $algoliaConfigured) {
+    fwrite(STDERR, "ALGOLIA_APP_ID, ALGOLIA_SEARCH_API_KEY, and/or ALGOLIA_INDEX_NAME not set — search will be disabled.\n");
+}
 
 /**
  * Collects raw code blocks discovered while rendering, keyed by a
@@ -363,7 +373,7 @@ foreach (glob($assetsDir.'/*') as $asset) {
 
 // --- assemble and write each page ---
 
-function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $packagistUrl): string
+function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName): string
 {
     $total = count($chapters);
 
@@ -410,24 +420,42 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         ? render_template('toc', ['ITEMS' => $tocItems])."\n"
         : '';
 
+    $searchStyles = $algoliaConfigured
+        ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">'
+        : '';
+
+    $searchButton = $algoliaConfigured
+        ? '<div id="docsearch" class="topbar-search"></div>'
+        : '';
+
+    $searchScript = $algoliaConfigured
+        ? render_template('search-script', [
+            'ALGOLIA_APP_ID' => json_encode($algoliaAppId, JSON_THROW_ON_ERROR),
+            'ALGOLIA_SEARCH_API_KEY' => json_encode($algoliaApiKey, JSON_THROW_ON_ERROR),
+            'ALGOLIA_INDEX_NAME' => json_encode($algoliaIndexName, JSON_THROW_ON_ERROR),
+        ])."\n"
+        : '';
+
     return render_template('page', [
         'TITLE' => htmlspecialchars($chapter['title'], ENT_QUOTES),
         'SITE_NAME' => $siteName,
         'DESCRIPTION' => htmlspecialchars($siteDescription, ENT_QUOTES),
         'REPO_URL' => $repoUrl,
-        'PACKAGIST_URL' => $packagistUrl,
         'SIDEBAR_ITEMS' => $sidebarItems,
         'CHAPTER_NUMBER' => (string) $chapter['number'],
         'CHAPTER_TOTAL' => (string) $total,
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
         'TOC_SECTION' => $tocSection,
+        'SEARCH_STYLES' => $searchStyles,
+        'SEARCH_BUTTON' => $searchButton,
+        'SEARCH_SCRIPT' => $searchScript,
     ])."\n";
 }
 
 foreach ($chapters as $chapter) {
     $bodyHtml = apply_torchlight($chapter['bodyHtml'], $collector->blocks, $torchlightResults);
-    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $packagistUrl);
+    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
 
     file_put_contents($siteDir.'/'.$chapter['htmlFile'], $page);
     echo "wrote {$chapter['htmlFile']}\n";
