@@ -383,7 +383,6 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         $sidebarItems .= render_template('sidebar-item', [
             'HREF' => $c['htmlFile'],
             'CURRENT' => $c['htmlFile'] === $chapter['htmlFile'] ? ' aria-current="page"' : '',
-            'NUMBER' => (string) $c['number'],
             'TITLE' => htmlspecialchars($c['title'], ENT_QUOTES),
         ])."\n";
     }

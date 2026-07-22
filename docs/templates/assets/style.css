@@ -408,6 +408,7 @@ body.search-open {
 .chapter-list a {
   display: block;
   padding: var(--space-2) var(--space-3);
+  border-left: 2px solid transparent;
   border-radius: var(--radius-sm);
   font-size: 0.9375rem;
   color: var(--ink-muted);
@@ -415,20 +416,13 @@ body.search-open {
 }
 
 .chapter-list a:hover {
-  color: var(--ink);
-}
-
-.chapter-list a[aria-current="page"] {
   background: var(--bg-well);
   color: var(--ink);
 }
 
-.chapter-num {
-  display: inline-block;
-  width: 1.25rem;
-  color: var(--ink-faint);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
+.chapter-list a[aria-current="page"] {
+  border-left-color: var(--accent);
+  color: var(--ink);
 }
 
 .content {
@@ -487,6 +481,12 @@ body.search-open {
 .toc a:hover {
   color: var(--ink);
   border-left-color: var(--border-strong);
+}
+
+/* Set by assets/toc-scrollspy.js as the user scrolls past each heading. */
+.toc a[aria-current="location"] {
+  color: var(--ink);
+  border-left-color: var(--accent);
 }
 
 @media (min-width: 64rem) {

@@ -12,7 +12,13 @@
 <header class="topbar">
   <div class="topbar-inner">
     <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
-
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
     <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
       <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
       <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -27,15 +33,15 @@
     <nav aria-label="Documentation">
       <p class="sidebar-heading">Documentation</p>
       <ol class="chapter-list" role="list">
-        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
-        <li><a href="installation.html"><span class="chapter-num">2</span>Installation</a></li>
-        <li><a href="creating-test-doubles.html" aria-current="page"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
-        <li><a href="expectations.html"><span class="chapter-num">4</span>Expectations</a></li>
-        <li><a href="argument-matching.html"><span class="chapter-num">5</span>Argument Matching</a></li>
-        <li><a href="verification.html"><span class="chapter-num">6</span>Verification</a></li>
-        <li><a href="failure-messages.html"><span class="chapter-num">7</span>Failure Messages</a></li>
-        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
-        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+        <li><a href="index.html">Introduction</a></li>
+        <li><a href="installation.html">Installation</a></li>
+        <li><a href="creating-test-doubles.html" aria-current="page">Creating Test Doubles</a></li>
+        <li><a href="expectations.html">Expectations</a></li>
+        <li><a href="argument-matching.html">Argument Matching</a></li>
+        <li><a href="verification.html">Verification</a></li>
+        <li><a href="failure-messages.html">Failure Messages</a></li>
+        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
       </ol>
     </nav>
   </aside>
@@ -228,6 +234,10 @@ than the whole double, <code>resolves()</code> is the better fit — see
     <span class="footer-spacer">jasonmccreary/test-double</span>
   </div>
 </footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="assets/search.js"></script>
 
+<script src="assets/toc-scrollspy.js"></script>
 </body>
 </html>
