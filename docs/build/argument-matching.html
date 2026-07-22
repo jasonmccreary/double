@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argument Matching · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double">GitHub</a>
+      <a class="topbar-link" href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
+        <li><a href="installation.html"><span class="chapter-num">2</span>Installation</a></li>
+        <li><a href="creating-test-doubles.html"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
+        <li><a href="expectations.html"><span class="chapter-num">4</span>Expectations</a></li>
+        <li><a href="argument-matching.html" aria-current="page"><span class="chapter-num">5</span>Argument Matching</a></li>
+        <li><a href="verification.html"><span class="chapter-num">6</span>Verification</a></li>
+        <li><a href="failure-messages.html"><span class="chapter-num">7</span>Failure Messages</a></li>
+        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <p class="page-eyebrow">Chapter 5 of 9</p>
+        <h1 class="page-title">Argument Matching</h1>
+<p>A plain value passed to <code>with()</code> covers most tests — <code>with(123)</code> matches
+the literal <code>123</code>. For anything looser than that — any argument at all,
+an instance of a class, a string in a particular shape — reach for
+<code>Argument</code>.</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #F97583;">use</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">JMac\Testing\Matching\Argument</span><span style="color: #E1E4E8;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">any</span><span style="color: #E1E4E8;">())</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">type</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Book</span><span style="color: #F97583;">::class</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div></code></pre></div>
+<p><code>Argument</code> is a small, standalone facade rather than a method on
+<code>TestDouble</code> itself — a matcher constrains one argument to a call, it
+isn't a double, so it gets its own class.</p>
+<h2 id="any-argument">Any Argument</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">any</span><span style="color: #E1E4E8;">())</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>Matches anything, including <code>null</code>. Useful when a position needs to be
+filled in <code>with()</code> but you don't care what's there.</p>
+<h2 id="one-of-several-values">One of Several Values</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">any</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">, </span><span style="color: #79B8FF;">2</span><span style="color: #E1E4E8;">, </span><span style="color: #79B8FF;">3</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>Give <code>any()</code> one or more values and it narrows to &quot;matches one of these&quot;
+rather than &quot;matches anything.&quot; Each alternative may be a plain value or
+another matcher.</p>
+<h2 id="by-type">By Type</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">type</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Book</span><span style="color: #F97583;">::class</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">type</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;int&#39;</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div></code></pre></div>
+<p>A class or interface name matches via <code>instanceof</code>. A PHP scalar type
+name — <code>'int'</code>, <code>'string'</code>, <code>'bool'</code>, <code>'array'</code>, and so on — matches via
+the corresponding <code>is_*()</code> function.</p>
+<h2 id="custom-logic">Custom Logic</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">satisfies</span><span style="color: #E1E4E8;">(</span><span style="color: #F97583;">fn</span><span style="color: #E1E4E8;"> ($id) =&gt; $id </span><span style="color: #F97583;">&gt;</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">100</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>For anything the other matchers don't cover, you may pass a predicate.
+One trade-off to keep in mind: a failure message can only describe this
+as <code>satisfies(...)</code> — it has no way to show what your closure checks. If
+you're using <code>satisfies()</code> to express &quot;not this,&quot; &quot;matches this
+pattern,&quot; or &quot;contains this,&quot; the matchers below produce a clearer
+failure message for the same idea.</p>
+<h2 id="capturing-what-was-passed">Capturing What Was Passed</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$captured </span><span style="color: #F97583;">=</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">null</span><span style="color: #E1E4E8;">;</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">capture</span><span style="color: #E1E4E8;">($captured))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">save</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$captured </span><span style="color: #F97583;">===</span><span style="color: #E1E4E8;"> $book; </span><span style="color: #6A737D;">// true</span></div></code></pre></div>
+<p>Matches anything, like <code>any()</code>, and also writes the real value into
+<code>$captured</code> once that call is confirmed as the match. Useful when you
+want to run further assertions against exactly what was passed.
+<code>$captured</code> always holds the most recent match.</p>
+<h2 id="trailing-arguments">Trailing Arguments</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;combine&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;-&#39;</span><span style="color: #E1E4E8;">, </span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">remaining</span><span style="color: #E1E4E8;">())</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;a-b-c&#39;</span><span style="color: #E1E4E8;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">combine</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;-&#39;</span><span style="color: #E1E4E8;">, </span><span style="color: #9ECBFF;">&#39;a&#39;</span><span style="color: #E1E4E8;">);           </span><span style="color: #6A737D;">// matches</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">combine</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;-&#39;</span><span style="color: #E1E4E8;">, </span><span style="color: #9ECBFF;">&#39;a&#39;</span><span style="color: #E1E4E8;">, </span><span style="color: #9ECBFF;">&#39;b&#39;</span><span style="color: #E1E4E8;">, </span><span style="color: #9ECBFF;">&#39;c&#39;</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// also matches</span></div></code></pre></div>
+<p>A trailing marker meaning &quot;however many further arguments there are,
+leave them unconstrained.&quot; It must be the last argument passed to
+<code>with()</code>.</p>
+<h2 id="no-arguments-at-all">No Arguments at All</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;reset&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">none</span><span style="color: #E1E4E8;">())</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div></code></pre></div>
+<p>Asserts the call took zero arguments. A bare <code>-&gt;with()</code> — nothing passed
+to it — already means the same thing, as a side effect of the general
+matching rule; <code>none()</code> exists so that intent reads clearly at the call
+site rather than relying on the reader already knowing that. It must be
+the only thing passed to <code>with()</code>.</p>
+<h2 id="same-exact-instance">Same Exact Instance</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">same</span><span style="color: #E1E4E8;">($book))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div></code></pre></div>
+<p>A plain object passed to <code>with()</code> matches an equivalent object — same
+class, equal properties. <code>Argument::same()</code> is for when you need this
+exact instance and no other, checked with <code>===</code>. It's named after
+PHPUnit's own <code>assertSame()</code>.</p>
+<h2 id="negating">Negating</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">not</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">5</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">not</span><span style="color: #E1E4E8;">()</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">type</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;int&#39;</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p><code>not($value)</code> negates a plain value directly. <code>not()</code> with no argument
+gives you an object with its own verbs — <code>type()</code>, <code>same()</code>,
+<code>satisfies()</code>, <code>contains()</code>, <code>matches()</code>, <code>any()</code> — so a negated verb
+reads left to right instead of nested inside out.</p>
+<h2 id="pattern-matching">Pattern Matching</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">matches</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;/</span><span style="color: #F97583;">^</span><span style="color: #85E89D;">\d</span><span style="color: #F97583;">+$</span><span style="color: #9ECBFF;">/&#39;</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>Matches a string (or anything <code>Stringable</code>) against a regular
+expression — <code>$pattern</code> includes its own delimiters, the same way
+<code>preg_match()</code> expects. A malformed pattern is caught at setup time, not
+buried in a warning during the test run.</p>
+<h2 id="searching-a-collection">Searching a Collection</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;saveAll&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">contains</span><span style="color: #E1E4E8;">($book))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;saveAll&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">contains</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">type</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Book</span><span style="color: #F97583;">::class</span><span style="color: #E1E4E8;">)))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;saveAll&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Argument</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">contains</span><span style="color: #E1E4E8;">(</span><span style="color: #F97583;">fn</span><span style="color: #E1E4E8;"> ($value, $key) =&gt; $value</span><span style="color: #F97583;">-&gt;</span><span style="color: #E1E4E8;">isbn </span><span style="color: #F97583;">===</span><span style="color: #E1E4E8;"> </span><span style="color: #9ECBFF;">&#39;123&#39;</span><span style="color: #E1E4E8;">))</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">true</span><span style="color: #E1E4E8;">);</span></div></code></pre></div>
+<p>Matches an array (or anything iterable) with at least one element
+satisfying <code>$needle</code> — a plain value, another matcher, or a callback
+invoked as <code>($value, $key)</code> for each element.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="expectations.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Expectations</span></a><a href="verification.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Verification</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#any-argument">Any Argument</a></li>
+        <li><a href="#one-of-several-values">One of Several Values</a></li>
+        <li><a href="#by-type">By Type</a></li>
+        <li><a href="#custom-logic">Custom Logic</a></li>
+        <li><a href="#capturing-what-was-passed">Capturing What Was Passed</a></li>
+        <li><a href="#trailing-arguments">Trailing Arguments</a></li>
+        <li><a href="#no-arguments-at-all">No Arguments at All</a></li>
+        <li><a href="#same-exact-instance">Same Exact Instance</a></li>
+        <li><a href="#negating">Negating</a></li>
+        <li><a href="#pattern-matching">Pattern Matching</a></li>
+        <li><a href="#searching-a-collection">Searching a Collection</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double">GitHub</a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+</body>
+</html>

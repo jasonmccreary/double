@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double">GitHub</a>
+      <a class="topbar-link" href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
+        <li><a href="installation.html"><span class="chapter-num">2</span>Installation</a></li>
+        <li><a href="creating-test-doubles.html"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
+        <li><a href="expectations.html"><span class="chapter-num">4</span>Expectations</a></li>
+        <li><a href="argument-matching.html"><span class="chapter-num">5</span>Argument Matching</a></li>
+        <li><a href="verification.html" aria-current="page"><span class="chapter-num">6</span>Verification</a></li>
+        <li><a href="failure-messages.html"><span class="chapter-num">7</span>Failure Messages</a></li>
+        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <p class="page-eyebrow">Chapter 6 of 9</p>
+        <h1 class="page-title">Verification</h1>
+<p><code>expects()</code> and <code>allows()</code> describe what you expect to happen before the
+code under test runs. Verification is the other half — confirming,
+afterward, that things happened the way you set up.</p>
+<p>There are two things you may check, and two ways to check them.</p>
+<h2 id="checking-your-expectations-verify">Checking Your Expectations: <code>verify()</code></h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$service</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">create</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">verify</span><span style="color: #E1E4E8;">();</span></div></code></pre></div>
+<p><code>verify()</code> looks at every <code>expects()</code> you configured on the double and
+fails if any of them weren't met. If you're using PHPUnit, you don't need
+to call this yourself at all — see
+<a href="phpunit-integration.html">PHPUnit Integration</a> for a trait that runs it
+automatically at the end of every test. Otherwise, call it once, wherever
+your test naturally ends.</p>
+<p>When something's unmet, the message doesn't just say it didn't happen —
+it shows you what did happen instead, if anything, which is usually
+enough to spot a typo or a stale value at a glance. See
+<a href="failure-messages.html">Failure Messages</a> for an example.</p>
+<h2 id="checking-what-happened-received">Checking What Happened: <code>received()</code></h2>
+<p>Sometimes you'd rather not declare an expectation up front, and just look
+back afterward to confirm something happened:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$service</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">create</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">received</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>You may compose it the same way you would an expectation:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">received</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">($book)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">times</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">2</span><span style="color: #E1E4E8;">);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">received</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;delete&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">never</span><span style="color: #E1E4E8;">();</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">received</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">atLeastOnce</span><span style="color: #E1E4E8;">();</span></div></code></pre></div>
+<p>Leave every modifier off and <code>received('save')</code> already means &quot;was this
+called at least once.&quot; Add <code>with()</code> to narrow it to specific arguments,
+and <code>never()</code>/<code>times()</code>/<code>atLeastOnce()</code> to be precise about the count.</p>
+<h3 id="when-the-check-runs">When the Check Runs</h3>
+<p>A <code>received()</code> call doesn't check anything the moment you write it,
+since it doesn't yet know whether you're about to chain <code>-&gt;with()</code> or
+<code>-&gt;never()</code> onto it. The check runs once the chain is finished, which for
+most test code is the instant the statement completes:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">received</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">($book)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">never</span><span style="color: #E1E4E8;">(); </span><span style="color: #6A737D;">// checked right here</span></div></code></pre></div>
+<p>If you assign a <code>received()</code> chain to something that outlives the
+statement — a property on the test case, say, rather than a local
+variable — there's no guarantee it's checked right away. Using the
+<a href="phpunit-integration.html">PHPUnit <code>VerifiesDoubles</code> trait</a> removes this
+concern entirely: every <code>received()</code> assertion made during a test is
+checked once that test ends, regardless of what you did with it.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="argument-matching.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Argument Matching</span></a><a href="failure-messages.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Failure Messages</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#checking-your-expectations-verify">Checking Your Expectations: <code>verify()</code></a></li>
+        <li><a href="#checking-what-happened-received">Checking What Happened: <code>received()</code></a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double">GitHub</a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+</body>
+</html>

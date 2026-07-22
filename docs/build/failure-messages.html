@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Failure Messages · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double">GitHub</a>
+      <a class="topbar-link" href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
+        <li><a href="installation.html"><span class="chapter-num">2</span>Installation</a></li>
+        <li><a href="creating-test-doubles.html"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
+        <li><a href="expectations.html"><span class="chapter-num">4</span>Expectations</a></li>
+        <li><a href="argument-matching.html"><span class="chapter-num">5</span>Argument Matching</a></li>
+        <li><a href="verification.html"><span class="chapter-num">6</span>Verification</a></li>
+        <li><a href="failure-messages.html" aria-current="page"><span class="chapter-num">7</span>Failure Messages</a></li>
+        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <p class="page-eyebrow">Chapter 7 of 9</p>
+        <h1 class="page-title">Failure Messages</h1>
+<p>A failing test is a message to whoever's looking at it next. This library
+aims for every one of its messages to name the double, name the call, and
+point at what to do about it.</p>
+<p>Here's what you'll actually see when things go wrong.</p>
+<h2 id="an-expectation-wasnt-met">An Expectation Wasn't Met</h2>
+<p>The most common cause isn't a call that never happened — it's a call that
+happened with a slightly different value than expected. A typo, a stale
+variable, a case-sensitivity slip. So <code>verify()</code> doesn't just report that
+an expectation went unmet — if that method was called with something
+else, it shows you exactly what:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;baz&#39;</span><span style="color: #E1E4E8;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">find</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;Baz&#39;</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// note the capital B</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">verify</span><span style="color: #E1E4E8;">();</span></div></code></pre></div>
+<div class="code-block"><span class="code-lang">text</span><pre><code>1 expectation was not satisfied on test double &quot;foo&quot;:
+
+    find(&quot;baz&quot;) — expected exactly 1 time(s), called 0 time(s)
+
+    &quot;find&quot; was called with different arguments elsewhere in this test:
+
+        find(&quot;Baz&quot;)
+</code></pre></div>
+<p>That second block comes straight from the call log — <code>find()</code> really was
+called, just not with anything that matched. Seeing the actual value next
+to the one you configured is usually enough to spot what went wrong.</p>
+<h2 id="a-call-wasnt-configured">A Call Wasn't Configured</h2>
+<p>In <a href="creating-test-doubles.html#strict">Strict mode</a>, a call that doesn't
+match a configured expectation fails the moment it happens:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;foo&quot; got an unexpected call to &quot;bar(1, 2)&quot; — Strict mode
+requires every call configured. Add: $foo-&gt;allows('bar')-&gt;returns(...);
+</code></pre></div>
+<p>That last sentence is meant to be copied and adjusted directly — <code>$foo</code>
+is derived from the double's own label, so it already matches what your
+test would plausibly call the variable.</p>
+<h3 id="method-name-suggestions">Method Name Suggestions</h3>
+<p>A typo'd method name is caught the moment you configure it:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;sav&#39;</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// meant &quot;save&quot;</span></div></code></pre></div>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Can't configure &quot;sav&quot; on a test double of &quot;BookRepository&quot;: no such method
+there. Did you mean &quot;save&quot;?
+</code></pre></div>
+<p>The suggestion only appears when something is genuinely close. If nothing
+is, the message simply doesn't guess.</p>
+<h2 id="a-call-happened-too-many-times">A Call Happened Too Many Times</h2>
+<p>If a call matches an expectation but would push it past its configured
+maximum, that call fails immediately, by number:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;foo&quot; got call #4 to &quot;bar(1)&quot;, but the expectation only
+allows 3.
+</code></pre></div>
+<h2 id="a-call-happened-out-of-order">A Call Happened Out of Order</h2>
+<p>For expectations marked
+<a href="expectations.html#keeping-calls-in-order"><code>inOrder()</code></a>, a call that
+arrives too early fails immediately, naming both methods involved:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;Connection&quot; received &quot;open()&quot; out of order: &quot;close()&quot; already
+happened, and inOrder() requires this to happen no later than that.
+</code></pre></div>
+<h2 id="setup-mistakes">Setup Mistakes</h2>
+<p>A handful of failures are about the test's setup rather than the double
+misbehaving mid-test, and these are caught the moment you make the
+mistake:</p>
+<ul>
+<li>Doubling a class that doesn't exist, or that's <code>final</code> (see
+<a href="creating-test-doubles.html#what-cant-be-doubled">What Can't Be Doubled</a>).</li>
+<li>A method name that collides with the library's own control verbs (see
+<a href="creating-test-doubles.html#reserved-method-names">Reserved Method Names</a>).</li>
+<li>Setting a double's mode twice.</li>
+<li>Configuring a static method with <code>expects()</code>/<code>allows()</code>/<code>received()</code>
+(see <a href="expectations.html#static-methods">Static Methods</a>).</li>
+<li>Calling <code>-&gt;passthru()</code> with no argument when there's nothing to
+auto-instantiate.</li>
+</ul>
+<h2 id="fabricated-doubles">Fabricated Doubles</h2>
+<p><a href="creating-test-doubles.html#loose-the-default">Loose mode</a> sometimes
+hands you back a freshly-generated double rather than a plain value. Any
+failure message involving one of those says so plainly:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Note: this double was auto-fabricated by Loose mode, not created directly.
+</code></pre></div>
+<p>And if a generated double is asked to fabricate something of its own,
+that's where a line is drawn:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;Book&quot; only fabricates one call chain deep — configure
+&quot;author()&quot; explicitly: $book-&gt;allows('author')-&gt;returns(...);
+</code></pre></div>
+<p>One generated double for free, and then a clear stop with a fix you may
+paste directly, rather than a silently growing chain of generated
+objects.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="verification.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Verification</span></a><a href="phpunit-integration.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">PHPUnit Integration</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#an-expectation-wasnt-met">An Expectation Wasn't Met</a></li>
+        <li><a href="#a-call-wasnt-configured">A Call Wasn't Configured</a></li>
+        <li><a href="#a-call-happened-too-many-times">A Call Happened Too Many Times</a></li>
+        <li><a href="#a-call-happened-out-of-order">A Call Happened Out of Order</a></li>
+        <li><a href="#setup-mistakes">Setup Mistakes</a></li>
+        <li><a href="#fabricated-doubles">Fabricated Doubles</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double">GitHub</a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+</body>
+</html>

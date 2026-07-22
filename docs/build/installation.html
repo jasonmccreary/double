@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installation · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double">GitHub</a>
+      <a class="topbar-link" href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
+        <li><a href="installation.html" aria-current="page"><span class="chapter-num">2</span>Installation</a></li>
+        <li><a href="creating-test-doubles.html"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
+        <li><a href="expectations.html"><span class="chapter-num">4</span>Expectations</a></li>
+        <li><a href="argument-matching.html"><span class="chapter-num">5</span>Argument Matching</a></li>
+        <li><a href="verification.html"><span class="chapter-num">6</span>Verification</a></li>
+        <li><a href="failure-messages.html"><span class="chapter-num">7</span>Failure Messages</a></li>
+        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <p class="page-eyebrow">Chapter 2 of 9</p>
+        <h1 class="page-title">Installation</h1>
+<p>You may install this library as a development dependency with Composer:</p>
+<div class="code-block"><span class="code-lang">sh</span><pre><code class="language-sh torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #B392F0;">composer</span><span style="color: #E1E4E8;"> </span><span style="color: #9ECBFF;">require</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">--dev</span><span style="color: #E1E4E8;"> </span><span style="color: #9ECBFF;">jasonmccreary/test-double</span></div></code></pre></div>
+<h2 id="requirements">Requirements</h2>
+<p>This library needs PHP 8.3 or newer, and nothing else. There's no required
+dependency on PHPUnit or any other test runner — the core library doesn't
+know or care what's running your tests.</p>
+<h2 id="phpunit-integration">PHPUnit Integration</h2>
+<p>If PHPUnit happens to be installed in your project, this library notices
+and improves a couple of things automatically:</p>
+<ul>
+<li>Failures are reported as PHPUnit failures rather than generic errors, so
+they're attributed to the right test.</li>
+<li>You may add a trait to your base test case to have every expectation
+verified automatically, without calling <code>-&gt;verify()</code> yourself.</li>
+</ul>
+<p>None of this requires configuration — it's detected the moment your tests
+run. The full details live in <a href="phpunit-integration.html">PHPUnit Integration</a>.
+If you're using another test runner, or none at all, everything still
+works the same way; you just call <code>$double-&gt;verify()</code> yourself, as shown
+in <a href="verification.html">Verification</a>.</p>
+<h2 id="confirming-it-works">Confirming It Works</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">&lt;?php</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #F97583;">use</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">JMac\Testing\TestDouble</span><span style="color: #E1E4E8;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #F97583;">require</span><span style="color: #E1E4E8;"> </span><span style="color: #9ECBFF;">&#39;vendor/autoload.php&#39;</span><span style="color: #E1E4E8;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$double </span><span style="color: #F97583;">=</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">TestDouble</span><span style="color: #F97583;">::</span><span style="color: #B392F0;">for</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">Countable</span><span style="color: #F97583;">::class</span><span style="color: #E1E4E8;">);</span></div><div class='line'><span style="color: #E1E4E8;">$double</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;count&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">3</span><span style="color: #E1E4E8;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #79B8FF;">var_dump</span><span style="color: #E1E4E8;">($double</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">count</span><span style="color: #E1E4E8;">()); </span><span style="color: #6A737D;">// int(3)</span></div></code></pre></div>
+<p>If that prints <code>int(3)</code>, you're ready to go. Head over to
+<a href="creating-test-doubles.html">Creating Test Doubles</a> to see what a real
+one looks like.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="index.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Introduction</span></a><a href="creating-test-doubles.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Creating Test Doubles</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#requirements">Requirements</a></li>
+        <li><a href="#phpunit-integration">PHPUnit Integration</a></li>
+        <li><a href="#confirming-it-works">Confirming It Works</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double">GitHub</a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+</body>
+</html>

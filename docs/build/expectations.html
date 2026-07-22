@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expectations · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double">GitHub</a>
+      <a class="topbar-link" href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html"><span class="chapter-num">1</span>Introduction</a></li>
+        <li><a href="installation.html"><span class="chapter-num">2</span>Installation</a></li>
+        <li><a href="creating-test-doubles.html"><span class="chapter-num">3</span>Creating Test Doubles</a></li>
+        <li><a href="expectations.html" aria-current="page"><span class="chapter-num">4</span>Expectations</a></li>
+        <li><a href="argument-matching.html"><span class="chapter-num">5</span>Argument Matching</a></li>
+        <li><a href="verification.html"><span class="chapter-num">6</span>Verification</a></li>
+        <li><a href="failure-messages.html"><span class="chapter-num">7</span>Failure Messages</a></li>
+        <li><a href="phpunit-integration.html"><span class="chapter-num">8</span>PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html"><span class="chapter-num">9</span>Migrating from Mockery</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <p class="page-eyebrow">Chapter 4 of 9</p>
+        <h1 class="page-title">Expectations</h1>
+<p>This is the part you'll write the most — telling a double what you expect
+to happen, and what should happen when it does.</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">123</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>Read left to right, that's the whole sentence: expect a call to <code>find</code>,
+with <code>123</code>, and return <code>$book</code>. Every modifier here has a sensible
+default if you leave it off.</p>
+<h2 id="expects-and-allows"><code>expects()</code> and <code>allows()</code></h2>
+<p>Both register a configured call. The difference is what happens if it
+never happens:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">);  </span><span style="color: #6A737D;">// must be called exactly once — verify() fails otherwise</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">);   </span><span style="color: #6A737D;">// may be called any number of times, including zero</span></div></code></pre></div>
+<p>You may reach for <code>expects()</code> when the call is the point of the test —
+the thing you're actually asserting happened — and <code>allows()</code> for setup
+that just needs to respond to a call, without the count being part of
+what you're testing.</p>
+<h2 id="constraining-arguments-with-with">Constraining Arguments with <code>with()</code></h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">123</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div></code></pre></div>
+<p>Leave <code>with()</code> off and the expectation matches a call to that method with
+any arguments. A plain value passed to <code>with()</code> is compared directly —
+scalars and arrays with <code>===</code>, objects with <code>==</code> (an equivalent object,
+not necessarily the same instance; see
+<a href="argument-matching.html#same-exact-instance">Argument Matching</a> if you
+need identity instead).</p>
+<p>For anything more flexible than an exact value, see
+<a href="argument-matching.html">Argument Matching</a>.</p>
+<h2 id="deciding-what-happens">Deciding What Happens</h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">123</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">999</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">throws</span><span style="color: #E1E4E8;">(</span><span style="color: #F97583;">new</span><span style="color: #E1E4E8;"> </span><span style="color: #79B8FF;">NotFoundException</span><span style="color: #E1E4E8;">());</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;calculateTax&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">resolves</span><span style="color: #E1E4E8;">(</span><span style="color: #F97583;">fn</span><span style="color: #E1E4E8;"> (</span><span style="color: #F97583;">...</span><span style="color: #E1E4E8;">$args) =&gt; $realGateway</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">calculateTax</span><span style="color: #E1E4E8;">(</span><span style="color: #F97583;">...</span><span style="color: #E1E4E8;">$args));</span></div></code></pre></div>
+<ul>
+<li><code>returns(...)</code> hands back a value.</li>
+<li><code>throws(...)</code> throws an exception instead.</li>
+<li><code>resolves(...)</code> computes the return value with a closure, given the
+real call's arguments. This is also how you may delegate a single call
+to a real object without switching the whole double to
+<a href="creating-test-doubles.html#passthru">passthru</a>.</li>
+</ul>
+<p>If you leave all three off, a matched call falls back to the same safe
+default that <a href="creating-test-doubles.html#loose-the-default">Loose mode</a>
+uses for an unmatched one, so an expectation without an explicit return
+doesn't hand back a bare <code>null</code> that turns into a <code>TypeError</code> further
+down.</p>
+<h2 id="sequential-returns">Sequential Returns</h2>
+<p>You may pass more than one value to <code>returns()</code> (or <code>throws()</code>), and each
+call receives the next value in the list, holding at the last one once
+the list runs out:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($first, $second);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">find</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// $first</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">find</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// $second</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">find</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// $second again</span></div></code></pre></div>
+<p>This is one expectation with a queue attached, not several competing
+expectations, so it composes cleanly with everything else on this page.</p>
+<h2 id="counting-calls-with-times">Counting Calls with <code>times()</code></h2>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">times</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">3</span><span style="color: #E1E4E8;">);                 </span><span style="color: #6A737D;">// exactly 3</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">times</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">1</span><span style="color: #E1E4E8;">, </span><span style="color: #79B8FF;">3</span><span style="color: #E1E4E8;">);               </span><span style="color: #6A737D;">// between 1 and 3</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">times</span><span style="color: #E1E4E8;">(</span><span style="color: #B392F0;">minimum</span><span style="color: #E1E4E8;">: </span><span style="color: #79B8FF;">2</span><span style="color: #E1E4E8;">);         </span><span style="color: #6A737D;">// at least 2</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">times</span><span style="color: #E1E4E8;">(</span><span style="color: #B392F0;">maximum</span><span style="color: #E1E4E8;">: </span><span style="color: #79B8FF;">5</span><span style="color: #E1E4E8;">);          </span><span style="color: #6A737D;">// at most 5</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">atLeastOnce</span><span style="color: #E1E4E8;">();             </span><span style="color: #6A737D;">// shorthand for times(minimum: 1)</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;save&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">never</span><span style="color: #E1E4E8;">();                    </span><span style="color: #6A737D;">// shorthand for times(0)</span></div></code></pre></div>
+<p>One overloaded verb covers every count you'd want, rather than a separate
+word for each shape. <code>atLeastOnce()</code> and <code>never()</code> remain as their own
+methods because they read more naturally than the equivalent <code>times()</code>
+call for those two common cases.</p>
+<h2 id="matching-order">Matching Order</h2>
+<p>When more than one expectation could match a call, write your setup top
+to bottom and the last one that applies wins:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">null</span><span style="color: #E1E4E8;">);              </span><span style="color: #6A737D;">// a default, declared first</span></div><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">allows</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;find&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">with</span><span style="color: #E1E4E8;">(</span><span style="color: #79B8FF;">123</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">returns</span><span style="color: #E1E4E8;">($book);  </span><span style="color: #6A737D;">// a specific override, declared second</span></div></code></pre></div>
+<p>This mirrors how you'd naturally write the setup: state a broad default,
+then layer specific overrides underneath it.</p>
+<h2 id="keeping-calls-in-order">Keeping Calls in Order</h2>
+<p>Most tests don't need to care what order unrelated calls happen in. But
+sometimes order is genuinely part of the contract — you can't <code>commit()</code>
+before <code>beginTransaction()</code>. For that, mark the relevant expectations
+<code>inOrder()</code>:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$connection</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;open&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">inOrder</span><span style="color: #E1E4E8;">();</span></div><div class='line'><span style="color: #E1E4E8;">$connection</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;write&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">inOrder</span><span style="color: #E1E4E8;">();</span></div><div class='line'><span style="color: #E1E4E8;">$connection</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;close&#39;</span><span style="color: #E1E4E8;">)</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">inOrder</span><span style="color: #E1E4E8;">();</span></div></code></pre></div>
+<p>Calling <code>write()</code> before <code>open()</code> throws immediately, naming both methods
+involved. Expectations without <code>inOrder()</code> are unaffected, and ordering
+is only checked within a single double.</p>
+<h2 id="static-methods">Static Methods</h2>
+<p><code>expects()</code>, <code>allows()</code>, and <code>received()</code> only work with instance
+methods — there's no instance for a double to intercept a static call
+through. Configuring one is rejected up front, with a clear reason,
+rather than silently doing nothing:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #E1E4E8;">$repository</span><span style="color: #F97583;">-&gt;</span><span style="color: #B392F0;">expects</span><span style="color: #E1E4E8;">(</span><span style="color: #9ECBFF;">&#39;findAll&#39;</span><span style="color: #E1E4E8;">); </span><span style="color: #6A737D;">// findAll() is `public static function`</span></div><div class='line'><span style="color: #6A737D;">// Can&#39;t configure &quot;findAll&quot; on a test double of &quot;BookRepository&quot;: it&#39;s a</span></div><div class='line'><span style="color: #6A737D;">// static method, and test doubles only intercept instance calls.</span></div></code></pre></div>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="creating-test-doubles.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Creating Test Doubles</span></a><a href="argument-matching.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Argument Matching</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#expects-and-allows"><code>expects()</code> and <code>allows()</code></a></li>
+        <li><a href="#constraining-arguments-with-with">Constraining Arguments with <code>with()</code></a></li>
+        <li><a href="#deciding-what-happens">Deciding What Happens</a></li>
+        <li><a href="#sequential-returns">Sequential Returns</a></li>
+        <li><a href="#counting-calls-with-times">Counting Calls with <code>times()</code></a></li>
+        <li><a href="#matching-order">Matching Order</a></li>
+        <li><a href="#keeping-calls-in-order">Keeping Calls in Order</a></li>
+        <li><a href="#static-methods">Static Methods</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double">GitHub</a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double">Packagist</a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+</body>
+</html>
