@@ -58,7 +58,7 @@
     --accent: var(--orange-400);
     --border: rgb(255 255 255 / 10%);
     --border-strong: rgb(255 255 255 / 16%);
-    --docsearch-modal-shadow: 0 0.5rem 2rem rgb(0 0 0 / 40%);
+    --search-backdrop: rgb(0 0 0 / 60%);
   }
 }
 
@@ -147,71 +147,150 @@ svg {
   max-width: 20rem;
 }
 
-/* Re-skins Algolia DocSearch's default widget (pill button, gradient
-   keycaps with inset shadows) to match this site's flat, soft-radius
-   look instead of its own out-of-the-box "system UI" style. Selectors
-   are boosted with html/body — not scoped to .topbar-search — because
-   the search modal itself is portalled to the end of <body>, and needs
-   to out-specificity docsearch.css regardless of the two stylesheets'
-   load order. */
-html body .DocSearch-Button {
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   width: 100%;
-  height: 2.25rem;
-  margin: 0;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-well);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-faint);
   font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-/* docsearch.css points the icon and the hover/focus/active text color at
-   --docsearch-text-color (mapped to --ink for contrast inside the modal's
-   results). Left alone, that makes the button's icon permanently
-   near-black and the whole button flash near-black on interaction. Pin
-   both to a muted tone instead, closer to laravel.com/docs's soft gray
-   icon that barely shifts on hover. */
-html body .DocSearch-Button .DocSearch-Search-Icon {
+.search-trigger:hover {
+  color: var(--ink-muted);
+}
+
+.search-trigger-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.search-trigger-text {
+  flex: 1;
+}
+
+.search-trigger-key {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   color: var(--ink-faint);
 }
 
-html body .DocSearch-Button:active,
-html body .DocSearch-Button:focus,
-html body .DocSearch-Button:hover {
-  color: var(--ink-muted);
-  box-shadow: none;
+.search-dialog-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--search-backdrop);
+  padding: 10vh var(--space-4) var(--space-8);
+  overflow-y: auto;
 }
 
-html body .DocSearch-Button-Key,
-html body .DocSearch-Commands-Key {
+.search-dialog-backdrop.is-open {
+  display: block;
+}
+
+.search-dialog {
+  max-width: 34rem;
+  margin: 0 auto;
   background: var(--bg);
-  box-shadow: none;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-}
-
-html body .DocSearch-Button-Key--pressed {
-  box-shadow: none;
-  transform: none;
-}
-
-html body .DocSearch-Modal {
   border-radius: var(--radius-lg);
+  box-shadow: 0 1rem 3rem rgb(9 9 11 / 20%);
+  overflow: hidden;
 }
 
-html body .DocSearch-Form {
-  border-radius: var(--radius-md);
+.search-dialog-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
-html body .DocSearch-Hit a {
+.search-dialog-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+
+.search-dialog-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.search-dialog-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.search-dialog-results {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
+  text-decoration: none;
 }
 
-html body .DocSearch-Hit-source {
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+.search-result[aria-selected="true"] {
+  background: var(--bg-well);
 }
 
-html body .DocSearch-Footer {
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+.search-result-path {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.search-result-title {
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.search-result-title mark {
+  background: none;
+  color: var(--accent);
+}
+
+.search-dialog-empty {
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ink-faint);
+}
+
+.search-dialog-footer {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+body.search-open {
+  overflow: hidden;
 }
 
 .topbar-links {

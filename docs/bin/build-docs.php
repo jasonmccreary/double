@@ -73,8 +73,9 @@ $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 $torchlightTheme = 'github-dark';
 $torchlightOptions = ['lineNumbers' => false];
 
-// Algolia DocSearch. The API key here is a search-only key, meant to be
-// public and shipped to the browser — not a secret like TORCHLIGHT_TOKEN.
+// Search, via a hand-rolled UI (templates/search-button.html, assets/search.js)
+// querying Algolia directly. The API key here is a search-only key, meant to
+// be public and shipped to the browser — not a secret like TORCHLIGHT_TOKEN.
 $algoliaAppId = getenv('ALGOLIA_APP_ID') ?: null;
 $algoliaApiKey = getenv('ALGOLIA_SEARCH_API_KEY') ?: null;
 $algoliaIndexName = getenv('ALGOLIA_INDEX_NAME') ?: null;
