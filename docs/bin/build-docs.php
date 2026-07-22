@@ -70,10 +70,10 @@ $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 
 // Fixed, not environment-configurable: the site only ships a dark code
 // theme, and line numbers aren't part of this design.
-$torchlightTheme = 'github-dark';
+$torchlightTheme = 'night-owl';
 $torchlightOptions = ['lineNumbers' => false];
 
-// Search, via a hand-rolled UI (templates/search-button.html, assets/search.js)
+// Search, via a hand-rolled UI (templates/search-button.html, assets/site.js)
 // querying Algolia directly. The API key here is a search-only key, meant to
 // be public and shipped to the browser — not a secret like TORCHLIGHT_TOKEN.
 $algoliaAppId = getenv('ALGOLIA_APP_ID') ?: null;
@@ -438,8 +438,6 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         'DESCRIPTION' => htmlspecialchars($siteDescription, ENT_QUOTES),
         'REPO_URL' => $repoUrl,
         'SIDEBAR_ITEMS' => $sidebarItems,
-        'CHAPTER_NUMBER' => (string) $chapter['number'],
-        'CHAPTER_TOTAL' => (string) $total,
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
         'TOC_SECTION' => $tocSection,

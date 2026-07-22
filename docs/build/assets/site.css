@@ -48,8 +48,11 @@
   --search-backdrop: rgb(9 9 11 / 40%);
 }
 
+/* Default: follow the OS preference. The [data-theme] rule below lets
+   assets/theme-toggle.js override that choice explicitly; :not([data-theme="light"])
+   keeps an explicit light override winning even when the OS prefers dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: var(--zinc-950);
     --bg-well: var(--zinc-900);
     --ink: var(--zinc-100);
@@ -60,6 +63,18 @@
     --border-strong: rgb(255 255 255 / 16%);
     --search-backdrop: rgb(0 0 0 / 60%);
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: var(--zinc-950);
+  --bg-well: var(--zinc-900);
+  --ink: var(--zinc-100);
+  --ink-muted: var(--zinc-400);
+  --ink-faint: var(--zinc-500);
+  --accent: var(--orange-400);
+  --border: rgb(255 255 255 / 10%);
+  --border-strong: rgb(255 255 255 / 16%);
+  --search-backdrop: rgb(0 0 0 / 60%);
 }
 
 *,
@@ -318,6 +333,50 @@ body.search-open {
   fill: currentColor;
 }
 
+/* Toggled by assets/theme-toggle.js, which sets data-theme on <html> and
+   mirrors the override into localStorage. Shows the icon for the theme a
+   click would switch *to* — moon while light, sun while dark. */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+}
+
+.theme-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon {
+    display: none;
+  }
+}
+
 .menu-btn {
   grid-column: 3;
   justify-self: end;
@@ -549,13 +608,6 @@ body.search-open {
 
 .prose > * + * {
   margin-top: var(--space-5);
-}
-
-.page-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--ink-faint);
-  margin: 0 0 var(--space-2);
 }
 
 .page-title {

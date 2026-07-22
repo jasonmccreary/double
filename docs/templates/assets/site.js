@@ -1,3 +1,6 @@
+// ---------- Search ----------
+// No-ops if Algolia isn't configured (see docs/bin/build-docs.php).
+
 (function () {
   var config = window.__ALGOLIA__;
   if (!config || !config.appId || !config.apiKey || !config.indexName || typeof window.algoliasearch !== 'function') {
@@ -175,4 +178,94 @@
       }
     }
   });
+})();
+
+// ---------- "On this page" scrollspy ----------
+// No-ops on pages without a .toc.
+
+(function () {
+  var tocLinks = document.querySelectorAll('.toc a[href^="#"]');
+  if (!tocLinks.length) {
+    return;
+  }
+
+  var headings = Array.prototype.map.call(tocLinks, function (link) {
+    return document.getElementById(link.getAttribute('href').slice(1));
+  }).filter(Boolean);
+
+  if (!headings.length) {
+    return;
+  }
+
+  // Matches .prose h2/h3's scroll-margin-top, so the active link flips
+  // right around where an anchor jump would land the heading.
+  var offset = 80;
+  var ticking = false;
+
+  function setActive() {
+    var current = headings[0];
+
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].getBoundingClientRect().top - offset <= 0) {
+        current = headings[i];
+      } else {
+        break;
+      }
+    }
+
+    tocLinks.forEach(function (link) {
+      if (link.getAttribute('href') === '#' + current.id) {
+        link.setAttribute('aria-current', 'location');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+
+    ticking = false;
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(setActive);
+      ticking = true;
+    }
+  }
+
+  document.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  setActive();
+})();
+
+// ---------- Theme toggle ----------
+// The blocking inline script in <head> (see templates/page.html) applies
+// any stored override before first paint, to avoid a flash of the wrong
+// theme; this just wires up the button to change and persist it.
+
+(function () {
+  var toggle = document.getElementById('theme-toggle');
+  if (!toggle) {
+    return;
+  }
+
+  var media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function effectiveTheme() {
+    var stored = document.documentElement.getAttribute('data-theme');
+    return stored === 'light' || stored === 'dark' ? stored : (media.matches ? 'dark' : 'light');
+  }
+
+  function updateLabel() {
+    var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    toggle.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+  }
+
+  toggle.addEventListener('click', function () {
+    var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('td-theme', next);
+    updateLabel();
+  });
+
+  media.addEventListener('change', updateLabel);
+  updateLabel();
 })();
