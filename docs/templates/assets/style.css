@@ -163,6 +163,73 @@ svg {
   max-width: 20rem;
 }
 
+/* Re-skins Algolia DocSearch's default widget (pill button, gradient
+   keycaps with inset shadows) to match this site's flat, soft-radius
+   look instead of its own out-of-the-box "system UI" style. Selectors
+   are boosted with html/body — not scoped to .topbar-search — because
+   the search modal itself is portalled to the end of <body>, and needs
+   to out-specificity docsearch.css regardless of the two stylesheets'
+   load order. */
+html body .DocSearch-Button {
+  width: 100%;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+}
+
+/* docsearch.css points the icon and the hover/focus/active text color at
+   --docsearch-text-color (mapped to --ink for contrast inside the modal's
+   results). Left alone, that makes the button's icon permanently
+   near-black and the whole button flash near-black on interaction. Pin
+   both to a muted tone instead, closer to laravel.com/docs's soft gray
+   icon that barely shifts on hover. */
+html body .DocSearch-Button .DocSearch-Search-Icon {
+  color: var(--ink-faint);
+}
+
+html body .DocSearch-Button:active,
+html body .DocSearch-Button:focus,
+html body .DocSearch-Button:hover {
+  color: var(--ink-muted);
+  box-shadow: none;
+}
+
+html body .DocSearch-Button-Key,
+html body .DocSearch-Commands-Key {
+  background: var(--bg);
+  box-shadow: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+html body .DocSearch-Button-Key--pressed {
+  box-shadow: none;
+  transform: none;
+}
+
+html body .DocSearch-Modal {
+  border-radius: var(--radius-lg);
+}
+
+html body .DocSearch-Form {
+  border-radius: var(--radius-md);
+}
+
+html body .DocSearch-Hit a {
+  border-radius: var(--radius-sm);
+}
+
+html body .DocSearch-Hit-source {
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+html body .DocSearch-Footer {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
 .topbar-links {
   grid-column: 3;
   justify-self: end;
@@ -371,6 +438,11 @@ svg {
 @media (min-width: 80rem) {
   .toc {
     display: block;
+  }
+  /* 15rem matches .toc's width, completing the mirror of the shell's
+     three columns so the search box centers on .content-inner. */
+  .topbar-inner {
+    grid-template-columns: 17rem 1fr 15rem;
   }
 }
 
