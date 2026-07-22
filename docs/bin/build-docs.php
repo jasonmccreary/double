@@ -420,12 +420,8 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         ? render_template('toc', ['ITEMS' => $tocItems])."\n"
         : '';
 
-    $searchStyles = $algoliaConfigured
-        ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">'
-        : '';
-
     $searchButton = $algoliaConfigured
-        ? '<div id="docsearch" class="topbar-search"></div>'
+        ? render_template('search-button', [])
         : '';
 
     $searchScript = $algoliaConfigured
@@ -447,7 +443,6 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
         'TOC_SECTION' => $tocSection,
-        'SEARCH_STYLES' => $searchStyles,
         'SEARCH_BUTTON' => $searchButton,
         'SEARCH_SCRIPT' => $searchScript,
     ])."\n";

@@ -1,9 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/@docsearch/js@3"></script>
-<script>
-  docsearch({
-    container: '#docsearch',
-    appId: {{ALGOLIA_APP_ID}},
-    apiKey: {{ALGOLIA_SEARCH_API_KEY}},
-    indexName: {{ALGOLIA_INDEX_NAME}},
-  });
-</script>
+<script>window.__ALGOLIA__ = { appId: {{ALGOLIA_APP_ID}}, apiKey: {{ALGOLIA_SEARCH_API_KEY}}, indexName: {{ALGOLIA_INDEX_NAME}} };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+<script src="assets/search.js"></script>
