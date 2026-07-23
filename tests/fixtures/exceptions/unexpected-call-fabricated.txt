@@ -1,1 +1,1 @@
-Test double "Book" got an unexpected call to "getAuthor()" — Strict mode requires every call configured. Add: $book->allows('getAuthor')->returns(...); Note: this double was auto-fabricated by Loose mode, not created directly.
+Test double `Book` got an unexpected call to `getAuthor()` — Strict mode requires every call configured. Add: $book->allows('getAuthor')->returns(...); Note: this test double was returned automatically from an unconfigured call.

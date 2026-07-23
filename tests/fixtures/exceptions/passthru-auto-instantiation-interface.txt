@@ -1,1 +1,1 @@
-Can't auto-instantiate "BookRepositoryInterface" to passthru to: it's an interface — no constructor to invoke. Pass an existing instance instead: ->passthru($existingInstance).
+Can't auto-instantiate `BookRepositoryInterface` to passthru to: it's an interface — no constructor to invoke. Pass an existing instance instead: ->passthru($existingInstance).

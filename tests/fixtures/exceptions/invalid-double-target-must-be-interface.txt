@@ -1,0 +1,1 @@
+Can't create a test double for `Book`: it's a class — every target passed to for() together must be an interface.

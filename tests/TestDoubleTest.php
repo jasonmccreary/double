@@ -126,7 +126,7 @@ final class TestDoubleTest extends TestCase
         $double->expects('delete')->returns(null);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
-        $this->expectExceptionMessageMatches('/delete\(any arguments\).*exactly 1 time, called 0 times/s');
+        $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called exactly 1 time, but it was never called/s');
 
         $double->verify();
     }
@@ -179,7 +179,7 @@ final class TestDoubleTest extends TestCase
         $double->save(new Book('Dune'));
 
         $this->expectException(PHPUnitOutOfOrderCallException::class);
-        $this->expectExceptionMessage('received "find()" out of order: "save()" already happened');
+        $this->expectExceptionMessage('received `find()` out of order: `save()` already happened');
 
         // find() is earlier in the declared sequence than save(), which
         // already happened — calling it now is a regression.
@@ -471,7 +471,7 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
-        $this->expectExceptionMessage('Did you mean "save"?');
+        $this->expectExceptionMessage('Did you mean `save`?');
 
         $double->expects('sav');
     }
@@ -507,7 +507,7 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
-        $this->expectExceptionMessageMatches('/delete\(any arguments\).*expected at least 1 time, called 0 times/s');
+        $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called at least 1 time, but it was never called/s');
 
         $double->received('delete');
     }
@@ -550,7 +550,7 @@ final class TestDoubleTest extends TestCase
         $double->delete(1);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
-        $this->expectExceptionMessageMatches('/expected exactly 0 times, called 1 time/');
+        $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to never be called, but it was called 1 time/');
 
         $double->received('delete')->never();
     }
@@ -563,7 +563,7 @@ final class TestDoubleTest extends TestCase
         $double->delete(2);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
-        $this->expectExceptionMessageMatches('/expected exactly 3 times, called 2 times/');
+        $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called exactly 3 times, but it was called 2 times/');
 
         $double->received('delete')->times(3);
     }
@@ -598,7 +598,7 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
-        $this->expectExceptionMessage('Did you mean "save"?');
+        $this->expectExceptionMessage('Did you mean `save`?');
 
         $double->received('sav');
     }
@@ -636,8 +636,8 @@ final class TestDoubleTest extends TestCase
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
             $message = $exception->getMessage();
 
-            $this->assertStringContainsString('find(123) — expected exactly 1 time, called 0 times', $message);
-            $this->assertStringContainsString('"find" was called with different arguments elsewhere in this test:', $message);
+            $this->assertStringContainsString('expected `find(123)` to be called exactly 1 time, but it was never called', $message);
+            $this->assertStringContainsString('`find` was called elsewhere in this test, just with different arguments:', $message);
             $this->assertStringContainsString('find(456)', $message);
         }
     }
@@ -670,7 +670,7 @@ final class TestDoubleTest extends TestCase
         $satisfied->delete(1);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
-        $this->expectExceptionMessageMatches('/save\(any arguments\).*expected exactly 1 time, called 0 times/s');
+        $this->expectExceptionMessageMatches('/expected `save\(any arguments\)` to be called exactly 1 time, but it was never called/s');
 
         TestDouble::verifyAll();
     }

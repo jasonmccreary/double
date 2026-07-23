@@ -1,7 +1,1 @@
-1 expectation was not satisfied on test double "foo":
-
-    bar('baz') — expected exactly 1 time, called 0 times
-
-    "bar" was called with different arguments elsewhere in this test:
-
-        bar('Baz')
+Test double `foo` expected `bar('baz')` to be called exactly 1 time, but it was never called. `bar` was called elsewhere in this test, just with different arguments: bar('Baz').

@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
  * Base for tests that compare a rendered exception message against a
  * fixture file rather than an inline string, so a rendering change shows up
  * as a reviewable diff on the fixture instead of a wall of escaped text in
- * the test itself. Run with UPDATE_GOLDEN=1 to (re)write every fixture a
- * test touches from the current actual output, then diff the fixture
- * change before committing it.
+ * the test itself. Fixtures are edited by hand, directly, rather than
+ * regenerated from actual output — there is deliberately no write-mode
+ * escape hatch here.
  */
 abstract class GoldenFileTestCase extends TestCase
 {
@@ -20,24 +20,12 @@ abstract class GoldenFileTestCase extends TestCase
     {
         $path = __DIR__.'/../fixtures/exceptions/'.$name.'.txt';
 
-        if (getenv('UPDATE_GOLDEN') !== false) {
-            file_put_contents($path, $actual);
-            $this->markTestSkipped(sprintf('Golden file "%s" was (re)written from actual output.', $name));
-        }
-
-        $this->assertFileExists($path, sprintf(
-            'Golden file "%s" does not exist. Run with UPDATE_GOLDEN=1 to create it, then review it.',
-            $name,
-        ));
+        $this->assertFileExists($path, sprintf('Golden file "%s" does not exist.', $name));
 
         $this->assertSame(
             file_get_contents($path),
             $actual,
-            sprintf(
-                'Rendered output does not match golden file "%s". '
-                .'Run with UPDATE_GOLDEN=1 to update it, then review the diff before committing.',
-                $name,
-            ),
+            sprintf('Rendered output does not match golden file "%s".', $name),
         );
     }
 }

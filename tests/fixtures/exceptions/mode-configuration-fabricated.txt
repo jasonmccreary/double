@@ -1,0 +1,1 @@
+Test double `SecondLink` is already Strict — can't also make it Strict. A double's mode can only be set once. Note: this test double was returned automatically from an unconfigured call.

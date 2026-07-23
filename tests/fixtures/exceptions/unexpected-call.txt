@@ -1,1 +1,1 @@
-Test double "BookRepository" got an unexpected call to "count()" — Strict mode requires every call configured. Add: $bookRepository->allows('count')->returns(...);
+Test double `BookRepository` got an unexpected call to `count()` — Strict mode requires every call configured. Add: $bookRepository->allows('count')->returns(...);

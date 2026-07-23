@@ -33,41 +33,55 @@ trait UnsatisfiedExpectationFields
      */
     public static function renderMessage(string $label, array $expectations, bool $fabricated): string
     {
-        $blocks = array_map(self::renderOne(...), $expectations);
+        if (count($expectations) === 1) {
+            return self::renderSingle($label, $expectations[0], $fabricated);
+        }
+
+        return self::renderMultiple($label, $expectations, $fabricated);
+    }
+
+    private static function renderSingle(string $label, UnsatisfiedExpectation $expectation, bool $fabricated): string
+    {
+        $message = sprintf('Test double `%s` %s.', $label, $expectation->description);
+
+        if ($expectation->otherObservedCalls !== []) {
+            $message .= ' '.self::renderCorrelation($expectation);
+        }
+
+        return $message.TestDoubleException::fabricatedNote($fabricated);
+    }
+
+    /**
+     * @param  list<UnsatisfiedExpectation>  $expectations
+     */
+    private static function renderMultiple(string $label, array $expectations, bool $fabricated): string
+    {
         $count = count($expectations);
 
         $message = sprintf(
-            "%s %s not satisfied on test double \"%s\":\n\n%s",
-            Pluralizer::pluralize($count, 'expectation', 'expectations'),
-            $count === 1 ? 'was' : 'were',
+            "%s not satisfied on test double `%s`:\n\n%s",
+            Pluralizer::pluralize($count, 'expectation was', 'expectations were'),
             $label,
-            implode("\n\n", $blocks),
+            implode("\n", array_map(
+                static fn (UnsatisfiedExpectation $expectation): string => '    '.$expectation->description,
+                $expectations,
+            )),
         );
 
-        if ($fabricated) {
-            $message .= "\n\n".trim(TestDoubleException::fabricatedNote(true));
-        }
-
-        return $message;
+        return $message.TestDoubleException::fabricatedNote($fabricated);
     }
 
-    private static function renderOne(UnsatisfiedExpectation $expectation): string
+    private static function renderCorrelation(UnsatisfiedExpectation $expectation): string
     {
-        $lines = ['    '.$expectation->description];
+        $calls = implode(', ', array_map(
+            static fn (string $call): string => sprintf('%s(%s)', $expectation->method, $call),
+            $expectation->otherObservedCalls,
+        ));
 
-        if ($expectation->otherObservedCalls !== []) {
-            $lines[] = '';
-            $lines[] = sprintf(
-                '    "%s" was called with different arguments elsewhere in this test:',
-                $expectation->method,
-            );
-            $lines[] = '';
-
-            foreach ($expectation->otherObservedCalls as $call) {
-                $lines[] = sprintf('        %s(%s)', $expectation->method, $call);
-            }
-        }
-
-        return implode("\n", $lines);
+        return sprintf(
+            '`%s` was called elsewhere in this test, just with different arguments: %s.',
+            $expectation->method,
+            $calls,
+        );
     }
 }

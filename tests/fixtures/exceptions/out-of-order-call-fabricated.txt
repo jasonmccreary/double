@@ -1,0 +1,1 @@
+Test double `SecondLink` received `open()` out of order: `close()` already happened, and inOrder() requires this to happen no later than that. Note: this test double was returned automatically from an unconfigured call.

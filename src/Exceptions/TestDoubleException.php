@@ -43,7 +43,7 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
             return '';
         }
 
-        return ' Note: this double was auto-fabricated by Loose mode, not created directly.';
+        return ' Note: this test double was returned automatically from an unconfigured call.';
     }
 
     /**

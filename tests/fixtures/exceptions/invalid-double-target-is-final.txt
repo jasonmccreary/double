@@ -1,1 +1,1 @@
-Can't create a test double for "FinalLogger": it's final, so it can't be extended.
+Can't create a test double for `FinalLogger`: it's final, so it can't be extended.

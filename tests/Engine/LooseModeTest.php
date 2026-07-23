@@ -167,7 +167,7 @@ final class LooseModeTest extends TestCase
             $fabricated->verify();
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
-            $this->assertStringContainsString('auto-fabricated', $exception->getMessage());
+            $this->assertStringContainsString('returned automatically from an unconfigured call', $exception->getMessage());
         }
     }
 
@@ -180,7 +180,7 @@ final class LooseModeTest extends TestCase
             $fabricated->received('fill');
             $this->fail('Expected UnsatisfiedReceivedAssertionException to be thrown.');
         } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
-            $this->assertStringContainsString('auto-fabricated', $exception->getMessage());
+            $this->assertStringContainsString('returned automatically from an unconfigured call', $exception->getMessage());
         }
     }
 

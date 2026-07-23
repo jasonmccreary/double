@@ -92,7 +92,7 @@ final class ClassGeneratorTest extends TestCase
     public function test_rejects_a_target_with_an_abstract_static_method(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method ("make")');
+        $this->expectExceptionMessage('static method (`make`)');
 
         (new ClassGenerator)->generate(StaticMethodInterface::class);
     }

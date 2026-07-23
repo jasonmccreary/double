@@ -1,0 +1,1 @@
+TestDouble::for() only accepts a real instance as a target when doubling a single target.

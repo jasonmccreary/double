@@ -26,7 +26,7 @@ trait OutOfOrderCallFields
     public static function renderMessage(string $label, string $method, string $alreadyOccurredMethod, bool $fabricated): string
     {
         return sprintf(
-            'Test double "%s" received "%s()" out of order: "%s()" already happened, and inOrder() '
+            'Test double `%s` received `%s()` out of order: `%s()` already happened, and inOrder() '
             .'requires this to happen no later than that.%s',
             $label,
             $method,

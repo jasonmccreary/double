@@ -36,7 +36,7 @@ trait UnexpectedCallFields
     public static function renderMessage(string $label, string $method, string $argumentsDescription, bool $fabricated): string
     {
         return sprintf(
-            'Test double "%s" got an unexpected call to "%s(%s)" — Strict mode requires every '
+            'Test double `%s` got an unexpected call to `%s(%s)` — Strict mode requires every '
             .'call configured. Add: $%s->allows(\'%s\')->returns(...);%s',
             $label,
             $method,

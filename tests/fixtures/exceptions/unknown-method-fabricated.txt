@@ -1,0 +1,1 @@
+Can't configure `bogus` on a test double of `BookRepositoryInterface`: no such method there. Note: this test double was returned automatically from an unconfigured call.

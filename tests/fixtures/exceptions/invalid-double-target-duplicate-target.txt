@@ -1,0 +1,1 @@
+Can't create a test double for `LoggerInterface`: it was passed more than once.

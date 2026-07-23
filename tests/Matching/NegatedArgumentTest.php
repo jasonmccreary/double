@@ -38,7 +38,7 @@ final class NegatedArgumentTest extends TestCase
     public function test_not_rejects_a_matcher_passed_to_the_one_argument_form(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Argument::not()->verb(...)');
+        $this->expectExceptionMessage('it must prefix a matcher instead');
 
         Argument::not(Argument::type('int'));
     }

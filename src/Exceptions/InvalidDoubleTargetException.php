@@ -58,7 +58,7 @@ class InvalidDoubleTargetException extends TestDoubleException
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {
         return new self($target, sprintf(
-            'it declares a static method ("%s") with no implementation to fall back on — static methods can\'t be doubled',
+            'it declares a static method (`%s`) with no implementation to fall back on — static methods can\'t be doubled',
             $method,
         ));
     }
@@ -66,7 +66,7 @@ class InvalidDoubleTargetException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t create a test double for "%s": %s.',
+            'Can\'t create a test double for `%s`: %s.',
             $this->target,
             $this->reason,
         );

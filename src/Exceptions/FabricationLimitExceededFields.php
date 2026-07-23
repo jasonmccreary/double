@@ -33,7 +33,7 @@ trait FabricationLimitExceededFields
     public static function renderMessage(string $label, string $method): string
     {
         return sprintf(
-            'Test double "%s" only fabricates one call chain deep — configure "%s()" '
+            'Test double `%s` only fabricates one call chain deep — configure `%s()` '
             .'explicitly: $%s->allows(\'%s\')->returns(...);',
             $label,
             $method,

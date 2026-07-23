@@ -1,0 +1,1 @@
+Test double `SecondLink` received 2 calls to `delete(1)`, but your expectation only allowed 1 call. Note: this test double was returned automatically from an unconfigured call, so if two calls here are legitimate, loosen the expectation — ->times(2) or ->atLeastOnce() — rather than the default of exactly one.

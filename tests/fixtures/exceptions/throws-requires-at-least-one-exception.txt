@@ -1,0 +1,1 @@
+throws() requires at least one exception.

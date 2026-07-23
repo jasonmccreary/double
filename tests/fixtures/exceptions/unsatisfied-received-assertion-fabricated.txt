@@ -1,0 +1,1 @@
+Test double `SecondLink` expected `save(any arguments)` to never be called, but it was called 1 time. Note: this test double was returned automatically from an unconfigured call.

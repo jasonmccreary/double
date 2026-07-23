@@ -1,3 +1,1 @@
-1 expectation was not satisfied on test double "BookRepository":
-
-    delete(any arguments) — expected exactly 1 time, called 0 times
+Test double `BookRepository` expected `delete(any arguments)` to be called exactly 1 time, but it was never called.

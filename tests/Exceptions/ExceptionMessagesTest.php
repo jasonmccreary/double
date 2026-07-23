@@ -6,14 +6,17 @@ namespace JMac\Testing\Tests\Exceptions;
 
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\FabricationLimitExceededException;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
+use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
+use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
 
 final class ExceptionMessagesTest extends GoldenFileTestCase
 {
@@ -33,7 +36,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $expectation = new UnsatisfiedExpectation(
             method: 'bar',
-            description: "bar('baz') — expected exactly 1 time, called 0 times",
+            description: "expected `bar('baz')` to be called exactly 1 time, but it was never called",
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -48,7 +51,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $expectation = new UnsatisfiedExpectation(
             method: 'delete',
-            description: 'delete(any arguments) — expected exactly 1 time, called 0 times',
+            description: 'expected `delete(any arguments)` to be called exactly 1 time, but it was never called',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -63,7 +66,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     {
         $first = new UnsatisfiedExpectation(
             method: 'save',
-            description: 'save(any arguments) — expected exactly 1 time, called 0 times',
+            description: 'expected `save(any arguments)` to be called exactly 1 time, but it was never called',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -71,7 +74,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
         $second = new UnsatisfiedExpectation(
             method: 'delete',
-            description: 'delete(any arguments) — expected at least 1 time, called 0 times',
+            description: 'expected `delete(any arguments)` to be called at least 1 time, but it was never called',
             expectedMin: 1,
             expectedMax: PHP_INT_MAX,
             timesCalled: 0,
@@ -164,5 +167,125 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new OutOfOrderCallException('Connection', 'open', 'close');
 
         $this->assertMatchesGolden('out-of-order-call', $exception->getMessage());
+    }
+
+    public function test_renders_unexpected_call_with_arguments(): void
+    {
+        $exception = new UnexpectedCallException('BookRepository', 'save', "5, 'Alice'");
+
+        $this->assertMatchesGolden('unexpected-call-with-arguments', $exception->getMessage());
+    }
+
+    public function test_renders_unsatisfied_expectation_on_a_fabricated_double(): void
+    {
+        $expectation = new UnsatisfiedExpectation(
+            method: 'save',
+            description: 'expected `save(any arguments)` to be called exactly 1 time, but it was never called',
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: [],
+        );
+        $exception = new UnsatisfiedExpectationException('SecondLink', [$expectation], fabricated: true);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_call_limit_exceeded_on_a_fabricated_double(): void
+    {
+        $exception = new ExpectationCallLimitExceededException('SecondLink', 'delete', '1', 1, 2, fabricated: true);
+
+        $this->assertMatchesGolden('call-limit-exceeded-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_fabrication_limit_exceeded(): void
+    {
+        $exception = new FabricationLimitExceededException('SecondLink', 'toThird', 'ThirdLink', 1);
+
+        $this->assertMatchesGolden('fabrication-limit-exceeded', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_on_a_fabricated_double(): void
+    {
+        $exception = new UnknownMethodException('BookRepositoryInterface', 'bogus', fabricated: true);
+
+        $this->assertMatchesGolden('unknown-method-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_on_a_fabricated_double_with_a_suggestion(): void
+    {
+        $exception = new UnknownMethodException('BookRepositoryInterface', 'sav', fabricated: true, suggestion: 'save');
+
+        $this->assertMatchesGolden('unknown-method-fabricated-with-suggestion', $exception->getMessage());
+    }
+
+    public function test_renders_mode_configuration_on_a_fabricated_double(): void
+    {
+        $exception = new ModeConfigurationException('SecondLink', 'Strict', 'Strict', fabricated: true);
+
+        $this->assertMatchesGolden('mode-configuration-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_invalid_double_target_must_be_interface(): void
+    {
+        $exception = InvalidDoubleTargetException::mustBeInterface('Book');
+
+        $this->assertMatchesGolden('invalid-double-target-must-be-interface', $exception->getMessage());
+    }
+
+    public function test_renders_invalid_double_target_duplicate_target(): void
+    {
+        $exception = InvalidDoubleTargetException::duplicateTarget('LoggerInterface');
+
+        $this->assertMatchesGolden('invalid-double-target-duplicate-target', $exception->getMessage());
+    }
+
+    public function test_renders_static_method_on_a_fabricated_double(): void
+    {
+        $exception = new StaticMethodException('HasStaticMethod', 'make', fabricated: true);
+
+        $this->assertMatchesGolden('static-method-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_out_of_order_call_on_a_fabricated_double(): void
+    {
+        $exception = new OutOfOrderCallException('SecondLink', 'open', 'close', fabricated: true);
+
+        $this->assertMatchesGolden('out-of-order-call-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_unsatisfied_received_assertion(): void
+    {
+        $exception = new UnsatisfiedReceivedAssertionException(
+            'BookRepository',
+            'expected `delete(any arguments)` to be called at least 1 time, but it was never called',
+        );
+
+        $this->assertMatchesGolden('unsatisfied-received-assertion', $exception->getMessage());
+    }
+
+    public function test_renders_unsatisfied_received_assertion_on_a_fabricated_double(): void
+    {
+        $exception = new UnsatisfiedReceivedAssertionException(
+            'SecondLink',
+            'expected `save(any arguments)` to never be called, but it was called 1 time',
+            fabricated: true,
+        );
+
+        $this->assertMatchesGolden('unsatisfied-received-assertion-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_reserved_name_collision_for_a_single_method(): void
+    {
+        $exception = ReservedNameCollisionException::forCollisions('ExpectsCollisionInterface', ['expects']);
+
+        $this->assertMatchesGolden('reserved-name-collision-single', $exception->getMessage());
+    }
+
+    public function test_renders_reserved_name_collision_for_multiple_methods(): void
+    {
+        $exception = ReservedNameCollisionException::forCollisions('Fillable&Sized', ['expects', 'verify']);
+
+        $this->assertMatchesGolden('reserved-name-collision-multiple', $exception->getMessage());
     }
 }

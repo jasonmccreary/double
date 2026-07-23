@@ -1,1 +1,1 @@
-Can't create a test double for "StaticMethodInterface": it declares a static method ("make") with no implementation to fall back on — static methods can't be doubled.
+Can't create a test double for `StaticMethodInterface`: it declares a static method (`make`) with no implementation to fall back on — static methods can't be doubled.

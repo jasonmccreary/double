@@ -30,7 +30,7 @@ class PassthruAutoInstantiationException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t auto-instantiate "%s" to passthru to: %s. '
+            'Can\'t auto-instantiate `%s` to passthru to: %s. '
             .'Pass an existing instance instead: ->passthru($existingInstance).',
             $this->target,
             $this->reason,

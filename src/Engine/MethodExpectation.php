@@ -342,28 +342,39 @@ final class MethodExpectation
             : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
 
         return sprintf(
-            '%s(%s) — expected %s, called %s',
+            'expected `%s(%s)` to %s, but it was %s',
             $this->method,
             $arguments,
-            $this->describeExpectedCount(),
-            Pluralizer::pluralize($this->timesMatched, 'time', 'times'),
+            $this->describeExpectedBound(),
+            $this->describeActualCount(),
         );
     }
 
-    private function describeExpectedCount(): string
+    private function describeExpectedBound(): string
     {
+        if ($this->minimumCalls === 0 && $this->maximumCalls === 0) {
+            return 'never be called';
+        }
+
         if ($this->minimumCalls === $this->maximumCalls) {
-            return 'exactly '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
+            return 'be called exactly '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
         }
 
         if ($this->minimumCalls === 0 && $this->maximumCalls !== self::UNBOUNDED) {
-            return 'at most '.Pluralizer::pluralize($this->maximumCalls, 'time', 'times');
+            return 'be called at most '.Pluralizer::pluralize($this->maximumCalls, 'time', 'times');
         }
 
         if ($this->maximumCalls === self::UNBOUNDED) {
-            return 'at least '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
+            return 'be called at least '.Pluralizer::pluralize($this->minimumCalls, 'time', 'times');
         }
 
-        return sprintf('between %d and %d times', $this->minimumCalls, $this->maximumCalls);
+        return sprintf('be called between %d and %d times', $this->minimumCalls, $this->maximumCalls);
+    }
+
+    private function describeActualCount(): string
+    {
+        return $this->timesMatched === 0
+            ? 'never called'
+            : 'called '.Pluralizer::pluralize($this->timesMatched, 'time', 'times');
     }
 }

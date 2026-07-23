@@ -1,0 +1,1 @@
+Can't configure `sav` on a test double of `BookRepositoryInterface`: no such method there. Did you mean `save`? Note: this test double was returned automatically from an unconfigured call.

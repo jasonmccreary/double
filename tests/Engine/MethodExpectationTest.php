@@ -117,7 +117,7 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))->with(Argument::none());
 
         $this->assertSame(
-            'find(no arguments) — expected exactly 1 time, called 0 times',
+            'expected `find(no arguments)` to be called exactly 1 time, but it was never called',
             $expectation->describe(),
         );
     }
@@ -127,7 +127,7 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))->with(1, 2, Argument::remaining());
 
         $this->assertSame(
-            'find(1, 2, ...) — expected exactly 1 time, called 0 times',
+            'expected `find(1, 2, ...)` to be called exactly 1 time, but it was never called',
             $expectation->describe(),
         );
     }
@@ -333,21 +333,21 @@ final class MethodExpectationTest extends TestCase
     {
         $expectation = (new MethodExpectation('find', required: true))->with(123);
 
-        $this->assertSame('find(123) — expected exactly 1 time, called 0 times', $expectation->describe());
+        $this->assertSame('expected `find(123)` to be called exactly 1 time, but it was never called', $expectation->describe());
     }
 
     public function test_describe_renders_at_most_for_a_zero_floor_maximum(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->times(maximum: 3);
 
-        $this->assertSame('find(any arguments) — expected at most 3 times, called 0 times', $expectation->describe());
+        $this->assertSame('expected `find(any arguments)` to be called at most 3 times, but it was never called', $expectation->describe());
     }
 
     public function test_describe_renders_between_for_a_two_sided_range(): void
     {
         $expectation = (new MethodExpectation('find', required: false))->times(1, 3);
 
-        $this->assertSame('find(any arguments) — expected between 1 and 3 times, called 0 times', $expectation->describe());
+        $this->assertSame('expected `find(any arguments)` to be called between 1 and 3 times, but it was never called', $expectation->describe());
     }
 
     public function test_with_accepts_a_matcher_alongside_bare_literals(): void
@@ -383,7 +383,7 @@ final class MethodExpectationTest extends TestCase
         $expectation = (new MethodExpectation('find', required: true))
             ->with(Argument::any());
 
-        $this->assertSame('find(any()) — expected exactly 1 time, called 0 times', $expectation->describe());
+        $this->assertSame('expected `find(any())` to be called exactly 1 time, but it was never called', $expectation->describe());
     }
 
     public function test_is_ordered_is_false_until_in_order_is_called(): void

@@ -25,7 +25,7 @@ trait UnsatisfiedReceivedAssertionFields
     public static function renderMessage(string $label, string $description, bool $fabricated): string
     {
         return sprintf(
-            'Test double "%s" received() assertion failed: %s.%s',
+            'Test double `%s` %s.%s',
             $label,
             $description,
             TestDoubleException::fabricatedNote($fabricated),
