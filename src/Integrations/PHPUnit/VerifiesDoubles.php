@@ -50,6 +50,16 @@ use PHPUnit\Framework\Attributes\Before;
  *
  * $double->verify() remains available, and necessary, for every non-PHPUnit
  * test runner, and for PHPUnit users who'd rather verify explicitly.
+ *
+ * The #[After] hook only verifies if the test itself already succeeded.
+ * PHPUnit runs #[After] unconditionally — pass, fail, error, or skipped —
+ * unlike assertPostConditions() (what Mockery's integration hooks instead),
+ * which PHPUnit skips entirely once a test has already failed. Without this
+ * check, a test that fails a plain assertion (or throws) before an
+ * already-registered expects()/allows() is ever satisfied would report a
+ * second, unrelated-looking "unmet expectation" failure on top of the real
+ * one, every time. TestCase::status() already reflects the real outcome by
+ * the time #[After] runs, so isSuccess() is checked explicitly here instead.
  */
 trait VerifiesDoubles
 {
@@ -62,6 +72,13 @@ trait VerifiesDoubles
     #[After]
     final public function verifyDoublesCreatedDuringThisTest(): void
     {
+        if (! $this->status()->isSuccess()) {
+            // Test already failed for an unrelated reason — don't pile on.
+            // The next test's #[Before] resets $pending/$pendingReceived
+            // unconditionally, so nothing here needs to drain them.
+            return;
+        }
+
         TestDouble::verifyAll();
     }
 }
