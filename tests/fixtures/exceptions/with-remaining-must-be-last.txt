@@ -1,1 +1,1 @@
-Argument::remaining() can only be the last argument passed to with().
+`Argument::remaining()` must be the last argument passed to `with()`.

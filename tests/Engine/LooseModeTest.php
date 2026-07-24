@@ -167,7 +167,7 @@ final class LooseModeTest extends TestCase
             $fabricated->verify();
             $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
-            $this->assertStringContainsString('returned automatically from an unconfigured call', $exception->getMessage());
+            $this->assertStringContainsString('this test double was returned automatically', $exception->getMessage());
         }
     }
 
@@ -180,7 +180,7 @@ final class LooseModeTest extends TestCase
             $fabricated->received('fill');
             $this->fail('Expected UnsatisfiedReceivedAssertionException to be thrown.');
         } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
-            $this->assertStringContainsString('returned automatically from an unconfigured call', $exception->getMessage());
+            $this->assertStringContainsString('this test double was returned automatically', $exception->getMessage());
         }
     }
 
@@ -215,9 +215,9 @@ final class LooseModeTest extends TestCase
             $this->fail('Expected PHPUnitFabricationLimitExceededException to be thrown.');
         } catch (PHPUnitFabricationLimitExceededException $exception) {
             $this->assertStringContainsString('SecondLink', $exception->getMessage());
-            $this->assertStringContainsString('one call chain deep', $exception->getMessage());
+            $this->assertStringContainsString('one level deep', $exception->getMessage());
             $this->assertStringContainsString(
-                "\$secondLink->allows('toThird')->returns(...);",
+                "\$secondLink->allows('toThird')->returns(\$anotherDouble)",
                 $exception->getMessage(),
             );
         }

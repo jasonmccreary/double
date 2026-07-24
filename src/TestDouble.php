@@ -96,14 +96,14 @@ final class TestDouble
     public static function for(string|object ...$targets): object
     {
         if ($targets === []) {
-            throw new \InvalidArgumentException('TestDouble::for() requires at least one target.');
+            throw new \InvalidArgumentException('`TestDouble::for()` requires at least one target.');
         }
 
         if (count($targets) > 1) {
             foreach ($targets as $target) {
                 if (is_object($target)) {
                     throw new \InvalidArgumentException(
-                        'TestDouble::for() only accepts a real instance as a target when doubling a single target.',
+                        '`TestDouble::for()` can\'t accept a real instance as a target when passing multiple targets.',
                     );
                 }
             }
@@ -260,7 +260,7 @@ final class TestDouble
         $state = self::states()[$double] ?? null;
 
         if ($state === null) {
-            throw new \LogicException('Object is not a TestDouble-generated double.');
+            throw new \LogicException('Object is not a `TestDouble`-generated double.');
         }
 
         return $state;

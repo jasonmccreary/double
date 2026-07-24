@@ -29,11 +29,13 @@ class StaticMethodException extends TestDoubleException
 
     private function render(): string
     {
+        // No fabricatedNote() here, unlike its siblings: the static-method
+        // restriction holds regardless of how the double came to exist, so
+        // there's nothing true left to add about auto-fabrication.
         return sprintf(
-            'Can\'t configure `%s` on a test double of `%s`: it\'s a static method, and test doubles only intercept instance calls.%s',
+            'Can\'t configure `%s` on a test double for `%s` since it\'s a static method. Static methods can\'t be doubled.',
             $this->method,
             $this->target,
-            self::fabricatedNote($this->fabricated),
         );
     }
 }

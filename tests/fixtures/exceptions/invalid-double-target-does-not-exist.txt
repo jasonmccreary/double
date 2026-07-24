@@ -1,1 +1,1 @@
-Can't create a test double for `NoSuchClass`: no such class or interface exists.
+Can't create a test double for `NoSuchClass` since no such class or interface exists.

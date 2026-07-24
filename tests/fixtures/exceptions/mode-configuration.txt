@@ -1,1 +1,1 @@
-Test double `BookRepository` is already Strict — can't also make it Strict. A double's mode can only be set once.
+Test double `BookRepository` is already "strict". You can't set its mode again.

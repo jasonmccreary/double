@@ -25,7 +25,7 @@ class UnknownMethodException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t configure `%s` on a test double of `%s`: no such method there.%s%s',
+            'Can\'t configure `%s` on a test double for `%s`. That method does not exist.%s%s',
             $this->method,
             $this->target,
             $this->suggestion !== null ? sprintf(' Did you mean `%s`?', $this->suggestion) : '',

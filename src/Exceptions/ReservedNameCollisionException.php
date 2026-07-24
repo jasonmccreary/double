@@ -18,12 +18,16 @@ final class ReservedNameCollisionException extends \LogicException
      */
     public static function forCollisions(string $target, array $collisions): self
     {
+        $backtickedNames = array_map(static fn (string $name): string => "`{$name}`", $collisions);
+
+        $last = array_pop($backtickedNames);
+        $names = $backtickedNames === [] ? $last : implode(', ', $backtickedNames).' and '.$last;
+
         return new self(sprintf(
-            'Can\'t create a test double for `%s`: %s collides with TestDouble\'s own '
-            .'control verbs (expects/allows/strict/passthru/received/verify) — a method can\'t be '
-            .'both a real one and a configuration verb.',
+            'Can\'t create a test double for `%s`. It contains %s which %s with TestDouble\'s internal methods.',
             $target,
-            implode(', ', $collisions),
+            $names,
+            count($collisions) === 1 ? 'collides' : 'collide',
         ));
     }
 }

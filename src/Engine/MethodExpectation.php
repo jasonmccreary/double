@@ -74,13 +74,13 @@ final class MethodExpectation
         foreach ($constraints as $index => $matcher) {
             if ($matcher instanceof RemainingMatcher && $index !== array_key_last($constraints)) {
                 throw new \InvalidArgumentException(
-                    'Argument::remaining() can only be the last argument passed to with().',
+                    '`Argument::remaining()` must be the last argument passed to `with()`.',
                 );
             }
 
             if ($matcher instanceof NoneMatcher && count($constraints) !== 1) {
                 throw new \InvalidArgumentException(
-                    'Argument::none() must be the only argument passed to with().',
+                    '`Argument::none()` must be the only argument passed to `with()`.',
                 );
             }
         }
@@ -93,7 +93,7 @@ final class MethodExpectation
     public function returns(mixed ...$values): static
     {
         if ($values === []) {
-            throw new \InvalidArgumentException('returns() requires at least one value.');
+            throw new \InvalidArgumentException('`returns()` requires at least one value.');
         }
 
         $this->returnValues = $values;
@@ -116,7 +116,7 @@ final class MethodExpectation
     public function throws(\Throwable ...$exceptions): static
     {
         if ($exceptions === []) {
-            throw new \InvalidArgumentException('throws() requires at least one exception.');
+            throw new \InvalidArgumentException('`throws()` requires at least one exception.');
         }
 
         $this->throwables = $exceptions;
@@ -165,7 +165,7 @@ final class MethodExpectation
     {
         if ($count !== null && $minimum !== null) {
             throw new \InvalidArgumentException(
-                'times() cannot take both a positional count and a named minimum — use one or the other.',
+                '`times()` can\'t take both a positional count and a named minimum — use one or the other.',
             );
         }
 
@@ -173,7 +173,7 @@ final class MethodExpectation
         $resolvedMaximum = $maximum ?? $count;
 
         if ($resolvedMinimum === null && $resolvedMaximum === null) {
-            throw new \InvalidArgumentException('times() requires a count, a minimum, or a maximum.');
+            throw new \InvalidArgumentException('`times()` requires a count, a minimum, or a maximum.');
         }
 
         $resolvedMinimum ??= 0;
@@ -181,7 +181,7 @@ final class MethodExpectation
 
         if ($resolvedMinimum > $resolvedMaximum) {
             throw new \InvalidArgumentException(sprintf(
-                'times(): minimum (%d) cannot be greater than maximum (%d).',
+                '`times()`: minimum (%d) can\'t be greater than maximum (%d).',
                 $resolvedMinimum,
                 $resolvedMaximum,
             ));

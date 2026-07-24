@@ -17,7 +17,13 @@ namespace JMac\Testing\Exceptions;
  * message itself is deliberately shorter than "everything the object
  * knows," and leads with a concrete, pasteable fix (built from the actual
  * label/method involved) rather than more prose — see ARCHITECTURE.md,
- * "Guardrails on fabrication."
+ * "Guardrails on fabrication." $anotherDouble in that fix is a placeholder
+ * on purpose, not derived from $returnType: $secondLink is concrete because
+ * it's the exact object throwing this exception, but what should come back
+ * from the deeper call isn't pinned to any one name — a real instance, a
+ * further TestDouble::for() call, anything satisfying the type all work
+ * equally, so naming it after $returnType would overstate how prescriptive
+ * this suggestion actually is.
  */
 trait FabricationLimitExceededFields
 {
@@ -33,8 +39,9 @@ trait FabricationLimitExceededFields
     public static function renderMessage(string $label, string $method): string
     {
         return sprintf(
-            'Test double `%s` only fabricates one call chain deep — configure `%s()` '
-            .'explicitly: $%s->allows(\'%s\')->returns(...);',
+            'Test double `%s` was returned automatically. This only happens one level deep from the '
+            .'original test double. To respond to `%s()`, you\'ll need to configure it explicitly. '
+            .'For example: `$%s->allows(\'%s\')->returns($anotherDouble)`.',
             $label,
             $method,
             TestDoubleException::suggestedVariableName($label),

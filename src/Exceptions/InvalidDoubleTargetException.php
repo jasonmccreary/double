@@ -25,7 +25,7 @@ class InvalidDoubleTargetException extends TestDoubleException
 
     public static function isFinal(string $target): self
     {
-        return new self($target, "it's final, so it can't be extended");
+        return new self($target, "it's final and can't be extended");
     }
 
     /**
@@ -37,7 +37,7 @@ class InvalidDoubleTargetException extends TestDoubleException
      */
     public static function mustBeInterface(string $target): self
     {
-        return new self($target, "it's a class — every target passed to for() together must be an interface");
+        return new self($target, "it's a class. When multiple targets are passed to `TestDouble::for()`, they must all be interfaces");
     }
 
     public static function duplicateTarget(string $target): self
@@ -58,7 +58,7 @@ class InvalidDoubleTargetException extends TestDoubleException
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {
         return new self($target, sprintf(
-            'it declares a static method (`%s`) with no implementation to fall back on — static methods can\'t be doubled',
+            'it declares a static method (`%s`). Static methods can\'t be doubled',
             $method,
         ));
     }
@@ -66,7 +66,7 @@ class InvalidDoubleTargetException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t create a test double for `%s`: %s.',
+            'Can\'t create a test double for `%s` since %s.',
             $this->target,
             $this->reason,
         );

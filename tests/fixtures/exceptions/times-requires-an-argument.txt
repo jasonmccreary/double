@@ -1,1 +1,1 @@
-times() requires a count, a minimum, or a maximum.
+`times()` requires a count, a minimum, or a maximum.

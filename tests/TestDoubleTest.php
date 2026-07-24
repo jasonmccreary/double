@@ -179,7 +179,7 @@ final class TestDoubleTest extends TestCase
         $double->save(new Book('Dune'));
 
         $this->expectException(PHPUnitOutOfOrderCallException::class);
-        $this->expectExceptionMessage('received `find()` out of order: `save()` already happened');
+        $this->expectExceptionMessage('received `find()` out of order. Using `inOrder`, this was expected to be called before `save()` was called.');
 
         // find() is earlier in the declared sequence than save(), which
         // already happened — calling it now is a regression.

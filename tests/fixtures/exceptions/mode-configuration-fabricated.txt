@@ -1,1 +1,3 @@
-Test double `SecondLink` is already Strict — can't also make it Strict. A double's mode can only be set once. Note: this test double was returned automatically from an unconfigured call.
+Test double `SecondLink` is already "strict". You can't set its mode again.
+
+Note: this test double was returned automatically. You will need to configure it explicitly if you want it to behave differently.

@@ -29,7 +29,7 @@ final class PatternMatcher implements Matcher
     ) {
         if (@preg_match($pattern, '') === false) {
             throw new \InvalidArgumentException(sprintf(
-                'Argument::matches(%s) is not a valid regular expression.',
+                '`Argument::matches(%s)` is not a valid regular expression.',
                 var_export($pattern, true),
             ));
         }

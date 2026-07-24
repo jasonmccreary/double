@@ -1,1 +1,1 @@
-TestDouble::for() only accepts a real instance as a target when doubling a single target.
+`TestDouble::for()` can't accept a real instance as a target when passing multiple targets.

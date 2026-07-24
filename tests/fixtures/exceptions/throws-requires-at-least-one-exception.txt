@@ -1,1 +1,1 @@
-throws() requires at least one exception.
+`throws()` requires at least one exception.

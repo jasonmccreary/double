@@ -24,11 +24,9 @@ class ModeConfigurationException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Test double `%s` is already %s — can\'t also make it %s. A double\'s mode can '
-            .'only be set once.%s',
+            'Test double `%s` is already "%s". You can\'t set its mode again.%s',
             $this->label,
-            $this->current,
-            $this->attempted,
+            strtolower($this->current),
             self::fabricatedNote($this->fabricated),
         );
     }

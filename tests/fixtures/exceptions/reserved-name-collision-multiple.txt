@@ -1,1 +1,1 @@
-Can't create a test double for `Fillable&Sized`: expects, verify collides with TestDouble's own control verbs (expects/allows/strict/passthru/received/verify) — a method can't be both a real one and a configuration verb.
+Can't create a test double for `Fillable&Sized`. It contains `expects` and `verify` which collide with TestDouble's internal methods.

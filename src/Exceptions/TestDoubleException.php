@@ -43,7 +43,8 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
             return '';
         }
 
-        return ' Note: this test double was returned automatically from an unconfigured call.';
+        return "\n\nNote: this test double was returned automatically. You will need to configure it "
+            .'explicitly if you want it to behave differently.';
     }
 
     /**

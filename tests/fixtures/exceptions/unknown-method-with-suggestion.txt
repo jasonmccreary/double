@@ -1,1 +1,1 @@
-Can't configure `sav` on a test double of `BookRepositoryInterface`: no such method there. Did you mean `save`?
+Can't configure `sav` on a test double for `BookRepositoryInterface`. That method does not exist. Did you mean `save`?

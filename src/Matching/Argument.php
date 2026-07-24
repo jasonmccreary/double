@@ -136,8 +136,8 @@ final class Argument
 
         if ($expected instanceof Matcher) {
             throw new \InvalidArgumentException(
-                'You cannot use Argument::not($matcher) directly — it must prefix a matcher instead. '
-                .'For example: Argument::not()->type(\'int\') or Argument::not()->contains($needle).',
+                'You can\'t use `Argument::not($matcher)` directly — it must prefix a matcher instead. '
+                .'For example: `Argument::not()->type(\'int\')` or `Argument::not()->contains($needle)`.',
             );
         }
 

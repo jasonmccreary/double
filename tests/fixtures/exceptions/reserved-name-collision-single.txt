@@ -1,1 +1,1 @@
-Can't create a test double for `ExpectsCollisionInterface`: expects collides with TestDouble's own control verbs (expects/allows/strict/passthru/received/verify) — a method can't be both a real one and a configuration verb.
+Can't create a test double for `ExpectsCollisionInterface`. It contains `expects` which collides with TestDouble's internal methods.

@@ -44,38 +44,6 @@ trait ExpectationCallLimitExceededFields
             Pluralizer::pluralize($maximum, 'call', 'calls'),
         );
 
-        if (! $fabricated) {
-            return $message;
-        }
-
-        return $message.sprintf(
-            ' Note: this test double was returned automatically from an unconfigured call, so if %s %s '
-            .'here are legitimate, loosen the expectation — ->times(%d) or ->atLeastOnce() — rather than '
-            .'the default of exactly %s.',
-            self::numberWord($callNumber),
-            $callNumber === 1 ? 'call' : 'calls',
-            $callNumber,
-            self::numberWord($maximum),
-        );
-    }
-
-    /**
-     * Small, deliberately bounded word-form for the fabricated-note's
-     * suggestion sentence ("if two calls here are legitimate..."), which
-     * reads as prose rather than a code snippet — unlike the ->times(%d)
-     * a few words later in the same sentence, which stays numeric because
-     * it's something to paste. Falls back to the numeral past ten: nobody
-     * configures ->times() with call counts large enough for spelled-out
-     * numbers to matter, so this never needs to be a general-purpose
-     * number-to-words converter.
-     */
-    private static function numberWord(int $count): string
-    {
-        static $words = [
-            0 => 'zero', 1 => 'one', 2 => 'two', 3 => 'three', 4 => 'four',
-            5 => 'five', 6 => 'six', 7 => 'seven', 8 => 'eight', 9 => 'nine', 10 => 'ten',
-        ];
-
-        return $words[$count] ?? (string) $count;
+        return $message.TestDoubleException::fabricatedNote($fabricated);
     }
 }

@@ -19,19 +19,19 @@ class PassthruAutoInstantiationException extends TestDoubleException
 
     public static function isInterface(string $target): self
     {
-        return new self($target, "it's an interface — no constructor to invoke");
+        return new self($target, "It's an interface — so there's no constructor to invoke.");
     }
 
     public static function constructionFailed(string $target, \Throwable $exception): self
     {
-        return new self($target, sprintf('constructing it threw: %s', $exception->getMessage()));
+        return new self($target, sprintf('Constructing it threw: "%s".', $exception->getMessage()));
     }
 
     private function render(): string
     {
         return sprintf(
-            'Can\'t auto-instantiate `%s` to passthru to: %s. '
-            .'Pass an existing instance instead: ->passthru($existingInstance).',
+            'Can\'t auto-instantiate `%s` to passthru. %s You may need to pass an existing instance '
+            .'instead. For example: `->passthru($existingInstance)`.',
             $this->target,
             $this->reason,
         );

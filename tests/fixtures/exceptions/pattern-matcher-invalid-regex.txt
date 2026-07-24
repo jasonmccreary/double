@@ -1,1 +1,1 @@
-Argument::matches('/unterminated') is not a valid regular expression.
+`Argument::matches('/unterminated')` is not a valid regular expression.
