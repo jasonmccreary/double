@@ -21,3 +21,4 @@ since it's expected to move into its own project eventually.
 7. [Failure Messages](07-failure-messages.md)
 8. [PHPUnit Integration](08-phpunit-integration.md)
 9. [Migrating from Mockery](09-migrating-from-mockery.md)
+10. [Contributing](10-contributing.md)

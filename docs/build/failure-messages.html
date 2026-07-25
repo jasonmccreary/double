@@ -57,6 +57,7 @@
         <li><a href="failure-messages.html" aria-current="page">Failure Messages</a></li>
         <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
         <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
       </ol>
     </nav>
   </aside>
@@ -90,12 +91,22 @@ to the one you configured is usually enough to spot what went wrong.</p>
 <h2 id="a-call-wasnt-configured">A Call Wasn't Configured</h2>
 <p>In <a href="creating-test-doubles.html#strict">Strict mode</a>, a call that doesn't
 match a configured expectation fails the moment it happens:</p>
-<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;foo&quot; got an unexpected call to &quot;bar(1, 2)&quot; — Strict mode
-requires every call configured. Add: $foo-&gt;allows('bar')-&gt;returns(...);
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured. For example:
+`$foo-&gt;allows('bar')-&gt;returns(...)`.
 </code></pre></div>
-<p>That last sentence is meant to be copied and adjusted directly — <code>$foo</code>
-is derived from the double's own label, so it already matches what your
-test would plausibly call the variable.</p>
+<p>That example is a starting point, not something to paste verbatim — <code>$foo</code>
+is only a best guess at your variable name (derived from the double's
+label), and whether you actually want <code>allows()</code> or <code>expects()</code> here is
+your call to make, not the library's.</p>
+<p>If <code>bar</code> was already called successfully elsewhere in the test, you'll see
+that instead of the guess — a fact pulled straight from the call log, not a
+suggestion:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured.
+
+The following calls to `bar` were made during this test: `bar(1)`
+</code></pre></div>
 <h3 id="method-name-suggestions">Method Name Suggestions</h3>
 <p>A typo'd method name is caught the moment you configure it:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">sav</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> meant &quot;save&quot;</span></div></code></pre></div>

@@ -57,7 +57,13 @@ $double = TestDouble::for($realLogger)->passthru();
 ## Documentation
 
 Full docs — creating doubles, modes (Loose/Strict/Passthru), argument
-matching, verification, failure messages, and PHPUnit integration — live in
-[docs/](docs/README.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for the
-project's standing policies (no aliases, module boundaries, frozen public
-API) before sending a PR.
+matching, verification, failure messages, PHPUnit integration, and
+contributing — live in [docs/](docs/README.md).
+
+## Contributing
+
+Contributions should target the `master` branch, follow the project's
+code style, and include tests. See [Contributing](docs/10-contributing.md)
+for the project's standing policies (no aliases, module boundaries,
+frozen public API) and walkthroughs for adding a matcher or improving a
+failure message.
