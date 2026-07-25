@@ -1218,9 +1218,15 @@ into the trait.
   real implementation should cache generated classes per target type.
 - `final` classes cannot be doubled via `extends` — detect at setup time
   with a clear error.
-- Static analysis (PHPStan/Psalm) will have real blind spots around the
-  `eval()`-generated classes and heavy `Reflection` use — plan for stub
-  files or an explicit baseline at that boundary.
+- Static analysis of *this library's own* `src/` will have real blind spots
+  around the `eval()`-generated classes and heavy `Reflection` use inside
+  `ClassGenerator` — a tool can't type-check code it can't see until
+  runtime, so this needs an explicit baseline or targeted `eval()`-site
+  suppression before PHPStan/Psalm ever run in this repo's own CI. Left
+  deliberately unaddressed for now (see "Static analysis: a sound
+  TestDoubleInterface, not a mixin" — the *consumer*-facing half of the
+  original static-analysis gap, `TestDouble::for()`'s return type, is
+  resolved there).
 - `ClassGenerator`'s type-signature reconstruction (unions, intersections,
   enum defaults, variadics, by-ref params) is the most version-sensitive
   code in the library and needs its own dedicated compatibility test suite
@@ -1641,6 +1647,81 @@ single call. **Built:** `buildMethod()` now falls back to
 regression, not just pass by construction: reverting the fallback and
 rerunning the new `ClassGeneratorTest` regression test reproduces both the
 assertion failure and PHPUnit's own deprecation count going non-zero.
+
+## Static analysis: a sound TestDoubleInterface, not a mixin (partially resolved)
+
+"Known scaffold-era limitations" flagged static analysis as a real blind
+spot, in two genuinely separate senses that got separated here rather than
+solved (or not) as one item:
+
+- **Consumer-facing:** `TestDouble::for()` returned a bare `object`, so a
+  consumer running PHPStan/Psalm against their own test code got false
+  positives on every double — `Call to an undefined method object::allows()`,
+  and a constructor type-hinted against the real target rejecting the double
+  entirely (`expects BookRepositoryInterface, object given`), despite both
+  being genuinely true at runtime.
+- **Library-internal:** `ClassGenerator`'s `eval()` and heavy `Reflection`
+  use make this library's own `src/` resistant to static analysis in a way
+  no annotation fixes — a tool can't type-check code it can't see until
+  runtime.
+
+**Decision: fix the consumer-facing half; leave the library-internal half
+deliberately unaddressed**, not silently dropped — this project doesn't run
+PHPStan/Psalm against its own source today, so a baseline or targeted
+`eval()`-site suppression would be speculative infrastructure for a
+scenario nobody's hit yet, the same "no configuration for its own sake"
+bias this document applies elsewhere. Revisit if that changes.
+
+**`@mixin` was the first idea, and the wrong one.** `@mixin SomeType` tells
+PHPStan/Psalm "this class also responds to `SomeType`'s methods" — but it
+names one fixed type at the point it's written. `TestDouble::for()`'s
+return type needs to track *whatever class-string argument was passed at
+the call site*, which is a generics/templates problem (`@template T`,
+`@return T`), not a mixin problem — `@mixin` answers "what else does this
+respond to," templates answer "how does the return type relate to the
+argument."
+
+**Templates alone don't fully close it either, for two reasons found
+working through it:**
+
+- The real return value isn't just `T` — it's `T` plus the six control
+  verbs (`expects()`, `allows()`, `strict()`, `passthru()`, `received()`,
+  `verify()`) every generated double also has. Those live in
+  `Engine\DoubleControlMethods`, a *trait* — and a trait can't appear in a
+  PHPStan/Psalm intersection type, only an interface can. **Built:** a new
+  public `TestDoubleInterface`, mirroring that trait's six signatures,
+  existing purely so `@return T&TestDoubleInterface` has something real to
+  point at.
+- That new interface had to be genuinely implemented, not just referenced
+  in a docblock — an annotation claiming a type the object doesn't actually
+  have at runtime is unsound, exactly the "speculation dressed as fact"
+  category this document already argues against elsewhere (see the
+  "unexpected-call" `Add:`-suggestion discussion). **Built:**
+  `ClassGenerator::buildSource()` now always adds `TestDoubleInterface` to
+  the generated class's own `implements` clause — `extends Target
+  implements TestDoubleInterface` for a class target, `implements
+  Target, TestDoubleInterface` for an interface target — so `$double
+  instanceof TestDoubleInterface` is a real, checkable fact for every
+  double, not a fiction only a type-checker believes. Confirmed directly for
+  both code paths, not just the interface one.
+
+**Known imprecision, not a regression:** `$targets` is variadic (a
+multi-target intersection double is a real, supported call —
+`TestDouble::for(Fillable::class, Sized::class)`), and a single
+`@template T` can't cleanly express "each argument contributes to an
+intersection" the way it can for the overwhelmingly common single-target
+call. The multi-target case falls back to the same untyped `object` a
+caller would have gotten before any of this existed — not newly broken,
+just not newly improved either. A precise multi-target type would need
+per-arity overload signatures, judged not worth the complexity for a rarer
+call shape.
+
+**Built:** `TestDoubleInterface` (public, root namespace — same reasoning
+`TestDouble` itself lives there, see "Module boundaries"), `ClassGenerator::
+buildSource()`'s always-add-the-control-interface change, and `TestDouble::
+for()`'s `@template T of object` / `@return T&TestDoubleInterface`
+docblock. Covered in `ClassGeneratorTest` (both the `extends` and
+`implements` code paths actually produce `instanceof TestDoubleInterface`).
 
 ## Second matcher expansion: not(), matches(), contains(), and any(...alternatives) (resolved)
 

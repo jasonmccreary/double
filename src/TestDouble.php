@@ -93,6 +93,27 @@ final class TestDouble
      * back to becomes ambiguous the moment more than one target is
      * involved, so a real instance mixed into a multi-target call is
      * rejected rather than guessing.
+     *
+     * The real PHP return type below stays the bare `object` — PHP itself has
+     * no syntax for "whatever type this class-string names," only PHPStan/
+     * Psalm's docblock @template/@return do. That pairing is sound, not just
+     * convenient: ClassGenerator::buildSource() makes every generated double
+     * actually `implements TestDoubleInterface` for real (see that
+     * interface's own docblock for why), so `@return T&TestDoubleInterface`
+     * below is never a docblock fiction the object doesn't back up at
+     * runtime. Only precise for the single-target call — $targets is
+     * templated as if it named one T, which is exactly right for the
+     * overwhelmingly common `TestDouble::for(Foo::class)` shape; a
+     * multi-target intersection call
+     * (`TestDouble::for(Fillable::class, Sized::class)`) doesn't have a
+     * single T to infer from a variadic template like this one, so it falls
+     * back to the same untyped `object` a caller would have gotten before
+     * this existed — a known imprecision, not a regression.
+     *
+     * @template T of object
+     *
+     * @param  class-string<T>|T  $targets
+     * @return T&TestDoubleInterface
      */
     public static function for(string|object ...$targets): object
     {

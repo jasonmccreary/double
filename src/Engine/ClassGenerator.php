@@ -6,6 +6,7 @@ namespace JMac\Testing\Engine;
 
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\TestDoubleInterface;
 
 /**
  * @internal
@@ -228,17 +229,27 @@ final class ClassGenerator
             $targets,
         ));
 
+        // Every generated double implements TestDoubleInterface for real, on top of
+        // whatever the caller's own target(s) were — not just as a docblock fiction
+        // for TestDouble::for()'s @template/@return pairing, see that interface's own
+        // docblock for why. A single-class target uses `extends`, so the interface
+        // needs its own `implements` clause; an interface target (or several, for an
+        // intersection double) already uses `implements`, so it just joins the list.
+        $controlInterface = '\\'.ltrim(TestDoubleInterface::class, '\\');
+        $inheritance = $keyword === 'extends'
+            ? sprintf('extends %s implements %s', $parents, $controlInterface)
+            : sprintf('implements %s, %s', $parents, $controlInterface);
+
         $methods = implode("\n", array_map(
             $this->buildMethod(...),
             $this->overridableMethods($reflections),
         ));
 
         return sprintf(
-            "namespace %s;\n\nfinal class %s %s %s\n{\n    use \\%s;\n\n%s\n}\n",
+            "namespace %s;\n\nfinal class %s %s\n{\n    use \\%s;\n\n%s\n}\n",
             $namespace,
             $shortName,
-            $keyword,
-            $parents,
+            $inheritance,
             DoubleControlMethods::class,
             $methods,
         );

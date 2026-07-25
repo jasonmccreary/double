@@ -8,6 +8,7 @@ use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\TestDouble;
+use JMac\Testing\TestDoubleInterface;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
 use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
@@ -55,6 +56,27 @@ final class ClassGeneratorTest extends TestCase
         $instance = $generated::__td_instantiate();
 
         $this->assertInstanceOf(ConcreteLogger::class, $instance);
+    }
+
+    /**
+     * TestDouble::for()'s @template/@return T&TestDoubleInterface docblock
+     * (see ARCHITECTURE.md, "Static analysis: a sound TestDoubleInterface,
+     * not a mixin") is only sound if this is genuinely true at runtime, for
+     * both the `implements` and `extends` code paths in buildSource() — not
+     * just a docblock claim nothing enforces.
+     */
+    public function test_generates_a_class_implementing_test_double_interface_for_an_interface_target(): void
+    {
+        $generated = (new ClassGenerator)->generate(BookRepositoryInterface::class);
+
+        $this->assertTrue(is_subclass_of($generated, TestDoubleInterface::class));
+    }
+
+    public function test_generates_a_class_implementing_test_double_interface_for_a_class_target(): void
+    {
+        $generated = (new ClassGenerator)->generate(ConcreteLogger::class);
+
+        $this->assertTrue(is_subclass_of($generated, TestDoubleInterface::class));
     }
 
     /**
