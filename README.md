@@ -1,5 +1,11 @@
 # Test Double
 
+<p align="right">
+    <a href="https://github.com/jasonmccreary/test-double/actions"><img src="https://github.com/jasonmccreary/test-double/workflows/CI/badge.svg" alt="Build Status"></a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double"><img src="https://poser.pugx.org/jasonmccreary/test-double/v/stable.svg" alt="Latest Stable Version"></a>
+    <a href="https://github.com/jasonmccreary/test-double/blob/master/LICENSE"><img src="https://poser.pugx.org/jasonmccreary/test-double/license.svg" alt="License"></a>
+</p>
+
 A modern, human-friendly PHP test double library — built as an alternative
 to Mockery, for three reasons: Mockery's syntax leads with a taxonomy (Mock
 vs. Spy vs. Partial Mock) that only makes sense to someone who already
