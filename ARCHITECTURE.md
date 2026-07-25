@@ -49,10 +49,10 @@ Every decision below traces back to one of these three.
   own test suite emits deprecation noise on every run under 8.4+, even
   though the floor itself is 8.3. PHP 8.4 also introduced property hooks
   and asymmetric visibility, and interfaces can now declare property hooks
-  as part of their contract; `ClassGenerator` currently only reasons about
-  methods, so a target interface with hooked properties is a real gap —
-  filed alongside the other known scaffold limitations below (magic
-  methods, final classes) rather than scoped into M1.
+  as part of their contract; `ClassGenerator` still only reasons about
+  methods, never properties — see "PHP 8.4 property hooks: a third mirror
+  of the static/magic-method crash" for why that's now a closed, deliberate
+  rejection rather than an open gap.
 - **CI matrix: PHP 8.3, 8.4, and 8.5**, floor and current stable both covered.
   Add an allowed-to-fail job against PHP 8.6 (in active development,
   expected toward the end of 2026) once alpha/nightly builds exist —
@@ -1902,3 +1902,56 @@ notice.
 intersection-return types; `ByRefParamInterface` and `RefReturnInterface`
 fixtures; `ClassGenerator::buildMethod()`'s by-reference-return handling
 (leading `&` plus the local-variable body). All in `ClassGeneratorTest`.
+
+## PHP 8.4 property hooks: a third mirror of the static/magic-method crash (resolved)
+
+Flagged when the PHP floor was chosen ("License and repo structure"): PHP
+8.4 lets an interface require a hooked property
+(`public string $name { get; }`) the same way it can require a method, and
+`ClassGenerator` only ever reasons about methods, never properties. Checked
+directly rather than left as a documented gap, the same way the
+static-method and magic-method audits were: **it crashes, identically.**
+
+```
+Fatal error: Class ...Generated\HookedPropertyInterface_1 contains 1 abstract
+method and must therefore be declared abstract or implement the remaining
+methods (HookedPropertyInterface::$displayName::get)
+```
+
+PHP represents an unimplemented property hook internally almost like a
+synthetic abstract method for exactly this purpose — confirmed directly by
+the error naming it `$displayName::get`. Same root cause as the
+abstract-static-method and abstract-magic-method crashes above (an abstract
+member `overridableMethods()` never emits an override for, leaving `final
+class` with an unsatisfied requirement), a third, unrelated reason a member
+ends up excluded. A `get`+`set` hook produces the same crash with two
+unimplemented members. A **concrete** class's hooked property, by contrast,
+already works today — reading it runs the real hook unchanged, since
+`ClassGenerator` never touches properties either way.
+
+**Narrower than the magic-method fix, not just a smaller version of it:**
+there's no second "silently no-op'd when configured" half to close, because
+this library's API has no property-configuration verb at all —
+`expects()`/`allows()`/`received()` only ever take method names, so there's
+no way to even attempt configuring a property through this API in the first
+place. Only the crash needed closing.
+
+**Built:** `ClassGenerator::assertNoAbstractPropertyHooks()` (checked
+before `eval()`, after the static and magic-method checks) raises the new
+`InvalidDoubleTargetException::hasAbstractPropertyHook()`. Guarded with
+`method_exists(ReflectionProperty::class, 'isAbstract')` — property hooks,
+and the entire Reflection API for them, don't exist before PHP 8.4, which
+this library's floor (8.3) still has to support; on 8.3 there's nothing to
+check, since a property can't be abstract there at all yet.
+
+**A compatibility wrinkle specific to this one, not present in the
+static/magic-method cases:** property-hook syntax (`{ get; }`) is a
+parser-level PHP 8.4+ feature, not just a runtime API — a fixture file
+using it would be a hard parse error if PHP 8.3 ever tried to load it.
+Since PHP only parses a file when it's actually `require`'d, and
+autoloading is lazy, the regression tests (`HookedPropertyInterface`,
+`HasHookedProperty`) are gated with `#[RequiresPhp('>=8.4.0')]` rather than
+run unconditionally — skipped, not touched at all, on the 8.3 CI job.
+Confirmed the guard is load-bearing, not just reasoned about: temporarily
+disabling `assertNoAbstractPropertyHooks()` reproduces the exact original
+crash, severe enough to kill the PHPUnit process outright.

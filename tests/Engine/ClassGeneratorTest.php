@@ -20,8 +20,10 @@ use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasHookedProperty;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
+use JMac\Testing\Tests\Support\HookedPropertyInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
@@ -36,6 +38,7 @@ use JMac\Testing\Tests\Support\UnionTypeInterface;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use JMac\Testing\Tests\Support\VerifyCollisionInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
 final class ClassGeneratorTest extends TestCase
@@ -183,6 +186,46 @@ final class ClassGeneratorTest extends TestCase
     public function test_does_not_reject_a_concrete_class_with_a_magic_method(): void
     {
         $generated = (new ClassGenerator)->generate(HasMagicMethod::class);
+
+        $this->assertTrue(class_exists($generated));
+    }
+
+    /**
+     * Regression check: PHP 8.4's property hooks let an interface require a
+     * hooked property the same way it can require a method — PHP treats an
+     * unimplemented hook internally almost like a synthetic abstract method
+     * for this purpose, confirmed directly: the crash names it
+     * `HookedPropertyInterface::$displayName::get`. Same failure category as
+     * the abstract-static/abstract-magic-method crashes above, for a third,
+     * unrelated reason a member ends up excluded from overriding —
+     * ClassGenerator never reasons about properties at all.
+     *
+     * #[RequiresPhp] rather than an unconditional test: property-hook syntax
+     * (`{ get; }`) is a parser-level PHP 8.4+ feature, not just a runtime
+     * API — the fixture file would be a hard parse error if this library's
+     * 8.3 floor ever tried to load it. Since PHP only parses a file when
+     * it's actually require()'d, and autoloading is lazy, skipping this
+     * test on <8.4 means the fixture is never touched there at all.
+     */
+    #[RequiresPhp('>=8.4.0')]
+    public function test_rejects_a_target_with_an_abstract_property_hook(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('hooked property (`displayName`)');
+
+        (new ClassGenerator)->generate(HookedPropertyInterface::class);
+    }
+
+    /**
+     * A hooked property on a concrete class already has a real
+     * implementation to fall back on — the generated class simply inherits
+     * it unoverridden (ClassGenerator never touches properties at all), so
+     * this is not the same rejection as the abstract case above.
+     */
+    #[RequiresPhp('>=8.4.0')]
+    public function test_does_not_reject_a_concrete_class_with_a_hooked_property(): void
+    {
+        $generated = (new ClassGenerator)->generate(HasHookedProperty::class);
 
         $this->assertTrue(class_exists($generated));
     }

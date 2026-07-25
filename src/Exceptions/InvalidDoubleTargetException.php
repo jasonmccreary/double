@@ -84,6 +84,26 @@ class InvalidDoubleTargetException extends TestDoubleException
         ));
     }
 
+    /**
+     * PHP 8.4's property hooks let an interface require a hooked property
+     * (`public string $name { get; }`) the same way it can require a
+     * method — and PHP represents an unimplemented hook internally almost
+     * like a synthetic abstract method for this exact purpose, confirmed
+     * directly: the fatal error PHP raises names it
+     * `Interface::$property::get`. `ClassGenerator` never reasons about
+     * properties at all (only `getMethods()`), so the same "abstract
+     * member excluded from overriding" crash the static-method and
+     * magic-method checks already guard against was reachable a third way.
+     * Caught here before eval() for the same reason those are.
+     */
+    public static function hasAbstractPropertyHook(string $target, string $property): self
+    {
+        return new self($target, sprintf(
+            'it declares a hooked property (`%s`). Hooked properties can\'t be doubled',
+            $property,
+        ));
+    }
+
     private function render(): string
     {
         return sprintf(

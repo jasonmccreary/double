@@ -28,10 +28,6 @@ use JMac\Testing\TestDoubleInterface;
  * original source spelled that nullability as `?Type` or as the
  * deprecated implicit `Type $x = null` form.
  *
- * Known gap, deliberately not in M1 (see ARCHITECTURE.md, "Known
- * scaffold-era limitations to design around, not just inherit"):
- * interfaces with hooked properties are not specially handled.
- *
  * Magic methods (__toString, __invoke, __call, even __construct/__destruct
  * — anything starting with "__") are never overridden either, but that's a
  * resolved, deliberate rejection rather than an open gap — see
@@ -42,6 +38,16 @@ use JMac\Testing\TestDoubleInterface;
  * abstract class too) would leave the generated class not actually
  * implementing it, which assertNoAbstractMagicMethods() rejects before this
  * generator ever runs eval().
+ *
+ * Properties (including PHP 8.4+ hooked ones) are never reasoned about at
+ * all — this generator only ever overrides methods. A concrete target's
+ * hooked property is simply inherited unchanged (harmless — real code,
+ * just not interceptable through this library's method-based API, which
+ * has no property-configuration verb to begin with); an interface
+ * requiring one (abstract) would leave the generated class not actually
+ * implementing it, which assertNoAbstractPropertyHooks() rejects before
+ * this generator ever runs eval() — see ARCHITECTURE.md, "PHP 8.4 property
+ * hooks: a third mirror of the static/magic-method crash."
  */
 final class ClassGenerator
 {
@@ -121,6 +127,7 @@ final class ClassGenerator
         $this->assertNoReservedNameCollisions($targets, $reflections);
         $this->assertNoAbstractStaticMethods($targets, $reflections);
         $this->assertNoAbstractMagicMethods($targets, $reflections);
+        $this->assertNoAbstractPropertyHooks($targets, $reflections);
 
         $className = $this->generateClassName($reflections);
 
@@ -196,6 +203,39 @@ final class ClassGenerator
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
                 if (str_starts_with($method->getName(), '__') && $method->isAbstract()) {
                     throw InvalidDoubleTargetException::hasAbstractMagicMethod(implode('&', $targets), $method->getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * A third mirror of assertNoAbstractStaticMethods() above, for the same
+     * failure shape and yet another reason a member ends up excluded from
+     * overriding: `ClassGenerator` never reasons about properties at all
+     * (only methods), so a target requiring a hooked property
+     * (`public string $name { get; }`, PHP 8.4+) leaves the generated class
+     * with the same kind of unimplemented abstract member the static/magic
+     * method checks already guard against.
+     *
+     * ReflectionProperty::isAbstract() (and property hooks generally) don't
+     * exist before PHP 8.4 — this library's floor is 8.3 — so the
+     * method_exists() guard is load-bearing, not defensive dead code: on
+     * 8.3 there's nothing to check, since a property can't be abstract at
+     * all yet.
+     *
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoAbstractPropertyHooks(array $targets, array $reflections): void
+    {
+        if (! method_exists(\ReflectionProperty::class, 'isAbstract')) {
+            return;
+        }
+
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $property) {
+                if ($property->isAbstract()) {
+                    throw InvalidDoubleTargetException::hasAbstractPropertyHook(implode('&', $targets), $property->getName());
                 }
             }
         }

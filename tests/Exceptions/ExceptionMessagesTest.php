@@ -184,6 +184,18 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('invalid-double-target-has-abstract-magic-method', $exception->getMessage());
     }
 
+    /**
+     * Plain strings in, no real PHP 8.4 property-hook syntax involved — this
+     * renders fine on every supported PHP version, unlike the ClassGenerator
+     * regression tests that actually declare a hooked property fixture.
+     */
+    public function test_renders_invalid_double_target_has_abstract_property_hook(): void
+    {
+        $exception = InvalidDoubleTargetException::hasAbstractPropertyHook('HookedPropertyInterface', 'displayName');
+
+        $this->assertMatchesGolden('invalid-double-target-has-abstract-property-hook', $exception->getMessage());
+    }
+
     public function test_renders_static_method(): void
     {
         $exception = new StaticMethodException('HasStaticMethod', 'make');
