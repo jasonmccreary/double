@@ -35,6 +35,21 @@ final class PHPUnitExceptionsTest extends TestCase
         $this->assertSame($phpunit, $phpunit->getDiagnostic());
     }
 
+    /**
+     * Same parity check as above, specifically with otherObservedCalls
+     * populated — the newest field on this trait, and the one most likely to
+     * be hand-duplicated out of sync between the two classes if it were ever
+     * added outside the shared trait.
+     */
+    public function test_unexpected_call_variant_correlation_is_identical_prose(): void
+    {
+        $plain = new UnexpectedCallException('BookRepository', 'find', '456', otherObservedCalls: ['123']);
+        $phpunit = new PHPUnitUnexpectedCallException('BookRepository', 'find', '456', otherObservedCalls: ['123']);
+
+        $this->assertSame($plain->getMessage(), $phpunit->getMessage());
+        $this->assertSame(['123'], $phpunit->otherObservedCalls);
+    }
+
     public function test_call_limit_exceeded_variant_is_an_assertion_failure_with_identical_prose(): void
     {
         $plain = new ExpectationCallLimitExceededException('BookRepository', 'delete', '1', 1, 2);

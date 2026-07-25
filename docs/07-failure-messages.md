@@ -42,13 +42,26 @@ In [Strict mode](03-creating-test-doubles.md#strict), a call that doesn't
 match a configured expectation fails the moment it happens:
 
 ```
-Test double "foo" got an unexpected call to "bar(1, 2)" — Strict mode
-requires every call configured. Add: $foo->allows('bar')->returns(...);
+Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured. For example:
+`$foo->allows('bar')->returns(...)`.
 ```
 
-That last sentence is meant to be copied and adjusted directly — `$foo`
-is derived from the double's own label, so it already matches what your
-test would plausibly call the variable.
+That example is a starting point, not something to paste verbatim — `$foo`
+is only a best guess at your variable name (derived from the double's
+label), and whether you actually want `allows()` or `expects()` here is
+your call to make, not the library's.
+
+If `bar` was already called successfully elsewhere in the test, you'll see
+that instead of the guess — a fact pulled straight from the call log, not a
+suggestion:
+
+```
+Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured.
+
+The following calls to `bar` were made during this test: `bar(1)`
+```
 
 ### Method Name Suggestions
 

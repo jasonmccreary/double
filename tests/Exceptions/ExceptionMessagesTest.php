@@ -47,6 +47,27 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unsatisfied-expectation-with-correlation', $exception->getMessage());
     }
 
+    /**
+     * More than three other observed calls collapses to "and N more" rather
+     * than listing every one — see CallListFormatter and ARCHITECTURE.md's
+     * "Symmetric extension" for why this cap exists on both correlation
+     * features, not just the unexpected-call one.
+     */
+    public function test_renders_unsatisfied_expectation_with_capped_call_correlation(): void
+    {
+        $expectation = new UnsatisfiedExpectation(
+            method: 'bar',
+            description: 'expected `bar(6)` to be called exactly 1 time, but it was never called',
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: ['1', '2', '3', '4'],
+        );
+        $exception = new UnsatisfiedExpectationException('foo', [$expectation]);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-with-correlation-capped', $exception->getMessage());
+    }
+
     public function test_renders_unsatisfied_expectation_with_no_observed_calls_at_all(): void
     {
         $expectation = new UnsatisfiedExpectation(
@@ -174,6 +195,38 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new UnexpectedCallException('BookRepository', 'save', "5, 'Alice'");
 
         $this->assertMatchesGolden('unexpected-call-with-arguments', $exception->getMessage());
+    }
+
+    /**
+     * The symmetric extension from ARCHITECTURE.md's "Symmetric extension,
+     * tracked but explicitly deferred": the same "was already observed
+     * elsewhere" fact the verify() path already shows, mirrored onto an
+     * unexpected call that matched no configured expectation.
+     */
+    public function test_renders_unexpected_call_with_correlation(): void
+    {
+        $exception = new UnexpectedCallException('BookRepository', 'find', '456', otherObservedCalls: ['123']);
+
+        $this->assertMatchesGolden('unexpected-call-with-correlation', $exception->getMessage());
+    }
+
+    /**
+     * Both correlation features share CallListFormatter's cap — more than
+     * three prior calls collapses to "and N more" instead of a wall of text.
+     * See ARCHITECTURE.md, "Symmetric extension" for why an uncapped list
+     * would defeat its own purpose once a method's been called many times
+     * legitimately (e.g. once per loop iteration with a different id).
+     */
+    public function test_renders_unexpected_call_with_capped_correlation(): void
+    {
+        $exception = new UnexpectedCallException(
+            'BookRepository',
+            'find',
+            '6',
+            otherObservedCalls: ['1', '2', '3', '4', '5'],
+        );
+
+        $this->assertMatchesGolden('unexpected-call-with-correlation-capped', $exception->getMessage());
     }
 
     public function test_renders_unsatisfied_expectation_on_a_fabricated_double(): void

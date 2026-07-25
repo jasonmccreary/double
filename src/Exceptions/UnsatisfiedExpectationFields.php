@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Exceptions;
 
+use JMac\Testing\Diagnostics\CallListFormatter;
 use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 
@@ -45,10 +46,10 @@ trait UnsatisfiedExpectationFields
         $message = sprintf('Test double `%s` %s.', $label, $expectation->description);
 
         if ($expectation->otherObservedCalls !== []) {
-            $message .= ' '.self::renderCorrelation($expectation);
+            $message .= "\n\n".CallListFormatter::renderCorrelationParagraph($expectation->method, $expectation->otherObservedCalls);
         }
 
-        return $message.TestDoubleException::fabricatedNote($fabricated);
+        return TestDoubleException::appendFabricatedNote($message, $fabricated);
     }
 
     /**
@@ -68,20 +69,6 @@ trait UnsatisfiedExpectationFields
             )),
         );
 
-        return $message.TestDoubleException::fabricatedNote($fabricated);
-    }
-
-    private static function renderCorrelation(UnsatisfiedExpectation $expectation): string
-    {
-        $calls = implode(', ', array_map(
-            static fn (string $call): string => sprintf('%s(%s)', $expectation->method, $call),
-            $expectation->otherObservedCalls,
-        ));
-
-        return sprintf(
-            '`%s` was called elsewhere in this test, just with different arguments: %s.',
-            $expectation->method,
-            $calls,
-        );
+        return TestDoubleException::appendFabricatedNote($message, $fabricated);
     }
 }

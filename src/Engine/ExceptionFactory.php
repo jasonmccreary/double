@@ -37,17 +37,21 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExceptionFactory
 {
+    /**
+     * @param  list<string>  $otherObservedCalls
+     */
     public static function unexpectedCall(
         string $label,
         string $method,
         string $argumentsDescription,
         bool $fabricated,
+        array $otherObservedCalls = [],
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
-            return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated);
+            return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls);
         }
 
-        return new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated);
+        return new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls);
     }
 
     public static function expectationCallLimitExceeded(

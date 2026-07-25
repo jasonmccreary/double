@@ -913,29 +913,117 @@ because listing the actual call verbatim is enough for a person to spot a
 typo or wrong value themselves, and adding a diff would imply a confidence
 about *why* it differs that a plain method-name correlation hasn't earned.
 
-### Symmetric extension, tracked but explicitly deferred: fact-based context on the unexpected-call path too
+### Symmetric extension: fact-based context on the unexpected-call path too (resolved)
 
-The unexpected-call diagnostic currently only shows *configured* candidates
-(the closest expectation, via the similarity heuristic). It doesn't yet
-show *other actual calls* to that same method that already happened and
-were already successfully resolved earlier in the test — e.g. an
-`allows('bar')->with('baz')` that already fired once, followed later by an
-unmatched `bar('qux')`. Showing "`bar()` was already called successfully
-with: `bar('baz')`" alongside the configured-candidate guess would be the
-same category of addition as the `verify()` correlation above: a plain
-fact pulled from `DoubleState`'s call log, not a similarity judgment, so it
-carries the same "stated as fact, not speculation" guarantee.
+The unexpected-call diagnostic used to only show *configured* candidates
+(the closest expectation, via the similarity heuristic). It didn't show
+*other actual calls* to that same method that already happened earlier in
+the test — e.g. an `allows('find')->with(123)` that already fired once,
+followed later by an unmatched `find(456)`. This was tracked here as
+deliberately deferred (not bundled into M3, "to avoid compounding two
+diagnostic changes into one milestone") and picked up as the fast-follow
+this note always said it should be, once the `verify()` side had shipped
+and proven out.
 
-This is genuinely the same mechanism in the opposite direction — Engine
-would already be doing "correlate calls by method name" for the `verify()`
-path once M3 lands, and extending that same correlation to the
-unexpected-call diagnostic is a small, low-risk addition once it exists,
-rather than a second mechanism to design from scratch. **Deliberately not
-bundled into the M3 scope above, to avoid compounding two diagnostic
-changes into one milestone** — but it belongs in the same "fact-based
-correlation" family and should be picked up as a fast-follow once the
-`verify()` side has shipped and proven out, not lost as a passing idea.
-Worth revisiting explicitly at the start of whatever milestone follows M3.
+**Built as the same mechanism in the opposite direction, exactly as
+predicted above.** `UnexpectedCallFields` gained an `otherObservedCalls`
+field (`list<string>`, same shape as `UnsatisfiedExpectation`'s own field —
+a plain fact pulled from `DoubleState::callsFor()`, matched or not, never a
+similarity guess). `ProxyBehavior::handleUnmatchedCall()` supplies it by
+slicing off the last entry of `callsFor($method)` — `recordCall()` already
+ran before matching, so that last entry is always this same failing call,
+not a genuinely prior one.
+
+**Also surfaced and fixed in the process: the existing `verify()`
+correlation had no cap.** `TestDouble::verifyState()` mapped every call in
+`DoubleState::callsFor()` straight into `otherObservedCalls` with nothing
+bounding it, and the old `UnsatisfiedExpectationFields::renderCorrelation()`
+`implode()`d all of them onto one line — a method called many times
+legitimately (once per loop iteration with a different id, say) would
+already have turned a one-line diagnostic into a wall of text, and the new
+unexpected-call correlation would have inherited the identical problem if
+built the same unbounded way. **Decision: cap at 3, collapse anything past
+that to "and N more"** rather than either an unbounded list or Mockery-style
+full suppression once there's "too much" to show — a long list is verbose,
+not wrong, so it doesn't need `DidYouMean`'s "a wrong guess is worse than
+none" treatment, just a ceiling on how verbose. Both correlation features
+share this cap through one implementation, `Diagnostics\CallListFormatter`,
+rather than each hand-rolling its own truncation. The full, uncapped list
+still lives on the exception's own public field regardless — only the
+rendered prose is capped, since these fields are frozen public API (see
+"Matcher" above) and silently truncating the data itself would be a
+surprising, lossy thing for that contract to do.
+
+**Refined: the cap isn't a flat "show the first 3, always."** At exactly 3
+calls, all 3 are shown and nothing is truncated — there's no "more" to
+speak of. At 4, only 2 are shown, not 3: `` `find(1)`, `find(2)`, `find(3)`,
+and 1 more `` was the first cut, but showing 3 of 4 and then saying "and 1
+more" reads as arbitrary — if there's room to show a fourth, why withhold
+exactly one? Dropping to 2 shown once truncation starts at all (`` `find(1)`,
+`find(2)`, and 2 more ``) reads unambiguously as a deliberate summary
+instead. Covered directly by a dedicated `CallListFormatterTest` (the
+3-vs-4 boundary specifically, plus a many-calls case), not just indirectly
+through the golden-file exception tests.
+
+**Revised during review: the correlation reads as its own paragraph, not an
+appended sentence, and both exception types now share identical phrasing.**
+`Diagnostics\CallListFormatter::renderCorrelationParagraph()` renders "The
+following calls to `` `%s` `` were made during this test: ..." as a
+`"\n\n"`-prefixed block ending in its own `"\n"` — used verbatim by both
+`UnexpectedCallFields` and `UnsatisfiedExpectationFields`, rather than the
+two drifting into their own phrasing the way an earlier draft of this
+change had them do (`` `find` was also called elsewhere in this test: ...
+`` vs. `` `bar` was called elsewhere in this test, just with different
+arguments: ... ``). Every individual call is backtick-wrapped
+(`` `find(123)` ``, not bare `find(123)`), matching how every other list of
+code-like tokens in this codebase's messages already reads — see
+`ReservedNameCollisionException::forCollisions()`'s "declares method(s)
+`` `expects` `` and `` `verify` ``" for the existing precedent this was
+brought in line with, not a new style invented for this feature.
+
+**Also revisited: the unexpected-call message's old "Add:
+`$bookRepository->allows('count')->returns(...);`" suggestion.** Dropped
+initially on the reasoning that it was never genuinely copy-pasteable — it
+guesses on three separate axes at once (the variable name, derived from the
+double's *label* rather than the test's actual code; `...` as a return-value
+placeholder that isn't real code; and `allows()` asserted as the verb with
+no basis, when `expects()` is just as plausible and arguably more likely for
+someone using Strict mode in the first place). That's speculation dressed as
+fact, which cuts against this document's own stated principle for these
+messages. But dropping it unconditionally went too far the other way: with
+*no* correlation data available (nothing else was ever observed for that
+method), the message was left with no next step at all beyond "this wasn't
+configured." **Resolved: the suggestion only appears when there's nothing
+stronger to offer — i.e. exactly when `otherObservedCalls` is empty.** Once
+real correlation data exists, it's shown instead of the guess, never
+alongside it. Also reworded from `Add: $x->y();` to `` For example:
+`$x->y()`. `` — matching the phrasing and backtick-wrapped-whole-snippet
+style `PassthruAutoInstantiationException` and
+`FabricationLimitExceededFields` already use for the same kind of
+illustrative-not-literal code suggestion, rather than inventing a third
+style for it.
+
+**Also extracted while making this change, since it was about to be
+hand-duplicated a second time:** `TestDoubleException::
+appendFabricatedNote()` joins a rendered message with `fabricatedNote()`'s
+own `"\n\n"`-prefixed text, only trimming the message's trailing newline
+when there's actually a note to append — needed because a correlation
+paragraph now deliberately ends in its own `"\n"`, and naive concatenation
+against `fabricatedNote()`'s leading `"\n\n"` would leave a stray blank
+line on a double that's both fabricated and has correlation data.
+
+**Built:** `Diagnostics\CallListFormatter` (`describe()` plus the new
+`renderCorrelationParagraph()`), `TestDoubleException::
+appendFabricatedNote()`, `UnexpectedCallFields::$otherObservedCalls` (+ its
+PHPUnit sibling via the same shared trait) and its conditional `For
+example:` suggestion, `ProxyBehavior::handleUnmatchedCall()`'s
+slice-off-the-last-entry wiring, and the same cap and paragraph structure
+now applied to `UnsatisfiedExpectationFields`'s pre-existing correlation.
+Covered in `ExceptionMessagesTest` (single-call and capped-multi-call golden
+fixtures for both exception types), `PHPUnitExceptionsTest` (parity between
+the plain and PHPUnit variants with the field populated), and
+`TestDoubleTest` (end-to-end through `ProxyBehavior`, proving the failing
+call itself is excluded from its own correlation list).
 
 ## Exceptions and PHPUnit integration
 

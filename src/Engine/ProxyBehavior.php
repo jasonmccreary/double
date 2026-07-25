@@ -109,11 +109,15 @@ final class ProxyBehavior
     private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed
     {
         return match ($state->mode()) {
+            // callsFor($method) already includes this very call — recordCall() above ran
+            // before findMatch() — so the last entry is dropped to leave only calls that
+            // happened before this one.
             Mode::Strict => throw ExceptionFactory::unexpectedCall(
                 $state->label(),
                 $method,
                 ArgumentFormatter::describe($arguments),
                 $state->isFabricated(),
+                array_map(ArgumentFormatter::describe(...), array_slice($state->callsFor($method), 0, -1)),
             ),
             Mode::Loose => SafeDefaultResolver::resolveForMethod($state, $method, $double),
             Mode::Passthru => $state->passthruTarget()->{$method}(...$arguments),

@@ -54,6 +54,23 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
     }
 
     /**
+     * Joins $message with fabricatedNote()'s own "\n\n"-prefixed text — used
+     * instead of plain concatenation by every renderMessage() whose $message
+     * can itself already end in "\n" (a call-correlation paragraph, see
+     * CallListFormatter::renderCorrelationParagraph()). Plain concatenation
+     * in that case would leave a stray blank line between the correlation
+     * paragraph and the note; trimming unconditionally would instead wrongly
+     * swallow the correlation paragraph's own deliberate trailing newline on
+     * messages with no note to append.
+     */
+    final public static function appendFabricatedNote(string $message, bool $fabricated): string
+    {
+        $note = self::fabricatedNote($fabricated);
+
+        return $note === '' ? $message : rtrim($message, "\n").$note;
+    }
+
+    /**
      * A best-effort variable name for a code snippet in a message, derived
      * from a double's label (e.g. "SecondLink" -> "secondLink"). Labels
      * aren't always valid identifier fragments — an intersection-typed

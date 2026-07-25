@@ -1,0 +1,3 @@
+Test double `foo` expected `bar(6)` to be called exactly 1 time, but it was never called.
+
+The following calls to `bar` were made during this test: `bar(1)`, `bar(2)`, and 2 more

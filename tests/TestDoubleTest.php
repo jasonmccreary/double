@@ -447,6 +447,36 @@ final class TestDoubleTest extends TestCase
         $double->count();
     }
 
+    /**
+     * Symmetric extension to test_verify_failure_correlates_other_calls_observed_for_the_same_method()
+     * above — see ARCHITECTURE.md's "Symmetric extension, tracked but
+     * explicitly deferred". Proves ProxyBehavior actually excludes the
+     * failing call itself (the one just recorded) from the correlation list,
+     * not just that the field gets populated with something.
+     */
+    public function test_unexpected_call_correlates_other_calls_already_observed_for_the_same_method(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class)->strict();
+        $double->allows('find')->with(123)->returns(new Book('Dune'));
+
+        $double->find(123);
+
+        try {
+            $double->find(456);
+            $this->fail('Expected PHPUnitUnexpectedCallException to be thrown.');
+        } catch (PHPUnitUnexpectedCallException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('received an unexpected call to `find(456)`', $message);
+            $this->assertStringContainsString('The following calls to `find` were made during this test:', $message);
+            $this->assertStringContainsString('find(123)', $message);
+            // The failing call (456) must appear only once — in the "unexpected call to"
+            // clause — and never inside the correlation list, which should only ever
+            // contain calls that happened before this one.
+            $this->assertSame(1, substr_count($message, 'find(456)'));
+        }
+    }
+
     public function test_mode_can_only_be_set_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class)->strict();
@@ -637,7 +667,7 @@ final class TestDoubleTest extends TestCase
             $message = $exception->getMessage();
 
             $this->assertStringContainsString('expected `find(123)` to be called exactly 1 time, but it was never called', $message);
-            $this->assertStringContainsString('`find` was called elsewhere in this test, just with different arguments:', $message);
+            $this->assertStringContainsString('The following calls to `find` were made during this test:', $message);
             $this->assertStringContainsString('find(456)', $message);
         }
     }
