@@ -9,9 +9,9 @@ namespace JMac\Testing\Matching;
  * interface, or any value of the given PHP builtin type (int/float/string/
  * bool/array/object/callable/iterable/null/mixed). Mirrors Mockery::type(),
  * confirmed against Mockery's own Matcher\Type source: it accepts the same
- * two kinds of $type interchangeably, not just class/interface names. See
- * ARCHITECTURE.md's example: `Argument::type(Book::class)` —
- * `Argument::type('int')` is the builtin-type form of the same verb.
+ * two kinds of $type interchangeably, not just class/interface names, e.g.
+ * `Argument::type(Book::class)` vs. `Argument::type('int')`, the
+ * builtin-type form of the same verb.
  *
  * Builtin names never collide with a real class/interface name: every name
  * in BUILTIN_CHECKS is a reserved word in PHP, so none of them can ever

@@ -11,9 +11,7 @@ use JMac\Testing\Diagnostics\ValueFormatter;
  * EqualsMatcher deliberately still defaults to == on: object identity ("this
  * exact instance," not "an equivalent value"). Named after PHPUnit's own
  * assertSame() (the more directly relevant prior art, since this library
- * integrates with PHPUnit directly), not php.net's operator-name table —
- * see ARCHITECTURE.md, "Strict-by-default scalar/array matching, loose
- * objects, explicit object identity."
+ * integrates with PHPUnit directly), not php.net's operator-name table.
  */
 final class SameMatcher implements Matcher
 {

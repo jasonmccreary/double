@@ -14,8 +14,7 @@ namespace JMac\Testing\Diagnostics;
  * is where it used to sit duplicated under a different name — since
  * Diagnostics is the one module built to be the shared home for rendering
  * logic every other module can reach: Matching may depend on Diagnostics
- * (and nothing else), Engine already may depend on everything (see
- * ARCHITECTURE.md's "Module boundaries").
+ * (and nothing else), Engine already may depend on everything.
  */
 final class ValueFormatter
 {

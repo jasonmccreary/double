@@ -12,11 +12,9 @@ use JMac\Testing\Matching\NoneMatcher;
 use JMac\Testing\Matching\RemainingMatcher;
 
 /**
- * One configured expects()/allows() entry. See ARCHITECTURE.md's "Verb
- * lineage" and "Sensible defaults" sections for the semantics each fluent
- * modifier must have.
+ * One configured expects()/allows() entry.
  *
- * Argument matching is the Matcher contract (JMac\Testing\Matching, M2). A
+ * Argument matching is the Matcher contract (JMac\Testing\Matching). A
  * bare literal passed to with() is wrapped in EqualsMatcher at this
  * boundary so the rest of the engine only ever deals in Matcher instances.
  */
@@ -204,14 +202,13 @@ final class MethodExpectation
     }
 
     /**
-     * Marks this expectation as participating in call-order enforcement —
-     * see ARCHITECTURE.md, "Call-order enforcement." Deliberately just a
-     * flag: this class stays a self-contained value object with zero
-     * knowledge of the double it's registered against or of any other
-     * expectation (see ARCHITECTURE.md, "Module boundaries"). The actual
-     * slot bookkeeping and violation check live in DoubleState/ProxyBehavior,
-     * which already have registration-order visibility across every
-     * expectation on a double — this class doesn't need to.
+     * Marks this expectation as participating in call-order enforcement.
+     * Deliberately just a flag: this class stays a self-contained value
+     * object with zero knowledge of the double it's registered against or
+     * of any other expectation. The actual slot bookkeeping and violation
+     * check live in DoubleState/ProxyBehavior, which already have
+     * registration-order visibility across every expectation on a
+     * double — this class doesn't need to.
      */
     public function inOrder(): static
     {

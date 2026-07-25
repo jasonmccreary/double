@@ -17,8 +17,8 @@ use PHPUnit\Framework\TestCase;
  * test runner), so ExceptionFactory's class_exists(TestCase::class) branch
  * is always true here — these assertions prove the switch actually picks
  * the PHPUnit variant rather than merely assuming it does. The "PHPUnit
- * unavailable" branch is proven separately in CI, per ARCHITECTURE.md's
- * "PHPUnit integration" mitigations.
+ * unavailable" branch is proven separately in CI — see
+ * tests/smoke/without-phpunit.php.
  */
 final class ExceptionFactoryTest extends TestCase
 {

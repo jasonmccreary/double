@@ -15,7 +15,8 @@ namespace JMac\Testing\Diagnostics;
  * (whose rendered "expected N time(s)" prose is what
  * UnsatisfiedExpectationException ultimately displays) and
  * Exceptions\UnsatisfiedExpectationFields depend on it without breaking the
- * acyclic module rule in ARCHITECTURE.md's "Module boundaries".
+ * acyclic module dependency rule (Diagnostics has zero dependencies on the
+ * rest of the library).
  *
  * Returns the count and the word together (e.g. "1 time" / "3 times")
  * since every current call site wants both, not just the bare word.

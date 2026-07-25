@@ -7,9 +7,8 @@ namespace JMac\Testing\Matching;
 use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
- * The default a bare literal is wrapped in at the with() boundary (see
- * ARCHITECTURE.md, "Strict-by-default scalar/array matching, loose objects,
- * explicit object identity"). Objects still compare with == ("an equivalent
+ * The default a bare literal is wrapped in at the with() boundary. Objects
+ * still compare with == ("an equivalent
  * value was passed" is the more common assertion for them); everything else
  * (scalars, arrays) compares with === instead, since for same-type values
  * === and == never disagree — only cross-type surprises like '0' == 0 are

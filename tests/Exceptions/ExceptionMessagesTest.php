@@ -29,8 +29,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     }
 
     /**
-     * The motivating scenario from ARCHITECTURE.md's "Correlating unsatisfied
-     * expectations with actual observed calls": expects('bar')->with('baz')
+     * The motivating scenario for call correlation: expects('bar')->with('baz')
      * never fires because the code under test actually called bar('Baz').
      */
     public function test_renders_unsatisfied_expectation_with_call_correlation(): void
@@ -50,9 +49,8 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     /**
      * More than three other observed calls collapses to "and N more" rather
-     * than listing every one — see CallListFormatter and ARCHITECTURE.md's
-     * "Symmetric extension" for why this cap exists on both correlation
-     * features, not just the unexpected-call one.
+     * than listing every one — see CallListFormatter; this cap exists on
+     * both correlation features, not just the unexpected-call one.
      */
     public function test_renders_unsatisfied_expectation_with_capped_call_correlation(): void
     {
@@ -225,8 +223,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     }
 
     /**
-     * The symmetric extension from ARCHITECTURE.md's "Symmetric extension,
-     * tracked but explicitly deferred": the same "was already observed
+     * The symmetric extension: the same "was already observed
      * elsewhere" fact the verify() path already shows, mirrored onto an
      * unexpected call that matched no configured expectation.
      */
@@ -239,10 +236,9 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     /**
      * Both correlation features share CallListFormatter's cap — more than
-     * three prior calls collapses to "and N more" instead of a wall of text.
-     * See ARCHITECTURE.md, "Symmetric extension" for why an uncapped list
-     * would defeat its own purpose once a method's been called many times
-     * legitimately (e.g. once per loop iteration with a different id).
+     * three prior calls collapses to "and N more" instead of a wall of text,
+     * which would defeat its own purpose once a method's been called many
+     * times legitimately (e.g. once per loop iteration with a different id).
      */
     public function test_renders_unexpected_call_with_capped_correlation(): void
     {

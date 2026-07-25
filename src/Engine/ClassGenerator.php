@@ -14,9 +14,7 @@ use JMac\Testing\TestDoubleInterface;
  * Reflects a target class/interface and eval()s a new class that either
  * extends or implements it, overriding every overridable method to funnel
  * through ProxyBehavior::intercept(). Uses the same eval() technique as
- * Mockery/Prophecy (see ARCHITECTURE.md's "Known scaffold-era
- * limitations", now resolved — see "ClassGenerator caching: closing the
- * scaffold-era memory gap"), and caches the generated class per distinct
+ * Mockery/Prophecy, and caches the generated class per distinct
  * target combination (module-static, same lifetime as $counter below),
  * mirroring Mockery's own CachingGenerator: a second call to
  * generate()/generateForIntersection() for the same target(s) returns the
@@ -36,9 +34,8 @@ use JMac\Testing\TestDoubleInterface;
  *
  * Magic methods (__toString, __invoke, __call, even __construct/__destruct
  * — anything starting with "__") are never overridden either, but that's a
- * resolved, deliberate rejection rather than an open gap — see
- * ARCHITECTURE.md, "Magic methods: rejected cleanly, not silently or with a
- * crash." A concrete target's magic method is simply inherited unoverridden
+ * deliberate rejection rather than an open gap. A concrete target's magic
+ * method is simply inherited unoverridden
  * (harmless — real code, just not interceptable, same as a concrete static
  * method); an abstract one (always true on an interface, possibly on an
  * abstract class too) would leave the generated class not actually
@@ -52,8 +49,7 @@ use JMac\Testing\TestDoubleInterface;
  * has no property-configuration verb to begin with); an interface
  * requiring one (abstract) would leave the generated class not actually
  * implementing it, which assertNoAbstractPropertyHooks() rejects before
- * this generator ever runs eval() — see ARCHITECTURE.md, "PHP 8.4 property
- * hooks: a third mirror of the static/magic-method crash."
+ * this generator ever runs eval().
  */
 final class ClassGenerator
 {

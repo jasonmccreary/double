@@ -16,8 +16,7 @@ namespace JMac\Testing\Exceptions;
  * programmatically (see TestDoubleException's getDiagnostic()), but the
  * message itself is deliberately shorter than "everything the object
  * knows," and leads with a concrete, pasteable fix (built from the actual
- * label/method involved) rather than more prose — see ARCHITECTURE.md,
- * "Guardrails on fabrication." $anotherDouble in that fix is a placeholder
+ * label/method involved) rather than more prose. $anotherDouble in that fix is a placeholder
  * on purpose, not derived from $returnType: $secondLink is concrete because
  * it's the exact object throwing this exception, but what should come back
  * from the deeper call isn't pinned to any one name — a real instance, a

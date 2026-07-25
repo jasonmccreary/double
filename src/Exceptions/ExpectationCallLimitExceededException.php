@@ -11,7 +11,7 @@ namespace JMac\Testing\Exceptions;
  * to something configured with ->never()). Properties, constructor, and
  * message rendering live in ExpectationCallLimitExceededFields, shared with
  * Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException — see
- * that trait's docblock and ARCHITECTURE.md's "PHPUnit integration".
+ * that trait's docblock.
  */
 class ExpectationCallLimitExceededException extends TestDoubleException
 {

@@ -15,15 +15,15 @@ use JMac\Testing\TestDouble;
  * DoubleState) because resolving a self/static safe-default return needs
  * the actual object to return (see SafeDefaultResolver).
  *
- * Matching rule: last-registered expectation whose arguments match wins
- * (see ARCHITECTURE.md, "Expectation matching order"). No exhaustion-based
- * fallthrough to an earlier expectation once one is selected.
+ * Matching rule: last-registered expectation whose arguments match wins.
+ * No exhaustion-based fallthrough to an earlier expectation once one is
+ * selected.
  *
  * A matched expectation with no configured return, and Loose mode's
  * unmatched-call fallback, both resolve through the same
- * SafeDefaultResolver::resolveForMethod() — see ARCHITECTURE.md's "Sensible
- * defaults": "there is only one safe-default-by-return-type resolver in the
- * codebase, used at both call sites."
+ * SafeDefaultResolver::resolveForMethod() — there is only one
+ * safe-default-by-return-type resolver in the codebase, used at both call
+ * sites.
  */
 final class ProxyBehavior
 {
@@ -75,8 +75,7 @@ final class ProxyBehavior
     }
 
     /**
-     * Orthogonal to findMatch() above, not part of it — see
-     * ARCHITECTURE.md, "Call-order enforcement". Only ever runs against
+     * Orthogonal to findMatch() above, not part of it. Only ever runs against
      * whichever expectation findMatch() already selected; never changes
      * that selection. A no-op unless $expectation itself was marked
      * inOrder(). Rejects only regression (a slot behind the furthest one

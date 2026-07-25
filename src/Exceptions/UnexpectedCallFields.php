@@ -11,8 +11,8 @@ use JMac\Testing\Diagnostics\CallListFormatter;
  * unexpected call" — shared, by both UnexpectedCallException and
  * Integrations\PHPUnit\PHPUnitUnexpectedCallException, since a trait is the
  * only way PHP lets two classes with different, already-fixed parents
- * (TestDoubleException vs. AssertionFailedError — see ARCHITECTURE.md's
- * "PHPUnit integration") share real code instead of hand-duplicating it.
+ * (TestDoubleException vs. AssertionFailedError) share real code instead
+ * of hand-duplicating it.
  * Each class still gets its own real, independent instance — this only
  * removes the duplication, not the two-classes-per-diagnostic split itself.
  *
@@ -30,8 +30,7 @@ trait UnexpectedCallFields
      * @param  list<string>  $otherObservedCalls  every other call already observed for this
      *                                            method (matched or not, same plain-fact rule
      *                                            UnsatisfiedExpectation::$otherObservedCalls
-     *                                            uses), excluding this failing call itself —
-     *                                            see ARCHITECTURE.md's "Symmetric extension"
+     *                                            uses), excluding this failing call itself
      */
     public function __construct(
         public readonly string $label,

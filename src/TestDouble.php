@@ -23,9 +23,9 @@ use JMac\Testing\Exceptions\UnknownMethodException;
  * delegates to (`ClassGenerator`, `ProxyBehavior`, `DoubleState`,
  * `MethodExpectation`) stays internal under Engine. `TestDouble::for()`
  * creates a double; `$double->verify()` (see `DoubleControlMethods`) is the
- * manual verification call every test runner can use (see ARCHITECTURE.md,
- * "PHPUnit integration" — a framework-specific auto-verify extension is
- * future, additive work, not M1).
+ * manual verification call every test runner can use. PHPUnit users can
+ * skip it via `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies
+ * every double created during a test.
  */
 final class TestDouble
 {

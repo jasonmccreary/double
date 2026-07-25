@@ -6,7 +6,7 @@ namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown when ->passthru() is called with no argument and reflection-based
- * auto-instantiation of the target fails. See ARCHITECTURE.md, "Passthru."
+ * auto-instantiation of the target fails.
  */
 class PassthruAutoInstantiationException extends TestDoubleException
 {

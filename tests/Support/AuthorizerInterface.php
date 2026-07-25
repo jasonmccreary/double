@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Support;
 
 /**
- * The confirmed, not hypothetical, real-world collision called out in
- * ARCHITECTURE.md's "Class surface area" section: authorization/policy
- * interfaces routinely declare a real allows($ability, ...$args): bool
- * method (Laravel's own Gate contract uses this exact verb).
+ * A confirmed, not hypothetical, real-world collision with TestDouble's own
+ * control API: authorization/policy interfaces routinely declare a real
+ * allows($ability, ...$args): bool method (Laravel's own Gate contract uses
+ * this exact verb).
  */
 interface AuthorizerInterface
 {

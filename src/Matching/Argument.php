@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JMac\Testing\Matching;
 
 /**
- * The argument-matcher facade (see ARCHITECTURE.md, "Verb lineage").
- * Starting matcher set — any(), type(), satisfies() — deliberately minimal
+ * The argument-matcher facade. Starting matcher set — any(), type(),
+ * satisfies() — deliberately minimal
  * for v1; more get added once real usage shows what's actually needed,
  * rather than porting a full matcher catalog speculatively. capture(),
  * remaining(), same(), not(), matches(), contains(), and none() are later
@@ -89,10 +89,10 @@ final class Argument
     }
 
     /**
-     * Asserts the call took no arguments at all — see NoneMatcher and
-     * ARCHITECTURE.md's "Argument::satisfies()" section for why this isn't
-     * a bare with(), and why it isn't a class constant either. Only valid
-     * as the sole argument passed to with(); with() throws otherwise.
+     * Asserts the call took no arguments at all — see NoneMatcher for why
+     * this isn't a bare with(), and why it isn't a class constant either.
+     * Only valid as the sole argument passed to with(); with() throws
+     * otherwise.
      */
     public static function none(): Matcher
     {
@@ -103,9 +103,8 @@ final class Argument
      * Matches only the exact same instance (===), for the one case a bare
      * literal passed to with() doesn't cover: object identity. A bare
      * literal object still defaults to == ("an equivalent value") — see
-     * SameMatcher and ARCHITECTURE.md's "Strict-by-default scalar/array
-     * matching, loose objects, explicit object identity." Named after
-     * PHPUnit's own assertSame(), not php.net's operator-name table.
+     * SameMatcher. Named after PHPUnit's own assertSame(), not php.net's
+     * operator-name table.
      */
     public static function same(mixed $expected): Matcher
     {

@@ -9,8 +9,7 @@ use JMac\Testing\TestDouble;
 /**
  * @internal
  *
- * The one safe-default-by-return-type resolver ARCHITECTURE.md calls for
- * (see "Sensible defaults" and "Modes: Loose, Strict, Passthru") — used both
+ * The one safe-default-by-return-type resolver in the codebase — used both
  * by Loose mode's unmatched-call fallback and by any matched expectation
  * missing an explicit ->returns()/->throws()/->resolves(), via the same
  * resolveForMethod() entry point (see ProxyBehavior).
@@ -35,11 +34,10 @@ use JMac\Testing\TestDouble;
  * does *not* match the declaring class is a genuine hard limit, enforced at
  * MAX_FABRICATION_DEPTH (default **1** — one safely-typed stand-in fabricated
  * for free, matching the single free hop Mockery's own shouldIgnoreMissing()
- * fallback gets before it stops being type-aware). This is deliberately not
- * "configurable" despite an earlier draft of ARCHITECTURE.md describing it
- * that way — there is no constructor/verb that exposes it, and it is not
- * planned as one; see ARCHITECTURE.md's "Guardrails on fabrication" for why
- * a hard, identically-enforced default was chosen over a per-double knob.
+ * fallback gets before it stops being type-aware). Deliberately not
+ * configurable — there is no constructor/verb that exposes it, and none is
+ * planned; a single, predictable, identically-enforced default was judged
+ * more valuable than a tunable one.
  *
  * Past the limit, null is NOT a viable fallback the way it is for every
  * other row of the safe-default table: the generated method's return type is
@@ -157,10 +155,10 @@ final class SafeDefaultResolver
                 'float' => 0.0,
                 'string' => '',
                 'array', 'iterable' => [],
-                // 'object', 'callable', 'false', 'true', 'never' aren't in
-                // ARCHITECTURE.md's safe-default table — null is a documented
-                // best-effort gap for these. void/mixed/null never reach here
-                // (already handled by the allowsNull() check above).
+                // 'object', 'callable', 'false', 'true', 'never' have no safe
+                // non-null default — null is a documented best-effort gap
+                // for these. void/mixed/null never reach here (already
+                // handled by the allowsNull() check above).
                 default => null,
             };
         }

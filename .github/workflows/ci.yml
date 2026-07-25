@@ -18,7 +18,7 @@ jobs:
           # neither PHPUnit 11 nor 12 declares an upper PHP-version bound
           # (11.5.56's own composer.json just says "php >=8.2"), so there's
           # no technical reason to test only one PHPUnit major per PHP
-          # version. See ARCHITECTURE.md, "PHPUnit integration."
+          # version.
           - php: '8.3'
             phpunit: '^11.0'
             allow-failure: false
@@ -79,11 +79,11 @@ jobs:
           coverage: none
 
       # --no-dev drops phpunit/phpunit from vendor/ entirely (and, as a side
-      # effect, disables autoload-dev) — proving the "absent" half of
-      # ARCHITECTURE.md's "optional integration" promise. The matrix above
-      # only ever proves the *version* half; nothing previously executed
+      # effect, disables autoload-dev) — proving the "absent" half of the
+      # optional-PHPUnit-integration promise. The matrix above only ever
+      # proves the *version* half; nothing previously executed
       # Engine\ExceptionFactory's class_exists() guard with the class
-      # genuinely missing. See ARCHITECTURE.md, "PHPUnit integration."
+      # genuinely missing.
       - name: Install dependencies without dev requirements
         run: composer install --no-dev --prefer-dist --no-progress --no-interaction
 

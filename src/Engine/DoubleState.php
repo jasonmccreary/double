@@ -12,8 +12,8 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
  * Holds everything about one double: the target it was created for, its
  * display label, its mode, every expectation registered against it (in
  * registration order, since matching is "last-registered-that-matches
- * wins" — see ARCHITECTURE.md), and every call actually observed,
- * regardless of whether it matched anything.
+ * wins"), and every call actually observed, regardless of whether it
+ * matched anything.
  */
 final class DoubleState
 {
@@ -42,8 +42,7 @@ final class DoubleState
 
     /**
      * The furthest slot reached so far by an inOrder()-marked call — see
-     * orderedExpectations() and ARCHITECTURE.md, "Call-order enforcement".
-     * 0 is a safe starting sentinel: the first inOrder()-marked
+     * orderedExpectations(). 0 is a safe starting sentinel: the first inOrder()-marked
      * expectation's own slot is always index 0, and comparing a slot against
      * itself never counts as a regression.
      */
@@ -134,10 +133,8 @@ final class DoubleState
     }
 
     /**
-     * Loose is the architected default (see ARCHITECTURE.md's "Sensible
-     * defaults" table) — reachable only implicitly, since there's
-     * deliberately no ->loose() verb (see ARCHITECTURE.md, "Modes: Loose,
-     * Strict, Passthru").
+     * Loose is the architected default — reachable only implicitly, since
+     * there's deliberately no ->loose() verb.
      */
     public function mode(): Mode
     {
@@ -155,8 +152,7 @@ final class DoubleState
 
     /**
      * ->passthru($realInstance) sets the mode and stores the delegation
-     * target together, so the two can never end up out of sync (see
-     * ARCHITECTURE.md, "Passthru").
+     * target together, so the two can never end up out of sync.
      */
     public function configurePassthru(object $realInstance): void
     {
@@ -252,8 +248,7 @@ final class DoubleState
 
     /**
      * Every inOrder()-marked expectation registered on this double, in
-     * registration order — see ARCHITECTURE.md, "Call-order enforcement".
-     * An expectation's position in this list is its slot for call-order
+     * registration order. An expectation's position in this list is its slot for call-order
      * enforcement (see ProxyBehavior); no separate slot-numbering
      * bookkeeping is needed since $expectations is already
      * registration-ordered.

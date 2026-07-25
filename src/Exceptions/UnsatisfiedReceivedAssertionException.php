@@ -19,7 +19,7 @@ namespace JMac\Testing\Exceptions;
  * happened. Properties, constructor, and message rendering live in
  * UnsatisfiedReceivedAssertionFields, shared with
  * Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException — see
- * that trait's docblock and ARCHITECTURE.md's "PHPUnit integration".
+ * that trait's docblock.
  */
 class UnsatisfiedReceivedAssertionException extends TestDoubleException
 {

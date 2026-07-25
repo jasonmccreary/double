@@ -6,8 +6,7 @@ namespace JMac\Testing\Diagnostics;
 
 /**
  * One unmet expects() expectation, paired with every other call actually
- * observed for the same method — see ARCHITECTURE.md, "Correlating
- * unsatisfied expectations with actual observed calls." $otherObservedCalls
+ * observed for the same method. $otherObservedCalls
  * is a plain fact pulled from DoubleState's call log (every call to this
  * method, matched or not), never a similarity guess — that distinction is
  * why this reads differently from the closest-candidate diffing on the

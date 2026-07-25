@@ -11,13 +11,9 @@ use JMac\Testing\TestDouble;
  *
  * Mixed into every generated double by ClassGenerator. These six public
  * methods (expects, allows, strict, passthru, received, verify) are the
- * reserved control API described in ARCHITECTURE.md's "Class surface area"
- * section — real instance methods, deliberately not engineered to zero
- * collision risk. ClassGenerator's collision check runs before a double
- * using this trait is ever generated.
- *
- * expects()/allows()/strict()/passthru()/verify()/received() are all fully
- * implemented as of M4.
+ * reserved control API — real instance methods, deliberately not engineered
+ * to zero collision risk. ClassGenerator's collision check runs before a
+ * double using this trait is ever generated.
  *
  * verify() and received() both delegate to a same-named TestDouble static
  * method, which holds the actual implementation (it needs access to the

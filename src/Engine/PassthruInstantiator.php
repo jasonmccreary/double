@@ -9,10 +9,10 @@ use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
 /**
  * @internal
  *
- * Backs ->passthru() called with no argument. See ARCHITECTURE.md,
- * "Passthru" — "attempts reflection-based auto-instantiation, throwing a
- * clear setup-time error suggesting ->passthru($existingInstance) if that
- * fails. Only valid for classes, not interfaces."
+ * Backs ->passthru() called with no argument: attempts reflection-based
+ * auto-instantiation of the target, throwing a clear setup-time error
+ * suggesting ->passthru($existingInstance) if that fails. Only valid for
+ * classes, not interfaces.
  */
 final class PassthruInstantiator
 {

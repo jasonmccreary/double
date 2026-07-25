@@ -8,7 +8,7 @@ use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
  * Argument::satisfies($predicate) — matches any value for which the given
- * callable returns a truthy result. See ARCHITECTURE.md's example:
+ * callable returns a truthy result, e.g.
  * `Argument::satisfies(fn ($id) => $id > 100)`.
  */
 final class PredicateMatcher implements Matcher

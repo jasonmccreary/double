@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Support;
 
 /**
- * One method per row of ARCHITECTURE.md's safe-default-by-return-type table
- * (see "Modes: Loose, Strict, Passthru") — a single purpose-built fixture
- * for SafeDefaultResolver tests instead of scattering return types across
- * unrelated interfaces.
+ * One method per row of SafeDefaultResolver's safe-default-by-return-type
+ * table — a single purpose-built fixture for its tests instead of
+ * scattering return types across unrelated interfaces.
  */
 interface SafeDefaultInterface
 {

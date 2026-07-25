@@ -8,10 +8,9 @@ namespace JMac\Testing\Diagnostics;
  * @internal
  *
  * Renders a capped "`method(args)`, `method(args)`, and N more" list — the
- * shared piece behind both call-correlation features described in
- * ARCHITECTURE.md ("Correlating unsatisfied expectations with actual
- * observed calls" and its symmetric extension to the unexpected-call path).
- * Each call is individually backtick-wrapped, matching how every other list
+ * shared piece behind both call-correlation features (UnsatisfiedExpectation's
+ * $otherObservedCalls and its symmetric extension on the unexpected-call
+ * path). Each call is individually backtick-wrapped, matching how every other list
  * of code-like tokens in this codebase's messages is rendered (see
  * ReservedNameCollisionException::forCollisions()) — "and N more" itself
  * stays outside the backticks since it's prose, not a call.
@@ -20,8 +19,8 @@ namespace JMac\Testing\Diagnostics;
  * into a wall of text with no more signal than the first few entries
  * already carry. Capping keeps the message the same shape regardless of how
  * many calls actually happened; the full, uncapped list still lives on the
- * exception's own public field for anything that wants it (see
- * ARCHITECTURE.md's "Matcher" section on frozen exception fields).
+ * exception's own public field for anything that wants it (these fields are
+ * frozen public API, see Exceptions\TestDoubleException's docblock).
  *
  * At exactly CAP calls, all of them are shown and nothing is truncated —
  * there's no "more" to speak of. Past that, only CAP - 1 are shown, not

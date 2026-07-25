@@ -211,8 +211,7 @@ final class TestDoubleTest extends TestCase
 
         // save() (the middle step) never happens — jumping straight from
         // find() to delete() is a forward skip, not a regression, and is
-        // allowed (mirrors Mockery's own validateOrder() — see
-        // ARCHITECTURE.md, "Call-order enforcement"). A skipped required
+        // allowed (mirrors Mockery's own validateOrder()). A skipped required
         // step still surfaces separately, via the ordinary
         // unmet-expectation check at verify() time.
         $double->find(1);
@@ -451,8 +450,7 @@ final class TestDoubleTest extends TestCase
 
     /**
      * Symmetric extension to test_verify_failure_correlates_other_calls_observed_for_the_same_method()
-     * above — see ARCHITECTURE.md's "Symmetric extension, tracked but
-     * explicitly deferred". Proves ProxyBehavior actually excludes the
+     * above. Proves ProxyBehavior actually excludes the
      * failing call itself (the one just recorded) from the correlation list,
      * not just that the field gets populated with something.
      */

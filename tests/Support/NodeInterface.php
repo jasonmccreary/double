@@ -7,8 +7,7 @@ namespace JMac\Testing\Tests\Support;
 /**
  * Self-referential and non-nullable — the return type names the same
  * interface that declares it, which SafeDefaultResolver treats the same as
- * a `self` return (see its class docblock). See ARCHITECTURE.md, "Modes:
- * Loose, Strict, Passthru."
+ * a `self` return (see its class docblock).
  */
 interface NodeInterface
 {

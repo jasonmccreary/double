@@ -7,12 +7,12 @@ namespace JMac\Testing\Exceptions;
 /**
  * Thrown by $double->verify() when one or more expects() expectations
  * were never satisfied by the end of the test. Each UnsatisfiedExpectation
- * is paired with every other call actually observed for that method — see
- * ARCHITECTURE.md, "Correlating unsatisfied expectations with actual
- * observed calls." Properties, constructor, and message rendering live in
- * UnsatisfiedExpectationFields, shared with
+ * is paired with every other call actually observed for that method, so a
+ * typo or wrong value in the actual call shows up as a plain fact rather
+ * than leaving the person guessing. Properties, constructor, and message
+ * rendering live in UnsatisfiedExpectationFields, shared with
  * Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException — see that
- * trait's docblock and ARCHITECTURE.md's "PHPUnit integration".
+ * trait's docblock.
  */
 class UnsatisfiedExpectationException extends TestDoubleException
 {

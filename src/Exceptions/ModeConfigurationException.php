@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 /**
- * A double's mode is set once and is immutable after that (see
- * ARCHITECTURE.md, "Modes: Loose, Strict, Passthru"). Thrown when setup
+ * A double's mode is set once and is immutable after that. Thrown when setup
  * code tries to set it more than once, e.g. ->strict()->strict() or
  * ->strict()->passthru($x).
  */

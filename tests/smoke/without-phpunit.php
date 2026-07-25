@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /**
- * Proves the "absent" half of ARCHITECTURE.md's "optional integration"
- * promise, under "PHPUnit integration": the phpunit-11-compat/12-compat
- * matrix in ci.yml proves this library works across supported PHPUnit
- * *versions*, but nothing previously proved it works with PHPUnit not
- * installed at all — Engine\ExceptionFactory's class_exists() branching was
- * only ever reasoned about for that case, never executed against it.
+ * Proves the "absent" half of the optional-PHPUnit-integration promise: the
+ * phpunit-11-compat/12-compat matrix in ci.yml proves this library works
+ * across supported PHPUnit *versions*, but nothing previously proved it
+ * works with PHPUnit not installed at all — Engine\ExceptionFactory's
+ * class_exists() branching was only ever reasoned about for that case,
+ * never executed against it.
  *
  * Run via `composer install --no-dev`, which drops phpunit/phpunit from
  * vendor/ entirely — and, as a side effect, disables autoload-dev, so

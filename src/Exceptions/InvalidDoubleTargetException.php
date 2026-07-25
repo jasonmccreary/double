@@ -7,7 +7,7 @@ namespace JMac\Testing\Exceptions;
 /**
  * Thrown at TestDouble::for() time when the requested target cannot be
  * doubled at all: it doesn't exist, or it's a final class (which can't be
- * extended). See ARCHITECTURE.md, "Known scaffold-era limitations."
+ * extended).
  */
 class InvalidDoubleTargetException extends TestDoubleException
 {

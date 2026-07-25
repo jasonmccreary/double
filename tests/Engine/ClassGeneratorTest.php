@@ -65,11 +65,10 @@ final class ClassGeneratorTest extends TestCase
     }
 
     /**
-     * TestDouble::for()'s @template/@return T&TestDoubleInterface docblock
-     * (see ARCHITECTURE.md, "Static analysis: a sound TestDoubleInterface,
-     * not a mixin") is only sound if this is genuinely true at runtime, for
-     * both the `implements` and `extends` code paths in buildSource() — not
-     * just a docblock claim nothing enforces.
+     * TestDouble::for()'s @template/@return T&TestDoubleInterface docblock is
+     * only sound if this is genuinely true at runtime, for both the
+     * `implements` and `extends` code paths in buildSource() — not just a
+     * docblock claim nothing enforces.
      */
     public function test_generates_a_class_implementing_test_double_interface_for_an_interface_target(): void
     {
@@ -112,8 +111,7 @@ final class ClassGeneratorTest extends TestCase
      * for a 122-method class, zero reuse. Mirroring Mockery's own
      * CachingGenerator, repeated calls for the same target now return the
      * same already-declared class instead of generating a fresh one each
-     * time — see ARCHITECTURE.md's "ClassGenerator caching: closing the
-     * scaffold-era memory gap."
+     * time.
      */
     public function test_repeated_calls_to_generate_reuse_the_same_class_for_the_same_target(): void
     {

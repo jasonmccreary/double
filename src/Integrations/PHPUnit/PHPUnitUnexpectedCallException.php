@@ -21,8 +21,7 @@ use PHPUnit\Framework\AssertionFailedError;
  * UnexpectedCallException`. Properties, constructor, and message rendering
  * come from the shared UnexpectedCallFields trait (see its docblock for how
  * that avoids duplicating them by hand) rather than from inheriting
- * UnexpectedCallException. See ARCHITECTURE.md's "PHPUnit integration" for
- * the full trade-off.
+ * UnexpectedCallException.
  *
  * Only ever constructed from behind the class_exists(TestCase::class) guard
  * in Engine\ExceptionFactory — never referenced unconditionally elsewhere,

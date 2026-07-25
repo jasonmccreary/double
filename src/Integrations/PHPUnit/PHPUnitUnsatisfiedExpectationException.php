@@ -14,8 +14,7 @@ use PHPUnit\Framework\AssertionFailedError;
  * See PHPUnitUnexpectedCallException's docblock for why this extends
  * AssertionFailedError and gets its properties/constructor/message from a
  * shared trait (here, UnsatisfiedExpectationFields) rather than inheriting
- * UnsatisfiedExpectationException, and ARCHITECTURE.md's "PHPUnit
- * integration" for the full trade-off.
+ * UnsatisfiedExpectationException.
  *
  * Only ever constructed from behind the class_exists(TestCase::class) guard
  * in Engine\ExceptionFactory.

@@ -25,8 +25,7 @@ use PHPUnit\Framework\TestCase;
  *
  * Picks between a plain TestDoubleException and its PHPUnit-specific
  * counterpart via a runtime class_exists(TestCase::class) check, so
- * ProxyBehavior and TestDouble never need to know PHPUnit exists — see
- * ARCHITECTURE.md, "PHPUnit integration."
+ * ProxyBehavior and TestDouble never need to know PHPUnit exists.
  *
  * The Integrations\PHPUnit class names below are only ever referenced
  * inside the guarded branch of each method. A `use` import alone never
