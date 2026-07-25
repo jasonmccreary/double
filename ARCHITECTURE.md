@@ -805,10 +805,42 @@ detail, coupled to the exception hierarchy" rather than a
 renderer-agnostic public contract — see "Exceptions and PHPUnit integration"
 for the shape this produces and why it doesn't collide with M5.
 
-**Still an open decision, must resolve before 1.0:** `Matcher`'s shape (is
-it a frozen, semver-guaranteed public contract or an internal detail that
-happens to be reachable?) is untouched by the above and still needs an
-explicit call before `1.0.0`, not allowed to ossify by accident.
+**Resolved: `Matcher` is a frozen, semver-guaranteed public contract, not
+just an internal detail that happens to be reachable.** Someone implementing
+`Matcher` themselves — a reusable, named domain matcher (`IsValidIsbn`,
+`MatchesJsonSchema`) rather than an anonymous `Argument::satisfies()`
+closure repeated at every call site — can rely on the three-method shape
+not changing outside a major version. This is why `explainMismatch()` was
+already kept a plain `?string` instead of being widened for richer data
+(see above): any future capability needs an additive, optional interface
+(`ExplainsWithDetail extends Matcher`), never a change to the base three
+methods. `Argument` itself is explicitly outside this freeze — it's a
+static facade consumers call, not an interface they implement, so it can
+keep growing/tightening incrementally without a stability promise attached.
+
+**A second, distinct decision, split out from the above rather than folded
+into it: are each `TestDoubleException` subclass's own public readonly
+fields (`UnexpectedCallException::$method`, `UnsatisfiedExpectation::
+$otherObservedCalls`, etc.) also committed as stable, semver-guaranteed
+API?** This is not the same question as `Diagnostic`'s own shape (already
+resolved above as "internal detail, coupled to the exception hierarchy" —
+and moot besides, since `Diagnostic` is a zero-method marker interface with
+nothing in it to freeze). The real public surface a consumer catches and
+inspects programmatically lives on each concrete exception class, one field
+set per exception, not on the marker interface.
+
+**Resolved: yes.** "Core: framework-agnostic" above already states
+`getDiagnostic()` gives structured access "for anything that wants it" —
+that promise only means something if the fields it exposes are safe to
+depend on, not silently reshaped in a minor release. Freezing them costs
+little beyond what's already true in practice: every field on every
+concrete exception is already `public readonly`, set once in the
+constructor, and none has changed shape since `M3`/`M4` landed. The
+practical follow-through is a per-class audit at `M6` (confirm each
+exception's current field set is one the project is actually willing to
+commit to, not an accidental leftover from an earlier draft) rather than a
+design decision still to be made — narrower work than the open question
+above implied.
 
 This is enforced with namespace-per-module (`JMac\Testing\Matching\*`,
 `JMac\Testing\Diagnostics\*`, `JMac\Testing\Exceptions\*`,
@@ -1140,8 +1172,12 @@ into the trait.
    genuinely absent") CI job.
 7. **M6 — Docs and first release.** Cookbook-style task docs, the Mockery/
    PHPUnit rosetta-stone migration table, the two contributor walkthroughs
-   ("add a matcher," "improve a message"), freeze `Matcher` and `Diagnostic`
-   shapes, tag `1.0.0`.
+   ("add a matcher," "improve a message"), tag `1.0.0`. The two API-stability
+   decisions this milestone used to gate on are both resolved now, not open
+   design work — `Matcher`'s three-method shape and each `TestDoubleException`
+   subclass's public field set are both committed as frozen, semver-guaranteed
+   public API; see "Matcher" above. What's left of that thread by `M6` is a
+   confirming audit of each exception's current fields, not a decision.
 
 Ship `0.x` throughout M1–M5 specifically so early shape mistakes in
 `Matcher` or `Diagnostic` aren't breaking changes yet.

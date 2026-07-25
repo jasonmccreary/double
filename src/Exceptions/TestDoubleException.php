@@ -14,6 +14,12 @@ use JMac\Testing\Diagnostics\Diagnostic;
  * getDiagnostic() gives structured access to the same instance for anything
  * that wants it (e.g. the future PHPUnit ComparisonFailure integration, see
  * ARCHITECTURE.md's "PHPUnit integration").
+ *
+ * Every concrete subclass's public readonly fields are frozen, semver-
+ * guaranteed public API (see ARCHITECTURE.md, "Matcher" — the freeze
+ * decision for Matcher and for these fields was made together). Adding a
+ * field is a minor-version change; renaming, removing, or retyping one is a
+ * major-version change, same as any other public API in this library.
  */
 abstract class TestDoubleException extends \RuntimeException implements Diagnostic
 {

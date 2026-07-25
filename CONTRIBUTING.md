@@ -27,6 +27,20 @@ table), not in the API surface.
 If you think a concept is genuinely missing a verb (not an alias for one that
 already exists), open an issue to discuss it before sending a PR.
 
+## Public API stability
+
+Two things are frozen as semver-guaranteed public API, not internal details
+that merely happen to be reachable: the `Matcher` interface (`matches()`,
+`describe()`, `explainMismatch()`) and the public readonly fields on every
+concrete `TestDoubleException` subclass. See `ARCHITECTURE.md`'s "Matcher"
+section for the full reasoning. Practically: a PR widening `Matcher` itself,
+or renaming/removing/retyping a field on an existing exception, is a
+major-version change and needs to be flagged as one — reach for an
+additive, optional interface (e.g. `ExplainsWithDetail extends Matcher`)
+instead when a matcher genuinely needs to convey more. `Argument` (the
+static facade) is not covered by this freeze and can keep growing
+incrementally.
+
 ## Module boundaries
 
 The codebase is split into `JMac\Testing\Engine`, `JMac\Testing\Matching`,
