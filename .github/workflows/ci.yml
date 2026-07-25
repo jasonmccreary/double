@@ -63,3 +63,29 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/phpunit
+
+  phpunit-absent:
+    name: Works with PHPUnit genuinely absent
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      # --no-dev drops phpunit/phpunit from vendor/ entirely (and, as a side
+      # effect, disables autoload-dev) — proving the "absent" half of
+      # ARCHITECTURE.md's "optional integration" promise. The matrix above
+      # only ever proves the *version* half; nothing previously executed
+      # Engine\ExceptionFactory's class_exists() guard with the class
+      # genuinely missing. See ARCHITECTURE.md, "PHPUnit integration."
+      - name: Install dependencies without dev requirements
+        run: composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Run smoke test with PHPUnit genuinely unavailable
+        run: php tests/smoke/without-phpunit.php

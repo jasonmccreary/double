@@ -1178,12 +1178,26 @@ breaks the promise silently. Mitigations in place:
   variants, not the plain ones — proving the switch fires, not just that the
   plain classes work in isolation).
 
-**Still open, not yet built:** a CI job that runs the test suite with
-PHPUnit's classes genuinely unavailable (a separate `composer.json` with the
-dev dependency stripped, run as its own matrix entry), proving the
-guarded-false branch instead of just reasoning about it. The `phpunit-11-compat`
-job added alongside this work proves the *version* half of the "optional
-integration" promise; it does not prove the *absent* half.
+**Resolved: a CI job now runs with PHPUnit's classes genuinely unavailable,**
+proving the guarded-false branch instead of just reasoning about it. Not the
+ordinary test suite, deliberately — `vendor/bin/phpunit` is itself PHPUnit,
+so "run the test suite with PHPUnit absent" is a contradiction; the ordinary
+matrix jobs prove the *version* half of the "optional integration" promise
+(PHPUnit 11 and 12, across every supported PHP version), never the *absent*
+half. Instead, a `phpunit-absent` job runs `composer install --no-dev`
+(which drops `phpunit/phpunit` from `vendor/` entirely, and disables
+`autoload-dev` as a side effect — `tests/Support`'s fixtures go with it) and
+executes a standalone, deliberately self-contained script,
+`tests/smoke/without-phpunit.php`, with its own inline fixture interface
+rather than depending on anything under `tests/`. Plain assertions with a
+non-zero exit on failure, since PHPUnit itself isn't installed when this
+runs to assert anything with. Confirmed to actually catch a regression, not
+just pass by construction: temporarily short-circuiting `ExceptionFactory::
+phpUnitIsAvailable()` to always return `true` (simulating a naive
+implementation that references the PHPUnit sibling classes unconditionally)
+made the script fail with `Class "PHPUnit\Framework\AssertionFailedError"
+not found` on both the unexpected-call and unsatisfied-expectation checks,
+exit code 1 — proof the check is load-bearing, not just green by default.
 
 **Built, not an "Extension":** `Integrations\PHPUnit\VerifiesDoubles`, a
 trait a PHPUnit user adds to a base TestCase, auto-verifies every double
@@ -1256,8 +1270,9 @@ into the trait.
    duck-typed method. Also done: `Integrations\PHPUnit\VerifiesDoubles`, the
    auto-verify trait — built as a `#[Before]`/`#[After]`-hooked trait, not a
    PHPUnit "Extension" (see "PHPUnit integration" for why an Extension
-   can't actually fail a test). Still open: the guarded-false ("PHPUnit
-   genuinely absent") CI job.
+   can't actually fail a test). Also done: the guarded-false ("PHPUnit
+   genuinely absent") CI job — see "PHPUnit integration" for the
+   `tests/smoke/without-phpunit.php` script it runs.
 7. **M6 — Docs and first release.** Cookbook-style task docs, the Mockery/
    PHPUnit rosetta-stone migration table, the two contributor walkthroughs
    ("add a matcher," "improve a message"), tag `1.0.0`. The two API-stability
