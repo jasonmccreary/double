@@ -31,10 +31,17 @@ already exists), open an issue to discuss it before sending a PR.
 Two things are frozen as semver-guaranteed public API, not internal details
 that merely happen to be reachable: the `Matcher` interface (`matches()`,
 `describe()`, `explainMismatch()`) and the public readonly fields on every
-concrete `TestDoubleException` subclass. Practically: a PR widening `Matcher` itself,
-or renaming/removing/retyping a field on an existing exception, is a
-major-version change and needs to be flagged as one — reach for an
-additive, optional interface (e.g. `ExplainsWithDetail extends Matcher`)
+concrete `TestDoubleException` subclass. This extends to any value object one
+of those fields exposes — e.g. `UnsatisfiedExpectationException::$expectations`
+is a `list<Diagnostics\UnsatisfiedExpectation>`, and `UnsatisfiedExpectation`'s
+own public readonly fields (`method`, `description`, `expectedMin`,
+`expectedMax`, `timesCalled`, `otherObservedCalls`) are frozen right along with
+it — a consumer reading `$exception->expectations[0]->description` is exactly
+the "structured access for anything that wants it" case this freeze exists
+for. Practically: a PR widening `Matcher` itself, or renaming/removing/retyping
+a field on an existing exception (or on a value object one of those fields
+exposes), is a major-version change and needs to be flagged as one — reach for
+an additive, optional interface (e.g. `ExplainsWithDetail extends Matcher`)
 instead when a matcher genuinely needs to convey more. `Argument` (the
 static facade) is not covered by this freeze and can keep growing
 incrementally.
@@ -51,3 +58,61 @@ instead of being hand-duplicated per module. `Matching` and `Exceptions` each
 depend only on `Diagnostics`, nothing else. A PR that introduces a dependency pointing the wrong
 direction (e.g. `Matching` referencing `Engine` directly, or `Diagnostics`
 referencing anything) will need to be restructured before it can be merged.
+
+## Walkthrough: adding a matcher
+
+Every argument constraint — `Argument::any()`, `Argument::same()`, a
+predicate closure, and any future one — is a class in `src/Matching/`
+implementing the `Matcher` interface, plus one static entry point on the
+`Argument` facade (`src/Matching/Argument.php`). Concretely, using
+`SameMatcher` as the reference shape:
+
+1. **Implement `Matcher`** in a new `src/Matching/YourMatcher.php`:
+   `matches(mixed $actual): bool`, `describe(): string` (used in failure
+   messages and in `with()`'s own argument description), and
+   `explainMismatch(mixed $actual): ?string` (`null` when it matched;
+   otherwise prose explaining why it didn't — see `SameMatcher::explainMismatch()`
+   for the shape). Depend only on `JMac\Testing\Diagnostics\ValueFormatter`
+   if you need to render a value — nothing in `Engine`.
+2. **Add a static entry point** on `Argument`, e.g.
+   `public static function yourMatcher(mixed $expected): Matcher { return new YourMatcher($expected); }`.
+   Don't add an alias for an existing matcher — see "No aliases" above.
+3. **Unit test it** in `tests/Matching/YourMatcherTest.php`: cover
+   `matches()` (true and false cases), `describe()`, and both branches of
+   `explainMismatch()` — see `SameMatcherTest` for the pattern.
+4. **Optionally**, if the matcher's `describe()` output should be proven
+   inside a real rendered failure message, add a case to
+   `tests/Exceptions/CallDescriptionMessagesTest.php` plus its golden file
+   in `tests/fixtures/exceptions/describe-matcher-*.txt` (see "Improving a
+   message" below for how golden files work).
+
+Nothing else needs to change — `Matching` depends only on `Diagnostics`, and
+`ProxyBehavior`/`MethodExpectation` only ever talk to a constraint through
+the `Matcher` interface, never a concrete matcher class.
+
+## Walkthrough: improving a message
+
+Every exception's wording lives in one place: its `*Fields` trait in
+`src/Exceptions/` (e.g. `UnexpectedCallFields::renderMessage()`), shared
+between the plain exception and its `Integrations\PHPUnit\PHPUnitXxxException`
+sibling so both render identically with no separate edit. To change one:
+
+1. **Edit the `render()`/`renderMessage()` method** on the relevant `*Fields`
+   trait (or the constructor directly, for an exception with no PHPUnit
+   sibling, e.g. `ModeConfigurationException`).
+2. **Update the golden fixture(s)** in `tests/fixtures/exceptions/*.txt`.
+   `GoldenFileTestCase::assertMatchesGolden()` does an exact string
+   comparison against that file's contents — a wording change will fail
+   every test asserting against the old text until the corresponding
+   `.txt` file is updated to match. There is no `--update-snapshots` flag;
+   edit the fixture by hand (or regenerate it by printing the exception's
+   new `getMessage()` and pasting it in).
+3. **Run the golden-file suite** that covers it —
+   `tests/Exceptions/ExceptionMessagesTest.php`,
+   `CallDescriptionMessagesTest.php`, or `ValidationMessagesTest.php`,
+   depending on which exception you touched — to confirm the new fixture
+   is exactly right.
+4. **Check `tests/Integrations/PHPUnit/PHPUnitExceptionsTest.php`** if the
+   exception has a PHPUnit sibling: it asserts parity between the two, so
+   it should pass without changes once step 1 is done (both read from the
+   same trait), but it's the place a divergence would show up.

@@ -10,23 +10,38 @@ namespace JMac\Testing\Exceptions;
  * (expects, allows, strict, passthru, received, verify) — a deliberate,
  * permanent trade-off (see DoubleControlMethods), not a later hardening pass.
  */
-final class ReservedNameCollisionException extends \LogicException
+class ReservedNameCollisionException extends TestDoubleException
 {
+    /**
+     * @param  string[]  $collisions
+     */
+    public function __construct(
+        public readonly string $target,
+        public readonly array $collisions,
+    ) {
+        parent::__construct($this->render());
+    }
+
     /**
      * @param  string[]  $collisions
      */
     public static function forCollisions(string $target, array $collisions): self
     {
-        $backtickedNames = array_map(static fn (string $name): string => "`{$name}`", $collisions);
+        return new self($target, $collisions);
+    }
+
+    private function render(): string
+    {
+        $backtickedNames = array_map(static fn (string $name): string => "`{$name}`", $this->collisions);
 
         $last = array_pop($backtickedNames);
         $names = $backtickedNames === [] ? $last : implode(', ', $backtickedNames).' and '.$last;
 
-        return new self(sprintf(
+        return sprintf(
             'Can\'t create a test double for `%s`. It contains %s which %s with TestDouble\'s internal methods.',
-            $target,
+            $this->target,
             $names,
-            count($collisions) === 1 ? 'collides' : 'collide',
-        ));
+            count($this->collisions) === 1 ? 'collides' : 'collide',
+        );
     }
 }
