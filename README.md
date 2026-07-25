@@ -23,32 +23,13 @@ composer require --dev jasonmccreary/test-double
 ## Usage
 
 ```php
-use JMac\Testing\TestDouble;
-
 $repository = TestDouble::for(BookRepository::class);
-
 $repository->expects('find')->with(123)->returns($book);
 
 $service = new CatalogService($repository);
 $service->lookup(123);
 
-$repository->verify();
-```
-
-That's the shape of most tests you'll write with this library: create a double, describe what you expect from it, run your code, and verify. There's no separate class or constructor to choose between for a mock versus a spy versus a partial mock — every double behaves the same way, and you add whatever behavior a test needs as you go.
-
-```php
-$repository->allows('save')->returns(true);        // any number of calls, including zero
-$repository->allows('find')->with(999)->throws(new NotFoundException());
-
-$repository->save($book);
-$repository->received('save')->with($book);        // check it after the fact
-```
-
-`TestDouble::for()` also accepts an already-built real instance via `->passthru()`, so unconfigured calls delegate to it while configured ones still intercept:
-
-```php
-$double = TestDouble::for($realLogger)->passthru();
+$repository->received('recordView')->with($book);
 ```
 
 ## Documentation

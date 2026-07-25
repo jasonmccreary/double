@@ -66,42 +66,44 @@
     <div class="content-inner">
       <article class="prose">
         <h1 class="page-title">Introduction</h1>
+<p><a href="https://github.com/jasonmccreary/test-double">Test Double</a> is a modern
+PHP test double library that puts developer experience first. It was
+built, from the ground up, on four goals:</p>
+<ul>
+<li><strong>Zero learning curve.</strong> Create a <code>TestDouble</code> and start testing
+immediately. There's no taxonomy to memorize and no upfront decision
+between a mock, a spy, or a partial — every double behaves the same way,
+and you add whatever behavior a test needs as you go: stub a return
+value here, assert a call happened there, fall back to a real object
+where it's useful.</li>
+<li><strong>Failures for humans.</strong> When an expectation isn't met, the message
+names the double, names the call, and points at the fix — not just that
+something, somewhere, didn't match. No terse output, no internal class
+identifiers to decode.</li>
+<li><strong>One clean API.</strong> A handful of methods, no aliases, no hidden nuance.
+You won't find <code>andReturn()</code> sitting next to <code>returns()</code>, or
+<code>shouldReceive()</code> next to <code>expects()</code>. If you can guess the method name,
+you're probably right.</li>
+<li><strong>Ready for contribution.</strong> Small, well-bounded internals mean no
+reverse-engineering the whole library for your first PR. New capability
+gets added once real use shows it's needed, not speculatively.</li>
+</ul>
+<p>Code speaks louder than words:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\</span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">CatalogService</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">lookup</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">recordView</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
 <p>Testing often means providing a stand-in for a real dependency — a fake
 <code>BookRepository</code> that behaves how you need it to, without touching a real
-database. This library calls that stand-in a <strong>test double</strong>, and gives
-you one consistent way to create, configure, and check one.</p>
-<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\</span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">CatalogService</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">lookup</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">verify</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
-<p>That's the shape of most tests you'll write with this library: create a
-double, describe what you expect from it, run your code, and verify.
-There's no separate class or constructor to choose between for a mock
-versus a spy versus a partial mock. Every double behaves the same way, and
-you add whatever behavior a test needs as you go — stub a return value
-here, assert a call happened there, fall back to a real object where it's
-useful.</p>
+database. This library calls that stand-in a <strong>test double</strong>, and the
+snippet above is the shape of most tests you'll write with it: create a
+double, describe what you expect from it, run your code, and check what
+it did.</p>
 <h2 id="one-verb-per-concept">One Verb per Concept</h2>
 <p>Every fluent method reads like a plain sentence, and there's exactly one
 way to say each thing:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);   </span><span style="color: #637777;">//</span><span style="color: #637777;"> called exactly once</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #82AAFF;">true</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> called any number of times</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">999</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">throws</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">NotFoundException</span><span style="color: #D6DEEB;">());</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">save</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> check it after the fact</span></div></code></pre></div>
-<p>You won't find <code>andReturn()</code> sitting next to <code>returns()</code>, or
-<code>shouldReceive()</code> next to <code>expects()</code>. If you've used Mockery or PHPUnit's
-built-in mocking before, the ideas here will already feel familiar — the
-words are just tidied up. <a href="migrating-from-mockery.html">Migrating from Mockery</a>
-has a full side-by-side reference if you're coming from there.</p>
-<h2 id="what-makes-a-good-test-double">What Makes a Good Test Double</h2>
-<p>A few ideas run through the rest of these docs:</p>
-<ul>
-<li><strong>You shouldn't need a glossary to get started.</strong> A test double is just a
-test double. Whatever behavior it needs — returning a value, throwing an
-exception, delegating to a real object — you add to the same object, the
-same way, every time.</li>
-<li><strong>A failure message should tell you what to do next.</strong> When an
-expectation isn't met, the message names the double, names the call, and
-points at the fix — not just that something, somewhere, didn't match.</li>
-<li><strong>Small and easy to read beats exhaustive.</strong> The matcher set, the
-configuration verbs, and the modes are deliberately minimal. New
-capability gets added once real use shows it's needed, not
-speculatively.</li>
-</ul>
+<p>If you've used Mockery or PHPUnit's built-in mocking before, the ideas
+here will already feel familiar — the words are just tidied up.
+<a href="migrating-from-mockery.html">Migrating from Mockery</a> has a full
+side-by-side reference if you're coming from there.</p>
 <h2 id="where-to-next">Where to Next</h2>
 <ul>
 <li><a href="installation.html">Installation</a> — get it into your project.</li>
@@ -119,7 +121,6 @@ nearly every test.</li>
     <p class="toc-label">On this page</p>
     <ol role="list">
         <li><a href="#one-verb-per-concept">One Verb per Concept</a></li>
-        <li><a href="#what-makes-a-good-test-double">What Makes a Good Test Double</a></li>
         <li><a href="#where-to-next">Where to Next</a></li>
 
     </ol>
