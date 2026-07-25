@@ -9,7 +9,7 @@ failure; and it's slow-moving, under-contributed, and its internals
 discourage new contributors from touching either the matching engine or the
 error output. This library picks one verb per concept, no aliases, and
 messages that tell you what to fix — see [Migrating from
-Mockery](docs/09-migrating-from-mockery.md) if you're coming from there.
+Mockery](https://testdoublephp.com/migrating-from-mockery) if you're coming from there.
 
 ## Installation
 
@@ -58,12 +58,12 @@ $double = TestDouble::for($realLogger)->passthru();
 
 Full docs — creating doubles, modes (Loose/Strict/Passthru), argument
 matching, verification, failure messages, PHPUnit integration, and
-contributing — live in [docs/](docs/README.md).
+contributing — live at [testdoublephp.com](https://testdoublephp.com/).
 
 ## Contributing
 
 Contributions should target the `master` branch, follow the project's
-code style, and include tests. See [Contributing](docs/10-contributing.md)
+code style, and include tests. See [Contributing](https://testdoublephp.com/contributing)
 for the project's standing policies (no aliases, module boundaries,
 frozen public API) and walkthroughs for adding a matcher or improving a
 failure message.
