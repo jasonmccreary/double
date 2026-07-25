@@ -63,6 +63,27 @@ class InvalidDoubleTargetException extends TestDoubleException
         ));
     }
 
+    /**
+     * ClassGenerator::overridableMethods() never overrides a magic method
+     * (__toString, __invoke, __call, even __construct/__destruct — anything
+     * whose name starts with "__") — see its own docblock. That's a silent
+     * no-op for a concrete class (the real implementation just keeps
+     * running, inherited as-is), but an abstract magic method (always
+     * abstract on an interface; possibly abstract on an abstract class too)
+     * leaves the generated class with an inherited abstract method it never
+     * implements — a PHP fatal error at eval() time, not a catchable
+     * exception, unless this check catches it first. Same failure shape as
+     * hasAbstractStaticMethod() above, for a different reason a method ends
+     * up excluded from overriding.
+     */
+    public static function hasAbstractMagicMethod(string $target, string $method): self
+    {
+        return new self($target, sprintf(
+            'it declares a magic method (`%s`). Magic methods can\'t be doubled',
+            $method,
+        ));
+    }
+
     private function render(): string
     {
         return sprintf(

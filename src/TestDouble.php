@@ -12,6 +12,7 @@ use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\ReceivedAssertion;
+use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 
@@ -312,10 +313,13 @@ final class TestDouble
 
     /**
      * Shared by registerExpectation() and received(): both need the same
-     * two checks before they can do anything with $method — that it exists
-     * at all, and that it isn't static (see StaticMethodException's
+     * three checks before they can do anything with $method — that it
+     * exists at all, that it isn't static (see StaticMethodException's
      * docblock for why a static method can never be intercepted, so
-     * configuring one could never do anything either verb needs it to do).
+     * configuring one could never do anything either verb needs it to do),
+     * and that it isn't magic (see MagicMethodException's docblock — the
+     * identical reasoning, for a different reason ClassGenerator excludes
+     * a method from overriding).
      */
     private static function assertConfigurable(DoubleState $state, string $method): void
     {
@@ -332,6 +336,10 @@ final class TestDouble
 
         if ($state->isStatic($declaringCandidate, $method)) {
             throw new StaticMethodException($state->target(), $method, $state->isFabricated());
+        }
+
+        if (str_starts_with($method, '__')) {
+            throw new MagicMethodException($state->target(), $method, $state->isFabricated());
         }
     }
 

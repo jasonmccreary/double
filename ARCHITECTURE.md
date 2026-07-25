@@ -1216,8 +1216,6 @@ into the trait.
 - `ClassGenerator` uses `eval()` (same technique Mockery/Prophecy use) and
   currently would regenerate a class on every `TestDouble::for()` call — a
   real implementation should cache generated classes per target type.
-- Magic methods (`__toString`, `__invoke`, `ArrayAccess`, etc.) need
-  explicit, deliberate handling, not silent non-support.
 - `final` classes cannot be doubled via `extends` — detect at setup time
   with a clear error.
 - Static analysis (PHPStan/Psalm) will have real blind spots around the
@@ -1574,6 +1572,75 @@ hasAbstractStaticMethod()` for the first case.
 name already is. Actual static-method *interception* remains out of
 scope, deliberately, for the same reasons Mockery's own `alias:` mocks
 are a documented last resort rather than a first-class feature.
+
+## Magic methods: rejected cleanly, not silently or with a crash (resolved)
+
+Magic methods (`__toString`, `__invoke`, `__call`, even `__construct`/
+`__destruct` — anything starting with `__`) were always out of
+`ClassGenerator`'s scope: `overridableMethods()` skips any method whose
+name starts with `__`, the same exclusion category static methods fall
+into. That scope decision was listed in "Known scaffold-era limitations"
+as an open gap ("magic methods need explicit, deliberate handling, not
+silent non-support") rather than something already resolved — checking it
+directly turned up the exact same two failure shapes the static-method
+audit above already found and fixed, not a new category of bug:
+
+- **Doubling an interface (or abstract class) with an abstract magic
+  method crashed with an uncatchable PHP fatal error**, confirmed
+  directly: an interface declaring `__toString(): string` (`Stringable`'s
+  own shape), `__invoke()`, or even `__construct()` all produced the
+  identical "must therefore be declared abstract or implement the
+  remaining methods" fatal `overridableMethods()`'s static-method
+  exclusion already causes for a static method — same root cause (an
+  abstract method excluded from overriding, PHP requiring a non-abstract
+  class to implement every abstract method it inherits), different
+  exclusion reason.
+- **`expects()`/`allows()`/`received()` on a magic method that exists on a
+  concrete class silently no-op'd**, confirmed directly: configuring
+  `allows('__toString')->returns('fake')` on a double for a class with a
+  real `__toString()` raised no error at all, and `(string) $double` kept
+  returning the real value regardless — the identical silent-no-op shape
+  the static-method case already had, for the identical reason (the
+  generated subclass never overrides the method at all, so the real
+  implementation runs unstubbed).
+
+**Built:** `ClassGenerator::assertNoAbstractMagicMethods()` (checked
+before `eval()`, right after the static-method check — a method that's
+both, `__callStatic` in practice, is already caught by the static check
+first) raises `InvalidDoubleTargetException::hasAbstractMagicMethod()` for
+the first case. `TestDouble::assertConfigurable()` gained a third check
+(`str_starts_with($method, '__')`, after the existence and static checks)
+raising the new `MagicMethodException` for the second, mirroring
+`StaticMethodException` down to not appending `fabricatedNote()` — the
+restriction holds regardless of how the double came to exist. Actual magic
+method *interception* remains out of scope, deliberately, for the same
+reason static-method interception does: no `$this`-dispatching mechanism
+exists for `__call`/`__get`-style dynamic proxying to hook into without a
+substantially larger feature than a scaffold-limitations pass warrants —
+that's a real gap still, just no longer a silent or crashing one.
+
+**A third, unrelated bug turned up checking `ArrayAccess` specifically —
+the other name the original gap listed alongside `__toString`/`__invoke`.**
+`ArrayAccess::offsetGet()`/`offsetSet()`/`offsetExists()`/`offsetUnset()`
+aren't magic-prefixed (no leading `__`), so none of the above ever applied
+to them — they were already being overridden as ordinary methods. But
+every method PHP's own internal interfaces declare (`ArrayAccess`,
+`Countable`, `Iterator`, and others) has used a *tentative* return type
+since PHP 8.1, a mechanism for phasing in a return type without an
+immediate BC break: `ReflectionMethod::getReturnType()` returns `null` for
+these specifically, confirmed directly against `ArrayAccess::offsetExists`,
+even though `hasTentativeReturnType()` is `true` and
+`getTentativeReturnType()` gives `bool`. `ClassGenerator::buildMethod()`
+only ever called `getReturnType()`, so every generated override of an
+`ArrayAccess` method silently lost its return type entirely — PHP accepts
+a subclass method with no return type at all, but flags it as a deprecated
+incompatibility against the interface's own (tentative) one, on every
+single call. **Built:** `buildMethod()` now falls back to
+`getTentativeReturnType()` when `getReturnType()` is `null` and
+`hasTentativeReturnType()` is `true`. Confirmed to actually catch a
+regression, not just pass by construction: reverting the fallback and
+rerunning the new `ClassGeneratorTest` regression test reproduces both the
+assertion failure and PHPUnit's own deprecation count going non-zero.
 
 ## Second matcher expansion: not(), matches(), contains(), and any(...alternatives) (resolved)
 

@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
+use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
@@ -176,11 +177,25 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('invalid-double-target-has-abstract-static-method', $exception->getMessage());
     }
 
+    public function test_renders_invalid_double_target_has_abstract_magic_method(): void
+    {
+        $exception = InvalidDoubleTargetException::hasAbstractMagicMethod('MagicMethodInterface', '__toString');
+
+        $this->assertMatchesGolden('invalid-double-target-has-abstract-magic-method', $exception->getMessage());
+    }
+
     public function test_renders_static_method(): void
     {
         $exception = new StaticMethodException('HasStaticMethod', 'make');
 
         $this->assertMatchesGolden('static-method', $exception->getMessage());
+    }
+
+    public function test_renders_magic_method(): void
+    {
+        $exception = new MagicMethodException('HasMagicMethod', '__toString');
+
+        $this->assertMatchesGolden('magic-method', $exception->getMessage());
     }
 
     public function test_renders_out_of_order_call(): void
@@ -298,6 +313,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new StaticMethodException('HasStaticMethod', 'make', fabricated: true);
 
         $this->assertMatchesGolden('static-method-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_magic_method_on_a_fabricated_double(): void
+    {
+        $exception = new MagicMethodException('HasMagicMethod', '__toString', fabricated: true);
+
+        $this->assertMatchesGolden('magic-method-fabricated', $exception->getMessage());
     }
 
     public function test_renders_out_of_order_call_on_a_fabricated_double(): void

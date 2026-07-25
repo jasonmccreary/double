@@ -27,11 +27,20 @@ use JMac\Testing\Exceptions\ReservedNameCollisionException;
  * original source spelled that nullability as `?Type` or as the
  * deprecated implicit `Type $x = null` form.
  *
- * Known gaps, deliberately not in M1 (see ARCHITECTURE.md, "Known
+ * Known gap, deliberately not in M1 (see ARCHITECTURE.md, "Known
  * scaffold-era limitations to design around, not just inherit"):
- * magic methods are never overridden (left to inherited/default
- * behavior), and interfaces with hooked properties are not specially
- * handled.
+ * interfaces with hooked properties are not specially handled.
+ *
+ * Magic methods (__toString, __invoke, __call, even __construct/__destruct
+ * — anything starting with "__") are never overridden either, but that's a
+ * resolved, deliberate rejection rather than an open gap — see
+ * ARCHITECTURE.md, "Magic methods: rejected cleanly, not silently or with a
+ * crash." A concrete target's magic method is simply inherited unoverridden
+ * (harmless — real code, just not interceptable, same as a concrete static
+ * method); an abstract one (always true on an interface, possibly on an
+ * abstract class too) would leave the generated class not actually
+ * implementing it, which assertNoAbstractMagicMethods() rejects before this
+ * generator ever runs eval().
  */
 final class ClassGenerator
 {
@@ -110,6 +119,7 @@ final class ClassGenerator
     {
         $this->assertNoReservedNameCollisions($targets, $reflections);
         $this->assertNoAbstractStaticMethods($targets, $reflections);
+        $this->assertNoAbstractMagicMethods($targets, $reflections);
 
         $className = $this->generateClassName($reflections);
 
@@ -162,6 +172,29 @@ final class ClassGenerator
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
                 if ($method->isStatic() && $method->isAbstract()) {
                     throw InvalidDoubleTargetException::hasAbstractStaticMethod(implode('&', $targets), $method->getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * Mirrors assertNoAbstractStaticMethods() above, for the same failure
+     * shape and a different reason a method ends up excluded from
+     * overriding — see overridableMethods()'s own str_starts_with('__')
+     * exclusion. Runs after the static check, so a method that's both
+     * static and abstract and magic (__callStatic, in practice) is already
+     * caught there first; this only ever needs to catch the non-static
+     * remainder.
+     *
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoAbstractMagicMethods(array $targets, array $reflections): void
+    {
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
+                if (str_starts_with($method->getName(), '__') && $method->isAbstract()) {
+                    throw InvalidDoubleTargetException::hasAbstractMagicMethod(implode('&', $targets), $method->getName());
                 }
             }
         }
@@ -265,7 +298,15 @@ final class ClassGenerator
             $method->getParameters(),
         ));
 
-        $returnType = $method->getReturnType();
+        // getReturnType() is null for a method whose only declared return type is
+        // "tentative" — the mechanism every internal interface method PHP 8.1+
+        // ships with (ArrayAccess::offsetGet(), Countable::count(), Iterator::
+        // current(), etc.) uses while its return type is still being phased in as
+        // enforced. Falling back to getTentativeReturnType() here is what stops a
+        // generated override of e.g. ArrayAccess::offsetExists() from being built
+        // with no return type at all — which PHP accepts, but flags as a
+        // deprecated incompatibility against the interface's own tentative one.
+        $returnType = $method->getReturnType() ?? ($method->hasTentativeReturnType() ? $method->getTentativeReturnType() : null);
         $returnTypeString = $returnType !== null ? $this->stringifyType($returnType) : null;
         $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
         $isVoid = $returnTypeString === 'void';

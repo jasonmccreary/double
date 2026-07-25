@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests;
 
 use JMac\Testing\Engine\ReceivedAssertion;
+use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
@@ -18,6 +19,7 @@ use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
@@ -522,6 +524,22 @@ final class TestDoubleTest extends TestCase
         $double->expects('make');
     }
 
+    /**
+     * "__toString" genuinely exists on HasMagicMethod, so this must fail
+     * with MagicMethodException specifically, not UnknownMethodException —
+     * same reasoning as the static-method case above, for a magic method
+     * instead of a static one.
+     */
+    public function test_expects_rejects_a_magic_method(): void
+    {
+        $double = TestDouble::for(HasMagicMethod::class);
+
+        $this->expectException(MagicMethodException::class);
+        $this->expectExceptionMessage('magic method');
+
+        $double->expects('__toString');
+    }
+
     public function test_received_passes_when_the_method_was_called_at_least_once(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);
@@ -641,6 +659,16 @@ final class TestDoubleTest extends TestCase
         $this->expectExceptionMessage('static method');
 
         $double->received('make');
+    }
+
+    public function test_received_rejects_a_magic_method(): void
+    {
+        $double = TestDouble::for(HasMagicMethod::class);
+
+        $this->expectException(MagicMethodException::class);
+        $this->expectExceptionMessage('magic method');
+
+        $double->received('__toString');
     }
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void

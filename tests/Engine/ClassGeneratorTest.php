@@ -9,6 +9,7 @@ use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
+use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
@@ -17,7 +18,9 @@ use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
+use JMac\Testing\Tests\Support\MagicMethodInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
@@ -52,6 +55,26 @@ final class ClassGeneratorTest extends TestCase
         $instance = $generated::__td_instantiate();
 
         $this->assertInstanceOf(ConcreteLogger::class, $instance);
+    }
+
+    /**
+     * Regression check: ArrayAccess::offsetExists()/offsetGet()/etc. only
+     * declare a *tentative* return type (PHP 8.1+'s mechanism for internal
+     * interfaces phasing in a return type without an immediate BC break) —
+     * ReflectionMethod::getReturnType() returns null for these, so before
+     * falling back to getTentativeReturnType(), the generated override had
+     * no return type at all, which PHP silently accepts but flags with a
+     * "should either be compatible... or use #[ReturnTypeWillChange]"
+     * deprecation on every single call.
+     */
+    public function test_generates_correctly_typed_overrides_for_tentative_return_type_interfaces(): void
+    {
+        $generated = (new ClassGenerator)->generate(ArrayAccessInterface::class);
+
+        $returnType = (new \ReflectionMethod($generated, 'offsetExists'))->getReturnType();
+
+        $this->assertNotNull($returnType);
+        $this->assertSame('bool', (string) $returnType);
     }
 
     public function test_each_call_to_generate_produces_a_distinct_class_for_the_same_target(): void
@@ -106,6 +129,35 @@ final class ClassGeneratorTest extends TestCase
     public function test_does_not_reject_a_concrete_class_with_a_static_method(): void
     {
         $generated = (new ClassGenerator)->generate(HasStaticMethod::class);
+
+        $this->assertTrue(class_exists($generated));
+    }
+
+    /**
+     * Regression check: an interface's __toString() is abstract like any
+     * other method it declares — before assertNoAbstractMagicMethods()
+     * existed, this crashed with the identical uncatchable PHP fatal error
+     * as the abstract-static-method case above ("must therefore be declared
+     * abstract or implement the remaining methods"), just for a magic
+     * method instead of a static one.
+     */
+    public function test_rejects_a_target_with_an_abstract_magic_method(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('magic method (`__toString`)');
+
+        (new ClassGenerator)->generate(MagicMethodInterface::class);
+    }
+
+    /**
+     * A magic method on a concrete class already has an implementation to
+     * fall back on — the generated class simply inherits it unoverridden
+     * (see overridableMethods()'s docblock), so this is not the same
+     * rejection as the abstract case above.
+     */
+    public function test_does_not_reject_a_concrete_class_with_a_magic_method(): void
+    {
+        $generated = (new ClassGenerator)->generate(HasMagicMethod::class);
 
         $this->assertTrue(class_exists($generated));
     }
