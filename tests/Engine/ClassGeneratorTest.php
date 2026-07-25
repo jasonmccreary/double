@@ -14,6 +14,7 @@ use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\ByRefParamInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
@@ -21,10 +22,12 @@ use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
+use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
+use JMac\Testing\Tests\Support\RefReturnInterface;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
@@ -290,6 +293,48 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('ok', $instance->accept(123));
     }
 
+    /**
+     * Behavioral-only coverage (call it, check the return value) can't catch
+     * a codegen bug that doesn't happen to crash — see the tentative-return-
+     * type bug this same audit already found in ArrayAccess, which passed
+     * every existing behavioral test right up until something reflected the
+     * actual generated type. This asserts the reconstructed signature text
+     * directly instead. Note the member order: PHP's own Reflection API
+     * doesn't preserve declaration order for a union type (`int|string`
+     * reflects back as `string|int`) — asserted here as the verified actual
+     * output, not a guess at what "should" come back.
+     */
+    public function test_reconstructs_union_type_signatures_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(UnionTypeInterface::class);
+
+        $accept = new \ReflectionMethod($generated, 'accept');
+        $this->assertSame('string|int', (string) $accept->getParameters()[0]->getType());
+        $this->assertSame('string|int', (string) $accept->getReturnType());
+    }
+
+    /**
+     * acceptNullableUnion() exists on the fixture specifically for the
+     * "null as one member of a union" shape, but until now nothing actually
+     * called it or reflected its signature — a fixture method that only
+     * looked covered because a sibling method on the same interface was
+     * tested. Covers both: the reconstructed signature text and that the
+     * interception layer actually works end-to-end for this shape.
+     */
+    public function test_reconstructs_and_executes_a_nullable_union_type_signature(): void
+    {
+        $generated = (new ClassGenerator)->generate(UnionTypeInterface::class);
+
+        $method = new \ReflectionMethod($generated, 'acceptNullableUnion');
+        $this->assertSame('string|int|null', (string) $method->getParameters()[0]->getType());
+        $this->assertSame('string|int|null', (string) $method->getReturnType());
+
+        $instance = TestDouble::for(UnionTypeInterface::class);
+        $instance->allows('acceptNullableUnion')->returns(null);
+
+        $this->assertNull($instance->acceptNullableUnion(null));
+    }
+
     public function test_supports_variadic_parameters(): void
     {
         $instance = TestDouble::for(VariadicInterface::class);
@@ -297,6 +342,126 @@ final class ClassGeneratorTest extends TestCase
         $instance->allows('combine')->returns('a-b-c');
 
         $this->assertSame('a-b-c', $instance->combine('-', 'a', 'b', 'c'));
+    }
+
+    /**
+     * Same reasoning as the union-type signature test above: calling
+     * combine() and checking its output never actually confirmed the
+     * generated parameter is variadic, or reconstructed with the right
+     * underlying type — just that the interception plumbing forwards
+     * whatever arguments arrive, which would look identical whether or not
+     * the "..." was preserved at all.
+     */
+    public function test_reconstructs_variadic_parameter_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(VariadicInterface::class);
+
+        $parameters = (new \ReflectionMethod($generated, 'combine'))->getParameters();
+
+        $this->assertTrue($parameters[1]->isVariadic());
+        $this->assertSame('string', (string) $parameters[1]->getType());
+    }
+
+    /**
+     * IntersectionReturnInterface::make() is only ever exercised today
+     * through Loose mode's *fabrication* tests (LooseModeTest) — a
+     * different subsystem (SafeDefaultResolver) confirming the fabricated
+     * value satisfies both interfaces, not confirming ClassGenerator's own
+     * stringifyIntersectionType() reconstructed the override's declared
+     * return type correctly in the first place.
+     */
+    public function test_reconstructs_intersection_return_type_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(IntersectionReturnInterface::class);
+
+        $returnType = (new \ReflectionMethod($generated, 'make'))->getReturnType();
+
+        $this->assertSame(
+            Fillable::class.'&'.Sized::class,
+            (string) $returnType,
+        );
+    }
+
+    /**
+     * buildParameter()'s isPassedByReference() handling had zero coverage —
+     * not even a fixture declaring a by-reference parameter existed.
+     */
+    public function test_reconstructs_a_by_reference_parameter_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(ByRefParamInterface::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'increment'))->getParameters()[0];
+
+        $this->assertTrue($parameter->isPassedByReference());
+        $this->assertSame('int', (string) $parameter->getType());
+    }
+
+    /**
+     * Calling a by-ref-parameter method through the double doesn't crash —
+     * ProxyBehavior::intercept() receives func_get_args() as ordinary
+     * values, so a configured return still works even though the
+     * interception layer has no way to write back through the reference.
+     * That's a real, accepted limitation (this library configures return
+     * values, not out-parameter mutation), not something this test claims
+     * to solve — it only proves the generated signature is valid PHP that
+     * can actually be called.
+     */
+    public function test_calls_a_method_with_a_by_reference_parameter_without_error(): void
+    {
+        $instance = TestDouble::for(ByRefParamInterface::class);
+        $instance->allows('increment')->returns(null);
+
+        $value = 5;
+        $instance->increment($value);
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * Regression check: before ClassGenerator emitted a matching leading
+     * "&", doubling a target with a by-reference-returning method
+     * (`function &foo()`) crashed with an uncatchable PHP fatal error
+     * ("Declaration ... must be compatible with & ...") — the identical
+     * failure category as the abstract-static/abstract-magic-method
+     * crashes elsewhere in this file, for a third, unrelated reason a
+     * signature can mismatch.
+     */
+    public function test_reconstructs_a_by_reference_return_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(RefReturnInterface::class);
+
+        $this->assertTrue((new \ReflectionMethod($generated, 'getRef'))->returnsReference());
+    }
+
+    /**
+     * Fixing the crash above (see test_reconstructs_a_by_reference_return_signature_exactly)
+     * introduced its own separate issue if the method body weren't built
+     * carefully: `return $call;` directly from a by-ref-declared method
+     * triggers "Only variable references should be returned by reference"
+     * on every call, since ProxyBehavior::intercept()'s own result isn't
+     * itself a reference. Confirmed silent, and that the configured value
+     * still comes through correctly.
+     */
+    public function test_calls_a_by_reference_returning_method_without_notice(): void
+    {
+        $instance = TestDouble::for(RefReturnInterface::class);
+        $instance->allows('getRef')->returns(5);
+
+        $notices = [];
+        set_error_handler(static function (int $errno, string $errstr) use (&$notices): bool {
+            $notices[] = $errstr;
+
+            return true;
+        }, E_NOTICE | E_WARNING);
+
+        try {
+            $result = $instance->getRef();
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $notices);
+        $this->assertSame(5, $result);
     }
 
     public function test_preserves_enum_case_default_values(): void

@@ -328,11 +328,28 @@ final class ClassGenerator
             var_export($name, true),
         );
 
-        $body = $isVoid ? sprintf('%s;', $call) : sprintf('return %s;', $call);
+        // A by-reference-returning method (`function &foo()`) requires the override to
+        // be declared with the same leading "&", or PHP rejects it as an incompatible
+        // signature — a fatal error at eval() time, the same failure shape the
+        // magic-method and static-method checks elsewhere in this class already guard
+        // against, just for a third, unrelated reason a signature can mismatch.
+        // `return $call;` directly (the ordinary body below) triggers its own separate
+        // issue once the method is declared by-reference: PHP allows returning a
+        // temporary by reference, but emits "Only variable references should be
+        // returned by reference" on every single call, since intercept()'s own result
+        // isn't itself a reference. Assigning to a real local variable first, then
+        // returning that variable, is what a by-ref return actually needs to be silent.
+        $reference = $method->returnsReference() ? '&' : '';
+        $body = match (true) {
+            $reference !== '' => sprintf("\$__td_result = %s;\n\n        return \$__td_result;", $call),
+            $isVoid => sprintf('%s;', $call),
+            default => sprintf('return %s;', $call),
+        };
 
         return sprintf(
-            "    %s function %s(%s)%s\n    {\n        %s\n    }\n",
+            "    %s function %s%s(%s)%s\n    {\n        %s\n    }\n",
             $visibility,
+            $reference,
             $name,
             $parameters,
             $returnDeclaration,

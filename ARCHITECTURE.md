@@ -1227,11 +1227,9 @@ into the trait.
   TestDoubleInterface, not a mixin" — the *consumer*-facing half of the
   original static-analysis gap, `TestDouble::for()`'s return type, is
   resolved there).
-- `ClassGenerator`'s type-signature reconstruction (unions, intersections,
-  enum defaults, variadics, by-ref params) is the most version-sensitive
-  code in the library and needs its own dedicated compatibility test suite
-  across the full supported PHP version range — not just "tests pass on
-  latest PHP."
+- `ClassGenerator`'s type-signature reconstruction is the most
+  version-sensitive code in the library — see "Type-signature reconstruction
+  coverage audit" for what auditing this turned up and fixed.
 
 ## Roadmap
 
@@ -1833,3 +1831,74 @@ lets each alternative be its own matcher.
 `ContainsMatcher`, `AnyOfMatcher`, plus
 `Argument::not()`/`matches()`/`contains()`, and `Argument::any()`
 widened to variadic.
+
+## Type-signature reconstruction coverage audit (resolved)
+
+"Known scaffold-era limitations" flagged `ClassGenerator`'s type-signature
+reconstruction (unions, intersections, enum defaults, variadics, by-ref
+params) as needing "its own dedicated compatibility test suite... not just
+'tests pass on latest PHP.'" Checked directly rather than assumed, that
+framing turned out to be slightly off: the CI matrix already runs the whole
+suite across every supported PHP version (8.3–8.5, plus an allow-failure
+8.6 nightly), so "does this run on multiple PHP versions" was never
+actually the gap. The real gap, found by auditing what each feature's
+*existing* tests actually assert:
+
+- **Nullable params, enum defaults, and tentative return types** were
+  already precisely tested — reflecting the generated signature/value
+  directly, not just observing behavior.
+- **Union types and variadic params were only behaviorally tested** —
+  called through the double, return value checked, but nothing ever
+  reflected the actual reconstructed signature. `UnionTypeInterface` even
+  had a second method, `acceptNullableUnion()`, declared specifically for
+  the "null as one union member" shape that nothing called or reflected at
+  all — a fixture that only looked covered because a sibling method on the
+  same interface was tested.
+- **Intersection return types were only tested through a different
+  subsystem** — `IntersectionReturnInterface::make()` is exercised in
+  `LooseModeTest` via Loose mode's recursive-fabrication feature
+  (`SafeDefaultResolver`), confirming the *fabricated value* satisfies both
+  interfaces, never confirming `ClassGenerator`'s own
+  `stringifyIntersectionType()` reconstructed the override's own declared
+  return type correctly.
+- **By-reference parameters had zero coverage** — `buildParameter()`'s
+  `isPassedByReference()` handling existed with no fixture interface
+  declaring one at all.
+
+This is exactly the same risk the tentative-return-type bug (see "Magic
+methods," `ArrayAccess`) already proved concrete: a behavioral-only test
+can pass on every PHP version while the actual generated signature is
+subtly wrong, because nothing ever looked at it. **Built:** direct
+signature-reflection assertions added for all four (union, nullable-union,
+variadic, intersection-return), plus a new `ByRefParamInterface` fixture
+and test for the previously uncovered by-ref-parameter case.
+
+**A second, previously-unknown bug turned up during the audit, in a
+feature not even on the original list: return-by-reference
+(`function &foo()`).** `buildMethod()` never checked
+`$method->returnsReference()` at all. Confirmed directly: doubling a
+target declaring one crashed with an uncatchable PHP fatal error
+("Declaration of ...::getRef(): int must be compatible with &
+...::getRef(): int") — the same failure category as the abstract-static
+and abstract-magic-method crashes elsewhere in this document, for a third,
+unrelated reason a signature can mismatch. Fixing it turned up a second,
+smaller issue in the same spot: naively emitting the leading `&` and
+otherwise leaving the body as `return $call;` traded the fatal error for a
+"Only variable references should be returned by reference" notice on
+*every single call*, since `ProxyBehavior::intercept()`'s own result isn't
+itself a reference — PHP allows returning a temporary by reference, but
+warns about it. **Built:** `buildMethod()` now emits the matching leading
+`&` when `returnsReference()` is true, and — only for that case — assigns
+the intercepted result to a real local variable first
+(`$__td_result = ...; return $__td_result;`) rather than returning the
+call expression directly, which is what a by-ref return actually needs to
+stay silent. Confirmed both fixes actually catch a regression, not just
+pass by construction: reverting the `&` emission reproduces the original
+fatal error (severe enough to kill the PHPUnit process outright, not just
+fail a test); reverting the local-variable body change reproduces the
+notice.
+
+**Built:** signature-reflection tests for union/nullable-union/variadic/
+intersection-return types; `ByRefParamInterface` and `RefReturnInterface`
+fixtures; `ClassGenerator::buildMethod()`'s by-reference-return handling
+(leading `&` plus the local-variable body). All in `ClassGeneratorTest`.
