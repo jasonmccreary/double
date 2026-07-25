@@ -6,15 +6,6 @@ namespace JMac\Testing\Diagnostics;
 
 /**
  * @internal
- *
- * Renders a single value for use inside a matcher's describe()/
- * explainMismatch() output, and, via ArgumentFormatter, for a whole
- * actual-call argument list too. Lives in Diagnostics — not Matching, which
- * has zero dependencies on the rest of the library, and not Engine, which
- * is where it used to sit duplicated under a different name — since
- * Diagnostics is the one module built to be the shared home for rendering
- * logic every other module can reach: Matching may depend on Diagnostics
- * (and nothing else), Engine already may depend on everything.
  */
 final class ValueFormatter
 {

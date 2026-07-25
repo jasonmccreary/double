@@ -27,15 +27,11 @@ final class DoubleState
 
     private ?object $passthruTarget = null;
 
-    /**
-     * A real instance supplied directly to TestDouble::for($instance) — see
-     * its docblock. Remembered here independent of mode, so a later
-     * ->passthru() with no argument can use it instead of needing to
-     * auto-instantiate a fresh one. Deliberately a separate field from
-     * $passthruTarget: knowing about a real instance and actually being in
-     * Passthru mode are two different things — this can be set at creation
-     * time, long before (or even if never) ->passthru() is called at all.
-     */
+    // A real instance supplied directly to TestDouble::for($instance). Remembered
+    // independent of mode, so a later ->passthru() with no argument can reuse it
+    // instead of auto-instantiating a fresh one — kept separate from
+    // $passthruTarget since knowing about a real instance and actually being in
+    // Passthru mode are two different things.
     private ?object $knownInstance = null;
 
     private int $fabricationDepth = 0;
@@ -59,11 +55,9 @@ final class DoubleState
     }
 
     /**
-     * Almost always a single-element list ([target()]). An intersection-typed
-     * fabrication (see TestDouble::fabricateIntersection()) stores its
-     * constituent interfaces joined with "&" in $target purely for display —
-     * PHP class/interface names can never contain "&", so splitting on it is
-     * unambiguous.
+     * Almost always a single-element list. An intersection-typed fabrication
+     * stores its constituent interfaces joined with "&" in $target for
+     * display — PHP names can never contain "&", so splitting on it is safe.
      *
      * @return list<string>
      */
@@ -90,14 +84,9 @@ final class DoubleState
     }
 
     /**
-     * Whether $method, as declared on $declaringCandidate, is static —
-     * callers already have $declaringCandidate in hand from
-     * declaringCandidate() before they'd ever need this, so it's taken as a
-     * parameter rather than re-deriving it here. Used by
-     * TestDouble::registerExpectation()/received() to reject configuring a
-     * static method the same way an unknown one is rejected — see
-     * StaticMethodException's own docblock for why a static method can
-     * never actually be intercepted regardless.
+     * Whether $method, as declared on $declaringCandidate, is static. Takes
+     * $declaringCandidate as a parameter since callers already have it in
+     * hand from declaringCandidate() before they'd need this.
      */
     public function isStatic(string $declaringCandidate, string $method): bool
     {
@@ -105,12 +94,8 @@ final class DoubleState
     }
 
     /**
-     * Every method name method_exists() would find on any target candidate —
-     * the same existence check declaringCandidate() uses — for
-     * UnknownMethodException's "did you mean" suggestion. Reflection's own
-     * getMethods() (not get_class_methods(), which only sees public methods
-     * from outside the declaring class) so this stays exactly as permissive
-     * as declaringCandidate() about visibility.
+     * Every method name method_exists() would find on any target candidate,
+     * for UnknownMethodException's "did you mean" suggestion.
      *
      * @return list<string>
      */
@@ -119,6 +104,9 @@ final class DoubleState
         $names = [];
 
         foreach ($this->targetCandidates() as $candidate) {
+            // Reflection's own getMethods(), not get_class_methods() — the latter
+            // only sees public methods from outside the declaring class, and this
+            // should stay exactly as permissive as declaringCandidate() about visibility.
             foreach ((new \ReflectionClass($candidate))->getMethods() as $method) {
                 $names[$method->getName()] = true;
             }

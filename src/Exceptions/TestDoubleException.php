@@ -8,15 +8,12 @@ use JMac\Testing\Diagnostics\Diagnostic;
 
 /**
  * Every concrete subclass holds its own diagnostic fields directly and
- * renders its own getMessage() — there is no separate parallel Diagnostic
- * data class per exception type. getMessage() gives full human prose with
- * zero setup in any test runner. getDiagnostic() gives structured access to
- * the same instance for anything that wants it.
+ * renders its own getMessage() — there is no separate Diagnostic data class
+ * per exception type.
  *
  * Every concrete subclass's public readonly fields are frozen, semver-
- * guaranteed public API, same freeze as the Matcher interface. Adding a
- * field is a minor-version change; renaming, removing, or retyping one is a
- * major-version change, same as any other public API in this library.
+ * guaranteed public API: adding a field is a minor-version change; renaming,
+ * removing, or retyping one is a major-version change.
  */
 abstract class TestDoubleException extends \RuntimeException implements Diagnostic
 {
@@ -26,15 +23,8 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
     }
 
     /**
-     * Shared by every subclass whose diagnostic can fire on a Loose-mode
-     * fabricated stand-in (mandatory provenance tagging on every fabricated
-     * object, so a person inspecting one can tell it's a stand-in rather
-     * than guessing why a value looks wrong). Returns '' when not fabricated
-     * so every render() can unconditionally splice this into its sprintf.
-     * Static (not just protected) so the PHPUnit-specific exception variants
-     * under Integrations\PHPUnit — which cannot extend these classes, since
-     * they already extend PHPUnit's own AssertionFailedError — can reuse the
-     * exact same note without duplicating it.
+     * Static, not just protected, so the PHPUnit exception variants — which
+     * extend AssertionFailedError, not this class — can reuse it too.
      */
     final public static function fabricatedNote(bool $fabricated): string
     {
@@ -47,14 +37,11 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
     }
 
     /**
-     * Joins $message with fabricatedNote()'s own "\n\n"-prefixed text — used
-     * instead of plain concatenation by every renderMessage() whose $message
-     * can itself already end in "\n" (a call-correlation paragraph, see
-     * CallListFormatter::renderCorrelationParagraph()). Plain concatenation
-     * in that case would leave a stray blank line between the correlation
-     * paragraph and the note; trimming unconditionally would instead wrongly
-     * swallow the correlation paragraph's own deliberate trailing newline on
-     * messages with no note to append.
+     * Joins $message with fabricatedNote()'s own "\n\n"-prefixed text,
+     * since $message can itself already end in "\n" (a call-correlation
+     * paragraph). Plain concatenation would leave a stray blank line;
+     * unconditional rtrim would wrongly swallow that trailing newline when
+     * there's no note to append.
      */
     final public static function appendFabricatedNote(string $message, bool $fabricated): string
     {
@@ -65,13 +52,10 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
 
     /**
      * A best-effort variable name for a code snippet in a message, derived
-     * from a double's label (e.g. "SecondLink" -> "secondLink"). Labels
-     * aren't always valid identifier fragments — an intersection-typed
-     * fabrication (see DoubleState::targetCandidates()) has a label like
-     * "Fillable&Sized" — so non-identifier characters are stripped rather
-     * than trusted verbatim. This is illustrative code in a message, not
-     * executed, but it should still read as something a person could
-     * plausibly paste in.
+     * from a double's label (e.g. "SecondLink" -> "secondLink"). Non-identifier
+     * characters are stripped since a label isn't always a valid identifier
+     * fragment — an intersection-typed fabrication's label looks like
+     * "Fillable&Sized".
      */
     final public static function suggestedVariableName(string $label): string
     {

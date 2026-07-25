@@ -6,18 +6,6 @@ namespace JMac\Testing\Diagnostics;
 
 /**
  * @internal
- *
- * Suggests the closest match to an unrecognized name, for diagnostics like
- * UnknownMethodException — the same "explain what to do about it" standard
- * every other message in this library is held to.
- *
- * The distance threshold scales with the longer of the two strings
- * (Levenshtein distance <= length/3, mirroring Symfony Console's own
- * suggestion heuristic) rather than a flat cap: a flat threshold either
- * over-matches short names (e.g. "id" is only 2 edits from a dozen
- * unrelated 4-letter methods) or under-matches long ones. Returns null
- * rather than a wrong guess when nothing is close enough — a bad
- * suggestion is worse than none.
  */
 final class DidYouMean
 {
@@ -33,6 +21,9 @@ final class DidYouMean
 
         foreach (array_unique($candidates) as $candidate) {
             $distance = levenshtein($needle, $candidate);
+            // Threshold scales with the longer string (mirrors Symfony Console's
+            // suggestion heuristic) instead of a flat cap — a flat cap either
+            // over-matches short names or under-matches long ones.
             $threshold = (int) max(1, floor(max(strlen($needle), strlen($candidate)) / 3));
 
             if ($distance > $threshold) {
@@ -45,6 +36,7 @@ final class DidYouMean
             }
         }
 
+        // Null rather than a wrong guess — a bad suggestion is worse than none.
         return $best;
     }
 }

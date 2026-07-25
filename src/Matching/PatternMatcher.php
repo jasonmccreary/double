@@ -8,19 +8,8 @@ use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
  * Argument::matches($pattern) — matches a string argument against a PCRE
- * pattern, $pattern already including its own delimiters (e.g.
- * '/^\d+$/'), same convention as preg_match() itself.
- *
- * Requires string|Stringable rather than blindly casting $actual to string
- * the way Mockery's own Pattern matcher does: an uncontrolled (string)
- * cast on an array raises a PHP warning and silently matches against the
- * literal string "Array", which is a confusing way to fail. Anything that
- * isn't naturally a string is treated as a straightforward non-match
- * instead.
- *
- * $pattern is validated at construction time — a malformed pattern fails
- * loudly here, at with()/allows()/expects() configuration time, rather
- * than as a silent preg_match() warning buried inside call matching later.
+ * pattern, $pattern already including its own delimiters (e.g. '/^\d+$/'),
+ * same convention as preg_match() itself.
  */
 final class PatternMatcher implements Matcher
 {
@@ -37,6 +26,9 @@ final class PatternMatcher implements Matcher
 
     public function matches(mixed $actual): bool
     {
+        // Requires string|Stringable rather than casting $actual to string —
+        // an uncontrolled (string) cast on an array raises a PHP warning and
+        // silently matches against the literal string "Array".
         if (! is_string($actual) && ! $actual instanceof \Stringable) {
             return false;
         }

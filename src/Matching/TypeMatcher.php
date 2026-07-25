@@ -4,20 +4,6 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Matching;
 
-/**
- * Argument::type($type) — matches any instance of the given class or
- * interface, or any value of the given PHP builtin type (int/float/string/
- * bool/array/object/callable/iterable/null/mixed). Mirrors Mockery::type(),
- * confirmed against Mockery's own Matcher\Type source: it accepts the same
- * two kinds of $type interchangeably, not just class/interface names, e.g.
- * `Argument::type(Book::class)` vs. `Argument::type('int')`, the
- * builtin-type form of the same verb.
- *
- * Builtin names never collide with a real class/interface name: every name
- * in BUILTIN_CHECKS is a reserved word in PHP, so none of them can ever
- * also be a class name — checking the builtin table first is unambiguous,
- * not a guess about which one the caller meant.
- */
 final class TypeMatcher implements Matcher
 {
     private const BUILTIN_CHECKS = [
@@ -44,6 +30,9 @@ final class TypeMatcher implements Matcher
             return true;
         }
 
+        // Builtin names never collide with a real class/interface name — every
+        // name in BUILTIN_CHECKS is a reserved word in PHP — so checking the
+        // builtin table first is unambiguous, not a guess about caller intent.
         $check = self::BUILTIN_CHECKS[$lower] ?? null;
 
         return $check !== null ? $check($actual) : $actual instanceof $this->type;

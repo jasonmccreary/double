@@ -26,13 +26,6 @@ use PHPUnit\Framework\TestCase;
  * Picks between a plain TestDoubleException and its PHPUnit-specific
  * counterpart via a runtime class_exists(TestCase::class) check, so
  * ProxyBehavior and TestDouble never need to know PHPUnit exists.
- *
- * The Integrations\PHPUnit class names below are only ever referenced
- * inside the guarded branch of each method. A `use` import alone never
- * triggers autoloading, so this file itself is always safe to autoload;
- * the `new PHPUnitXxxException(...)` calls are the only thing that would
- * ever load those classes, and they only run once class_exists() has
- * already confirmed phpunit/phpunit is present.
  */
 final class ExceptionFactory
 {
@@ -125,6 +118,10 @@ final class ExceptionFactory
         return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated);
     }
 
+    // A `use` import alone never triggers autoloading, so this file stays
+    // safe to autoload regardless — the `new PHPUnitXxxException(...)` calls
+    // above are the only thing that would load those classes, and they only
+    // run once this has already confirmed phpunit/phpunit is present.
     private static function phpUnitIsAvailable(): bool
     {
         return class_exists(TestCase::class);

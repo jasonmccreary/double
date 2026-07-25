@@ -7,20 +7,11 @@ namespace JMac\Testing\Matching;
 use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
- * Backs Argument::any($a, $b, ...) — matches if any one of the given
- * alternatives matches. Each alternative follows the same rule as
- * with()/not()/contains(): a bare literal is wrapped in EqualsMatcher,
- * anything already a Matcher is used as-is — so any(type('int'), type('float'))
- * composes just like any other combinator here, unlike Mockery's own
- * anyOf(), which only ever compares by strict identity against fixed
- * literal values and can't take a nested matcher at all.
- *
- * AnyMatcher (the true, unconstrained any()) stays a separate class rather
- * than folding into this one as "zero alternatives": that's a distinct,
- * far more common case (matches literally everything, including null) that
- * doesn't need an alternatives list walked on every call, and keeping it
- * as its own trivial class means Argument::any() with no arguments is
- * exactly as cheap as it always was.
+ * Each alternative follows the same bare-literal-or-Matcher rule as
+ * with()/not()/contains(), so a matcher can appear alongside plain values
+ * instead of every alternative being limited to an exact-value comparison.
+ * AnyMatcher covers the zero-alternatives case separately, since that's the
+ * far more common path and needs no alternatives list to walk.
  */
 final class AnyOfMatcher implements Matcher
 {

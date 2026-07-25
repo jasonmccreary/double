@@ -6,13 +6,6 @@ namespace JMac\Testing\Matching;
 
 use JMac\Testing\Diagnostics\ValueFormatter;
 
-/**
- * Argument::same($expected) — backed by ===, for the one case
- * EqualsMatcher deliberately still defaults to == on: object identity ("this
- * exact instance," not "an equivalent value"). Named after PHPUnit's own
- * assertSame() (the more directly relevant prior art, since this library
- * integrates with PHPUnit directly), not php.net's operator-name table.
- */
 final class SameMatcher implements Matcher
 {
     public function __construct(

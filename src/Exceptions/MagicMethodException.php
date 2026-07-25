@@ -6,18 +6,10 @@ namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown when expects()/allows()/received() is configured for a magic
- * method (__toString, __invoke, __call, etc.) that exists on the double's
- * target. ClassGenerator::overridableMethods() never overrides a magic
- * method — see its own docblock — so a generated double's magic methods
- * either don't exist at all (an interface's abstract one is caught earlier,
- * at TestDouble::for() time, by InvalidDoubleTargetException::
- * hasAbstractMagicMethod()) or fall through to the real, inherited
- * implementation unchanged. Either way, an expectation configured here
- * could never be satisfied, and a received() assertion here could never see
- * anything the real magic method didn't actually do. Rejected up front, the
- * same way StaticMethodException rejects a static method for the identical
- * underlying reason: the method exists, but is structurally impossible for
- * this library to intercept.
+ * method that exists on the double's target. A generated double's magic
+ * methods are never overridden (see ClassGenerator::overridableMethods()),
+ * so an expectation configured here could never be satisfied — rejected up
+ * front instead of failing confusingly later.
  */
 class MagicMethodException extends TestDoubleException
 {

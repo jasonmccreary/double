@@ -7,29 +7,9 @@ namespace JMac\Testing\Matching;
 use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
- * Argument::contains($needle) — matches an iterable argument (array or
- * Traversable) that has at least one element satisfying $needle. One verb
- * covering what Mockery splits across contains()/hasKey()/hasValue()/
- * subset(), by taking $needle in one of three forms rather than adding a
- * separate verb per form:
- *
- * - A Matcher: true if any element matches it, e.g.
- *   contains(Argument::type('int')) — "at least one int in here somewhere."
- * - A plain callable: invoked as ($value, $key) per element, true the
- *   first time it returns true — the escape hatch for anything
- *   value-and-key shaped (mirrors Laravel Collection::contains()'s
- *   callback form, and underscore/lodash's (value, key) callback
- *   convention), so "has this key with this value" or "has a key matching
- *   this pattern" is one predicate away without a dedicated hasKey() verb.
- * - Anything else: a bare literal, wrapped in EqualsMatcher exactly like a
- *   bare literal passed to with() itself — "contains this value somewhere,"
- *   the plain-value case that motivated the verb.
- *
- * A Matcher is checked first, ahead of is_callable(), on purpose: nothing
- * in this codebase makes a Matcher itself invokable (no __invoke()), so
- * the two checks never actually collide today, but checking the more
- * specific, intentional type first is the correct order regardless of
- * whether that happens to matter yet.
+ * One verb, in three forms, rather than a separate verb per search shape.
+ * The callback form follows a ($value, $key) convention, same as
+ * Laravel's Collection::contains().
  */
 final class ContainsMatcher implements Matcher
 {
@@ -40,6 +20,9 @@ final class ContainsMatcher implements Matcher
 
     public function __construct(mixed $needle)
     {
+        // Matcher checked first, ahead of is_callable() — nothing in this codebase
+        // makes a Matcher itself invokable, so the two never actually collide
+        // today, but the more specific, intentional type should still win.
         if ($needle instanceof Matcher) {
             $this->valueMatcher = $needle;
             $this->predicate = null;

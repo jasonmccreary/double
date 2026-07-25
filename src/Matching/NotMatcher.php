@@ -8,21 +8,12 @@ use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
  * The negation itself, wrapping either a bare value (via EqualsMatcher) or
- * another Matcher — this constructor stays generic on purpose, since it's
- * used two different ways: directly, from Argument::not($literal)'s
- * one-argument form; and indirectly, from every NegatedArgument method
- * (Argument::not()->type(...), ->contains(...), etc.), each of which builds
- * the inner matcher and wraps it here. Argument::not($matcher) itself is
- * not a supported public spelling — see Argument::not()'s own docblock —
- * so this class is the shared mechanism behind both public entry points,
- * not a second one.
+ * another Matcher — used both directly, from Argument::not($literal)'s
+ * one-argument form, and indirectly, from every NegatedArgument method.
  *
- * describe()/explainMismatch() defer to the wrapped matcher's own
- * describe() (not(5), not(type(int))) rather than rendering an opaque
- * "<Not>" the way Mockery's own Not matcher does — the same "explain what
- * to do about it" standard every other diagnostic in this library is held
- * to. Mockery's Not also can't wrap another matcher at all, only ever
- * comparing by identity against a fixed value.
+ * describe()/explainMismatch() defer to the wrapped matcher's own describe()
+ * (not(5), not(type(int))) rather than rendering an opaque "<Not>" that would
+ * lose what was actually being negated.
  */
 final class NotMatcher implements Matcher
 {

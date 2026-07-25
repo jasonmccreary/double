@@ -28,13 +28,6 @@ class InvalidDoubleTargetException extends TestDoubleException
         return new self($target, "it's final and can't be extended");
     }
 
-    /**
-     * TestDouble::for() with more than one target only accepts interfaces —
-     * mirrors PHP's own intersection-type rule (a class can extend at most
-     * one parent, so combining several targets into one double only ever
-     * works via multiple `implements`, which requires every one of them to
-     * be an interface).
-     */
     public static function mustBeInterface(string $target): self
     {
         return new self($target, "it's a class. When multiple targets are passed to `TestDouble::for()`, they must all be interfaces");
@@ -47,13 +40,10 @@ class InvalidDoubleTargetException extends TestDoubleException
 
     /**
      * A static method has no instance to dispatch through, so
-     * ClassGenerator never overrides one — see its own docblock. That's a
-     * silent no-op for a concrete class (the real static implementation
-     * just keeps running, inherited as-is), but an abstract static method
-     * (always abstract on an interface; possibly abstract on an abstract
-     * class too) leaves the generated class with an inherited abstract
-     * method it never implements — a PHP fatal error at eval() time, not a
-     * catchable exception, unless this check catches it first.
+     * ClassGenerator never overrides one. Harmless for a concrete class
+     * (real implementation just runs, inherited as-is); fatal for an
+     * abstract one — caught here instead of surfacing as an uncatchable
+     * eval()-time error.
      */
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {
@@ -64,17 +54,8 @@ class InvalidDoubleTargetException extends TestDoubleException
     }
 
     /**
-     * ClassGenerator::overridableMethods() never overrides a magic method
-     * (__toString, __invoke, __call, even __construct/__destruct — anything
-     * whose name starts with "__") — see its own docblock. That's a silent
-     * no-op for a concrete class (the real implementation just keeps
-     * running, inherited as-is), but an abstract magic method (always
-     * abstract on an interface; possibly abstract on an abstract class too)
-     * leaves the generated class with an inherited abstract method it never
-     * implements — a PHP fatal error at eval() time, not a catchable
-     * exception, unless this check catches it first. Same failure shape as
-     * hasAbstractStaticMethod() above, for a different reason a method ends
-     * up excluded from overriding.
+     * Same failure shape as hasAbstractStaticMethod() above, for magic
+     * methods (anything starting with "__") instead of static ones.
      */
     public static function hasAbstractMagicMethod(string $target, string $method): self
     {
@@ -85,16 +66,11 @@ class InvalidDoubleTargetException extends TestDoubleException
     }
 
     /**
-     * PHP 8.4's property hooks let an interface require a hooked property
-     * (`public string $name { get; }`) the same way it can require a
-     * method — and PHP represents an unimplemented hook internally almost
-     * like a synthetic abstract method for this exact purpose, confirmed
-     * directly: the fatal error PHP raises names it
-     * `Interface::$property::get`. `ClassGenerator` never reasons about
-     * properties at all (only `getMethods()`), so the same "abstract
-     * member excluded from overriding" crash the static-method and
-     * magic-method checks already guard against was reachable a third way.
-     * Caught here before eval() for the same reason those are.
+     * Same failure shape again, for PHP 8.4+ hooked properties — PHP
+     * represents an unimplemented hook internally like a synthetic
+     * abstract method (confirmed directly: the fatal error names it
+     * `Interface::$property::get`), and ClassGenerator never reasons about
+     * properties at all.
      */
     public static function hasAbstractPropertyHook(string $target, string $property): self
     {

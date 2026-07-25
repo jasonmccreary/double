@@ -9,71 +9,45 @@ use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
 
 /**
- * Opt-in auto-verification for PHPUnit users: add `use VerifiesDoubles;` to
- * a base TestCase once, and every expects() expectation, and every
- * received() assertion, on every double created anywhere during a test
- * gets checked automatically — no manual $double->verify() call, and no
- * reliance on a received() chain's own __destruct() timing, needed. Mirrors
- * what Mockery's own MockeryPHPUnitIntegration trait does for
- * Mockery::close(), extended to cover received()'s spy-style checks through
- * the same hook rather than a second, destructor-based mechanism — see
- * ReceivedAssertion's docblock.
- *
- * Hooks PHPUnit's #[Before]/#[After] lifecycle attributes rather than
- * overriding setUp()/tearDown(): those methods run regardless of whatever
- * the test class's own setUp()/tearDown() does, with no
- * parent::setUp()/parent::tearDown() boilerplate required to avoid silently
- * skipping them.
- *
- * Both hooks are required, not just #[After]: TestDouble::$pending has to
- * be a plain list holding real references (not a WeakMap like the
- * double->state map) because a double that's purely a local variable in the
- * test method — the overwhelming common case — is already
- * garbage-collected the instant that method returns, well before #[After]
- * ever runs, and would already be gone from a WeakMap by then (confirmed
- * empirically: an earlier version that just re-walked the existing
- * double->state WeakMap in #[After] passed a test with a genuinely unmet
- * expectation). armAutoVerify() is what makes that list start capturing
- * every double created for the rest of this test, before the test body
- * runs.
- *
- * There is deliberately no equivalent PHPUnit "Extension" (the newer
- * bootstrap/event-subscriber mechanism configured via phpunit.xml's
- * <extensions>). Checked directly against the installed phpunit/phpunit
- * source: Runner\Extension\Facade only exposes registering event
- * subscribers/tracers, which is read-only observability — a subscriber has
- * no way to retroactively fail a test. Only a method that runs inside
- * TestCase::runBare()'s own try/catch (setUp(), tearDown(),
- * assertPostConditions(), or a #[Before]/#[After] hook) can actually do
- * that. So this trait isn't a fallback for a "real" extension — it's the
- * only mechanism able to do this at all.
- *
- * $double->verify() remains available, and necessary, for every non-PHPUnit
- * test runner, and for PHPUnit users who'd rather verify explicitly.
- *
- * The #[After] hook only verifies if the test itself already succeeded.
- * PHPUnit runs #[After] unconditionally — pass, fail, error, or skipped —
- * unlike assertPostConditions() (what Mockery's integration hooks instead),
- * which PHPUnit skips entirely once a test has already failed. Without this
- * check, a test that fails a plain assertion (or throws) before an
- * already-registered expects()/allows() is ever satisfied would report a
- * second, unrelated-looking "unmet expectation" failure on top of the real
- * one, every time. TestCase::status() already reflects the real outcome by
- * the time #[After] runs, so isSuccess() is checked explicitly here instead.
+ * There's deliberately no equivalent PHPUnit "Extension" (the
+ * bootstrap/event-subscriber mechanism configured via phpunit.xml). Checked
+ * directly against phpunit/phpunit's source: Runner\Extension\Facade only
+ * exposes registering event subscribers, which is read-only observability —
+ * a subscriber has no way to retroactively fail a test. Only a method
+ * running inside TestCase::runBare()'s own try/catch (setUp(), tearDown(),
+ * assertPostConditions(), or a #[Before]/#[After] hook) can do that, so this
+ * trait isn't a fallback for a "real" extension — it's the only mechanism
+ * able to do this at all.
  */
 trait VerifiesDoubles
 {
+    // #[Before]/#[After], not setUp()/tearDown() overrides — these run
+    // regardless of whatever the test class's own setUp()/tearDown() does,
+    // with no parent::setUp()/parent::tearDown() boilerplate needed to
+    // avoid silently skipping them.
     #[Before]
     final public function armTestDoubleAutoVerification(): void
     {
+        // TestDouble::$pending has to be a plain list of real references, not a
+        // WeakMap — a double that's purely a local variable in the test method
+        // (the common case) is already garbage-collected the instant that method
+        // returns, well before #[After] runs, and would already be gone from a
+        // WeakMap by then. Confirmed empirically: an earlier version that just
+        // re-walked the double->state WeakMap in #[After] passed a test with a
+        // genuinely unmet expectation.
         TestDouble::armAutoVerify();
     }
 
     #[After]
     final public function verifyDoublesCreatedDuringThisTest(): void
     {
+        // PHPUnit runs #[After] unconditionally — pass, fail, error, or skipped —
+        // unlike assertPostConditions(), which PHPUnit skips once a test has
+        // already failed. Without this check, a test that fails a plain assertion
+        // before an already-registered expects()/allows() is satisfied would
+        // report a second, unrelated-looking "unmet expectation" failure on top
+        // of the real one.
         if (! $this->status()->isSuccess()) {
-            // Test already failed for an unrelated reason — don't pile on.
             // The next test's #[Before] resets $pending/$pendingReceived
             // unconditionally, so nothing here needs to drain them.
             return;

@@ -9,10 +9,7 @@ namespace JMac\Testing\Exceptions;
  * were never satisfied by the end of the test. Each UnsatisfiedExpectation
  * is paired with every other call actually observed for that method, so a
  * typo or wrong value in the actual call shows up as a plain fact rather
- * than leaving the person guessing. Properties, constructor, and message
- * rendering live in UnsatisfiedExpectationFields, shared with
- * Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException — see that
- * trait's docblock.
+ * than leaving the person guessing.
  */
 class UnsatisfiedExpectationException extends TestDoubleException
 {

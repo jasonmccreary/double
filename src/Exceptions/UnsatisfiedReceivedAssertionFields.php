@@ -6,11 +6,9 @@ namespace JMac\Testing\Exceptions;
 
 /**
  * The properties, constructor, and message for "a received() assertion's
- * chain didn't match what was actually recorded" — shared, by both
- * UnsatisfiedReceivedAssertionException and
- * Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException. See
- * UnexpectedCallFields's docblock for why a trait, and why
- * TestDoubleException:: rather than self:: for the shared prose helper.
+ * chain didn't match what was actually recorded" — shared with
+ * Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException via a
+ * trait (see UnexpectedCallFields).
  */
 trait UnsatisfiedReceivedAssertionFields
 {

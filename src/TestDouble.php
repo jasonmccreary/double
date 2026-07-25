@@ -17,38 +17,25 @@ use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 
 /**
- * The public facade and the library's sole entry point — deliberately a
- * top-level class (`JMac\Testing\TestDouble`, not nested under `Engine\`)
- * since it's the one class every consumer touches directly; everything it
- * delegates to (`ClassGenerator`, `ProxyBehavior`, `DoubleState`,
- * `MethodExpectation`) stays internal under Engine. `TestDouble::for()`
- * creates a double; `$double->verify()` (see `DoubleControlMethods`) is the
- * manual verification call every test runner can use. PHPUnit users can
- * skip it via `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies
- * every double created during a test.
+ * The public facade and the library's sole entry point. `TestDouble::for()`
+ * creates a double; `$double->verify()` is the manual verification call
+ * every test runner can use. PHPUnit users can skip it via
+ * `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies every double
+ * created during a test.
  */
 final class TestDouble
 {
     private static ?\WeakMap $states = null;
 
     /**
-     * Strong references, deliberately not a WeakMap like $states: a double
-     * that's purely a local variable in a test method (the overwhelming
-     * common case) is already garbage-collected — and therefore already
-     * gone from a WeakMap — the instant that method returns, well before
-     * any #[After] hook runs. This list has to outlive that gap, which
-     * means holding a real reference. Only appended to while
-     * $autoVerifyArmed is true (see armAutoVerify()), so a suite that never
-     * uses Integrations\PHPUnit\VerifiesDoubles never pays for this at all
-     * — otherwise every double ever created, for the life of the whole
-     * suite, would sit here unreleased.
-     *
-     * Holds DoubleState directly, not the double object: create() already
-     * has the state in scope when it decides to push here, and verifying
-     * only ever needs the state (see verifyState()) — going back through
-     * $states to re-fetch it from the double would be a pointless second
-     * lookup of data already in hand, and would needlessly couple this
-     * list's correctness to $states still having the entry.
+     * Strong references, not a WeakMap like $states — a double that's purely
+     * a local variable in a test method (the common case) is already
+     * garbage-collected, and therefore already gone from a WeakMap, the
+     * instant that method returns, well before any #[After] hook runs. Only
+     * appended to while $autoVerifyArmed is true, so a suite that never uses
+     * VerifiesDoubles never pays for this at all. Holds the DoubleState
+     * directly, not the double object, since create() already has it in
+     * scope and verifying never needs anything else.
      *
      * @var list<DoubleState>
      */
@@ -57,13 +44,7 @@ final class TestDouble
     /**
      * Same strong-reference reasoning as $pending, same lifecycle
      * (armAutoVerify() resets it, verifyAll() drains it) — the received()
-     * counterpart to $pending's expects()/allows() tracking, so both verbs
-     * get checked from the exact same #[After] hook instead of received()
-     * relying solely on ReceivedAssertion's own __destruct() timing. See
-     * ReceivedAssertion's docblock for why that destructor path still has
-     * to exist independently of this list (the framework-agnostic
-     * fallback), not why this list exists (that's here and in $pending's
-     * docblock).
+     * counterpart, so both verbs get checked from the same #[After] hook.
      *
      * @var list<ReceivedAssertion>
      */
@@ -74,41 +55,15 @@ final class TestDouble
     private function __construct() {}
 
     /**
-     * A single target creates a normal double; more than one creates a
-     * single double satisfying every target at once (e.g.
-     * TestDouble::for(LoggerInterface::class, FlushableInterface::class)) —
-     * every target beyond the first must be an interface, mirroring PHP's
-     * own intersection-type rule, since a class can extend at most one
-     * parent. This reuses the exact machinery SafeDefaultResolver already
-     * relies on internally to fabricate intersection-typed return values
-     * (see fabricateIntersection()) — it was already there, just never
-     * exposed as something a caller could ask for directly.
-     *
-     * A single target may also be a real instance instead of a class name —
-     * TestDouble::for($realBook) doubles $realBook::class and remembers
-     * $realBook so a later ->passthru() with no argument uses it, instead of
-     * needing ->passthru($realBook) spelled out separately (the class name
-     * is already fully implied by the instance's own type). Only valid for
-     * a single target: which real instance a later ->passthru() should fall
-     * back to becomes ambiguous the moment more than one target is
-     * involved, so a real instance mixed into a multi-target call is
-     * rejected rather than guessing.
-     *
-     * The real PHP return type below stays the bare `object` — PHP itself has
-     * no syntax for "whatever type this class-string names," only PHPStan/
-     * Psalm's docblock @template/@return do. That pairing is sound, not just
-     * convenient: ClassGenerator::buildSource() makes every generated double
-     * actually `implements TestDoubleInterface` for real (see that
-     * interface's own docblock for why), so `@return T&TestDoubleInterface`
-     * below is never a docblock fiction the object doesn't back up at
-     * runtime. Only precise for the single-target call — $targets is
-     * templated as if it named one T, which is exactly right for the
-     * overwhelmingly common `TestDouble::for(Foo::class)` shape; a
-     * multi-target intersection call
-     * (`TestDouble::for(Fillable::class, Sized::class)`) doesn't have a
-     * single T to infer from a variadic template like this one, so it falls
-     * back to the same untyped `object` a caller would have gotten before
-     * this existed — a known imprecision, not a regression.
+     * The real PHP return type stays the bare `object` — PHP has no syntax
+     * for "whatever type this class-string names," only PHPStan/Psalm's
+     * docblock generics do. That's sound, not just convenient: every
+     * generated double actually `implements TestDoubleInterface` for real
+     * (see that interface's own docblock), so the templated return below is
+     * never a docblock fiction. Only precise for the single-target call — a
+     * multi-target intersection call doesn't have a single T to infer from a
+     * variadic template like this one, so it falls back to the same untyped
+     * `object` a caller would have gotten before this existed.
      *
      * @template T of object
      *
@@ -124,6 +79,10 @@ final class TestDouble
         if (count($targets) > 1) {
             foreach ($targets as $target) {
                 if (is_object($target)) {
+                    // Which real instance a later ->passthru() should fall back to
+                    // becomes ambiguous the moment more than one target is involved,
+                    // so mixing one into a multi-target call is rejected rather than
+                    // guessing.
                     throw new \InvalidArgumentException(
                         '`TestDouble::for()` can\'t accept a real instance as a target when passing multiple targets.',
                     );
@@ -141,11 +100,9 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by SafeDefaultResolver for recursive Loose-mode
-     * fabrication. depth=0 is exactly TestDouble::for()'s own public path —
-     * a depth-0 double is never marked fabricated. $knownInstance is only
-     * ever non-null from that same public path (see for()) — recursive
-     * fabrication never has a real instance to remember.
+     * @internal Used by SafeDefaultResolver for recursive Loose-mode
+     * fabrication. depth=0 is for()'s own public path — a depth-0 double is
+     * never marked fabricated, and only that path ever passes $knownInstance.
      */
     public static function fabricate(string $target, int $depth, ?object $knownInstance = null): object
     {
@@ -155,9 +112,9 @@ final class TestDouble
     }
 
     /**
-     * @internal used by SafeDefaultResolver (depth>0, fabricating an
-     * intersection-typed return — see ClassGenerator::generateForIntersection())
-     * and by for() itself (depth=0, a direct multi-target double).
+     * @internal Used by SafeDefaultResolver (depth>0, fabricating an
+     * intersection-typed return) and by for() itself (depth=0, a direct
+     * multi-target double).
      *
      * @param  list<string>  $targets
      */
@@ -192,11 +149,9 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by DoubleControlMethods::verify() — the double's
-     * own verify() is the sole public entry point for verification (see the
-     * no-alias policy in CONTRIBUTING.md); this static method exists only
-     * because the verification logic needs access to the private
-     * double->state map, which DoubleControlMethods cannot reach directly.
+     * @internal Used only by DoubleControlMethods::verify() — this static
+     * method exists only because the verification logic needs access to the
+     * private double->state map, which that trait can't reach directly.
      */
     public static function verify(object $double): void
     {
@@ -232,12 +187,10 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by Integrations\PHPUnit\VerifiesDoubles's #[Before]
-     * hook. Arms $pending/$pendingReceived tracking (idempotent — safe to
-     * call every test, not just once) and resets both fresh, so a prior
-     * test that somehow skipped its own #[After] (e.g. a fatal error
-     * mid-test that bypassed normal lifecycle hooks entirely) can never
-     * leak stale entries into this one.
+     * @internal Used only by VerifiesDoubles's #[Before] hook. Idempotent —
+     * safe to call every test — and resets both lists fresh, so a prior test
+     * that somehow skipped its own #[After] (e.g. a fatal error mid-test)
+     * can't leak stale entries into this one.
      */
     public static function armAutoVerify(): void
     {
@@ -247,15 +200,9 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by Integrations\PHPUnit\VerifiesDoubles's #[After]
-     * hook — see its docblock for why an automatic hook has to live there
-     * and can't be a PHPUnit "Extension" instead. Verifies/checks, then
-     * discards, every expects()/allows() expectation and every received()
-     * assertion made since the last call (armAutoVerify() resets both lists
-     * at the start of every test, so this is always exactly "this test's
-     * doubles"). Both lists are drained up front, before iterating, so a
-     * failure partway through never leaves stale entries to leak into
-     * whichever test's #[After] runs next.
+     * @internal Used only by VerifiesDoubles's #[After] hook. Both lists are
+     * drained up front, before iterating, so a failure partway through never
+     * leaves stale entries to leak into whichever test's #[After] runs next.
      */
     public static function verifyAll(): void
     {
@@ -304,18 +251,10 @@ final class TestDouble
     }
 
     /**
-     * @internal used only by DoubleControlMethods::received() — the double's
-     * own received() is the sole public entry point (see the no-alias policy
-     * in CONTRIBUTING.md), same reasoning as verify(). Validates the method
-     * name exactly like registerExpectation() does, so a typo in
-     * received('sav') fails the same clear way expects()/allows() already do
-     * — but, unlike registerExpectation(), never registers anything on
-     * DoubleState: the returned ReceivedAssertion checks already-recorded
-     * calls, it never participates in live matching or verify().
-     *
-     * Registered into $pendingReceived while auto-verify is armed, same as
-     * create() does into $pending for expects()/allows() — see
-     * ReceivedAssertion's docblock for why.
+     * @internal Used only by DoubleControlMethods::received(). Validates the
+     * method name exactly like registerExpectation() does, but never
+     * registers anything on DoubleState — the returned ReceivedAssertion
+     * checks already-recorded calls, it never participates in live matching.
      */
     public static function received(object $double, string $method): ReceivedAssertion
     {
@@ -335,12 +274,7 @@ final class TestDouble
     /**
      * Shared by registerExpectation() and received(): both need the same
      * three checks before they can do anything with $method — that it
-     * exists at all, that it isn't static (see StaticMethodException's
-     * docblock for why a static method can never be intercepted, so
-     * configuring one could never do anything either verb needs it to do),
-     * and that it isn't magic (see MagicMethodException's docblock — the
-     * identical reasoning, for a different reason ClassGenerator excludes
-     * a method from overriding).
+     * exists, that it isn't static, and that it isn't magic.
      */
     private static function assertConfigurable(DoubleState $state, string $method): void
     {
@@ -370,12 +304,10 @@ final class TestDouble
     }
 
     /**
-     * $target may be several "&"-joined names for an intersection double
-     * (see targetCandidates()) — each candidate's own short name is derived
-     * independently and rejoined with "&", e.g. "Fillable&Sized", not the
-     * short name of the whole joined string (which would silently collapse
-     * to just the last candidate's name, since it's the last "\" in the
-     * *entire* string that a naive strrpos() would find).
+     * $target may be several "&"-joined names for an intersection double —
+     * each candidate's short name is derived independently and rejoined with
+     * "&" (e.g. "Fillable&Sized"), not derived from the joined string
+     * itself, which would collapse to just the last candidate's name.
      */
     private static function deriveLabel(string $target): string
     {

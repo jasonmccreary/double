@@ -13,43 +13,7 @@ use JMac\Testing\TestDoubleInterface;
  *
  * Reflects a target class/interface and eval()s a new class that either
  * extends or implements it, overriding every overridable method to funnel
- * through ProxyBehavior::intercept(). Uses the same eval() technique as
- * Mockery/Prophecy, and caches the generated class per distinct
- * target combination (module-static, same lifetime as $counter below),
- * mirroring Mockery's own CachingGenerator: a second call to
- * generate()/generateForIntersection() for the same target(s) returns the
- * already-declared class name instead of eval()ing a fresh one. This is
- * what keeps repeatedly doubling the same target (a data provider, a
- * tight loop, a fuzz test) from costing unbounded process memory —
- * uncached, this cost ~1KB-1.5KB of process memory per public method on
- * the target, per call, permanently, for the life of the process.
- *
- * Signature reconstruction always derives parameter/return type text from
- * Reflection's own type objects (never from re-parsing source), which is
- * what guarantees ClassGenerator never emits an implicit-nullable
- * parameter: PHP's ReflectionNamedType::__toString() always includes the
- * leading "?" whenever allowsNull() is true, regardless of whether the
- * original source spelled that nullability as `?Type` or as the
- * deprecated implicit `Type $x = null` form.
- *
- * Magic methods (__toString, __invoke, __call, even __construct/__destruct
- * — anything starting with "__") are never overridden either, but that's a
- * deliberate rejection rather than an open gap. A concrete target's magic
- * method is simply inherited unoverridden
- * (harmless — real code, just not interceptable, same as a concrete static
- * method); an abstract one (always true on an interface, possibly on an
- * abstract class too) would leave the generated class not actually
- * implementing it, which assertNoAbstractMagicMethods() rejects before this
- * generator ever runs eval().
- *
- * Properties (including PHP 8.4+ hooked ones) are never reasoned about at
- * all — this generator only ever overrides methods. A concrete target's
- * hooked property is simply inherited unchanged (harmless — real code,
- * just not interceptable through this library's method-based API, which
- * has no property-configuration verb to begin with); an interface
- * requiring one (abstract) would leave the generated class not actually
- * implementing it, which assertNoAbstractPropertyHooks() rejects before
- * this generator ever runs eval().
+ * through ProxyBehavior::intercept().
  */
 final class ClassGenerator
 {
@@ -58,6 +22,11 @@ final class ClassGenerator
     private static int $counter = 0;
 
     /**
+     * A second call to generate()/generateForIntersection() for the same
+     * target(s) returns the already-declared class instead of eval()ing a
+     * fresh one. Uncached, this cost ~1-1.5KB of process memory per public
+     * method on the target, per call, permanently.
+     *
      * @var array<string, string> cache key (see cacheKey()) => already-declared generated class name
      */
     private static array $cache = [];
@@ -80,12 +49,11 @@ final class ClassGenerator
     }
 
     /**
-     * @internal used only by SafeDefaultResolver (fabricating an
-     * intersection-typed return) and TestDouble::for() (a direct multi-target
-     * double, e.g. TestDouble::for(Foo::class, Bar::class)). Intersection
-     * members are always interfaces in PHP, so — unlike generate() — this
-     * never needs the extends-vs-implements branching a single class/interface
-     * target requires; it validates every target actually is one instead.
+     * @internal Used by SafeDefaultResolver (fabricating an
+     * intersection-typed return) and TestDouble::for() (a direct
+     * multi-target double). Intersection members are always interfaces in
+     * PHP, so this validates every target actually is one instead of
+     * branching between extends/implements.
      *
      * @param  list<string>  $targets
      */
@@ -150,14 +118,9 @@ final class ClassGenerator
     }
 
     /**
-     * Nothing buildSource() reads varies per call beyond the target list
-     * itself (no per-double method-exclusion list exists yet — see this
-     * class's own docblock) — so the sorted target list is a sufficient
-     * cache key today. Sorted rather than positional: generateForIntersection()
-     * merges overridable methods across targets without regard to argument
-     * order (PHP's own intersection-type rules already require compatible
-     * signatures across constituents), so `[A, B]` and `[B, A]` are the same
-     * request and should share one cached class rather than generating twice.
+     * Sorted, not positional — generateForIntersection() merges overridable
+     * methods across targets regardless of argument order, so `[A, B]` and
+     * `[B, A]` should share one cached class rather than generating twice.
      *
      * @param  list<string>  $targets
      */
@@ -191,18 +154,11 @@ final class ClassGenerator
     }
 
     /**
-     * overridableMethods() below deliberately never overrides a static
-     * method (see its own docblock — there's no instance to dispatch
-     * through). That's harmless for a concrete, already-implemented static
-     * method: the generated subclass just inherits the real one unchanged.
-     * It's fatal for an abstract one — always true of every interface
-     * method, and possible on an abstract class too — since PHP then
-     * requires the generated class to either implement it or be abstract
-     * itself, and this generator only ever emits `final class`. Caught
-     * here, before eval(), as a normal InvalidDoubleTargetException; left
-     * uncaught, PHP raises this as an uncatchable fatal error from inside
-     * the eval()'d source instead, which is a far worse failure mode than
-     * any exception this library throws on purpose.
+     * A concrete static method is inherited unoverridden (harmless — real
+     * code, just not interceptable). An abstract one would leave the
+     * generated `final class` not actually implementing it — caught here,
+     * before eval(), instead of surfacing as an uncatchable fatal error
+     * from inside the eval()'d source.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
@@ -219,13 +175,10 @@ final class ClassGenerator
     }
 
     /**
-     * Mirrors assertNoAbstractStaticMethods() above, for the same failure
-     * shape and a different reason a method ends up excluded from
-     * overriding — see overridableMethods()'s own str_starts_with('__')
-     * exclusion. Runs after the static check, so a method that's both
-     * static and abstract and magic (__callStatic, in practice) is already
-     * caught there first; this only ever needs to catch the non-static
-     * remainder.
+     * Same failure shape as assertNoAbstractStaticMethods() above, for magic
+     * methods (anything starting with "__") instead of static ones. Runs
+     * after the static check, so something both static and magic
+     * (__callStatic, in practice) is already caught there first.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
@@ -242,25 +195,18 @@ final class ClassGenerator
     }
 
     /**
-     * A third mirror of assertNoAbstractStaticMethods() above, for the same
-     * failure shape and yet another reason a member ends up excluded from
-     * overriding: `ClassGenerator` never reasons about properties at all
-     * (only methods), so a target requiring a hooked property
-     * (`public string $name { get; }`, PHP 8.4+) leaves the generated class
-     * with the same kind of unimplemented abstract member the static/magic
-     * method checks already guard against.
-     *
-     * ReflectionProperty::isAbstract() (and property hooks generally) don't
-     * exist before PHP 8.4 — this library's floor is 8.3 — so the
-     * method_exists() guard is load-bearing, not defensive dead code: on
-     * 8.3 there's nothing to check, since a property can't be abstract at
-     * all yet.
+     * Same failure shape again, for PHP 8.4+ hooked properties
+     * (`public string $name { get; }`) — this generator never reasons about
+     * properties otherwise, only methods.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
      */
     private function assertNoAbstractPropertyHooks(array $targets, array $reflections): void
     {
+        // ReflectionProperty::isAbstract() doesn't exist before PHP 8.4 (this
+        // library's floor is 8.3) — load-bearing, not defensive dead code: on
+        // 8.3 a property can't be abstract at all yet.
         if (! method_exists(\ReflectionProperty::class, 'isAbstract')) {
             return;
         }
@@ -302,12 +248,11 @@ final class ClassGenerator
             $targets,
         ));
 
-        // Every generated double implements TestDoubleInterface for real, on top of
-        // whatever the caller's own target(s) were — not just as a docblock fiction
-        // for TestDouble::for()'s @template/@return pairing, see that interface's own
-        // docblock for why. A single-class target uses `extends`, so the interface
-        // needs its own `implements` clause; an interface target (or several, for an
-        // intersection double) already uses `implements`, so it just joins the list.
+        // Every generated double implements TestDoubleInterface for real, not just as
+        // a docblock fiction for TestDouble::for()'s @template/@return pairing. A
+        // single-class target uses `extends`, so the interface needs its own
+        // `implements` clause; an interface target already uses `implements`, so it
+        // just joins the list.
         $controlInterface = '\\'.ltrim(TestDoubleInterface::class, '\\');
         $inheritance = $keyword === 'extends'
             ? sprintf('extends %s implements %s', $parents, $controlInterface)
@@ -330,18 +275,7 @@ final class ClassGenerator
 
     /**
      * Merges overridable methods across every target, keyed by name — the
-     * first reflection to declare a given method wins. Only relevant for
-     * intersection fabrication (a single-target call only ever has one
-     * reflection); PHP's own intersection-type rules already require
-     * compatible signatures across constituents, so any occurrence's
-     * signature is a valid one to emit.
-     *
-     * A static method is always excluded: ProxyBehavior::intercept() takes
-     * $this and dispatches through it, and a static call has no $this to
-     * give it. A concrete static method is simply inherited unoverridden
-     * (harmless — it's real code, just not interceptable); an abstract one
-     * would leave the generated class not actually implementing it, which
-     * assertNoAbstractStaticMethods() rejects before this method ever runs.
+     * first reflection to declare a given method wins.
      *
      * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>
@@ -356,6 +290,10 @@ final class ClassGenerator
                     continue;
                 }
 
+                // Static excluded: ProxyBehavior::intercept() takes $this and
+                // dispatches through it, and a static call has no $this to give it.
+                // A concrete static method is just inherited unoverridden; an
+                // abstract one is already caught by assertNoAbstractStaticMethods().
                 if ($method->isFinal()
                     || $method->isStatic()
                     || $method->isConstructor()
@@ -383,13 +321,11 @@ final class ClassGenerator
         ));
 
         // getReturnType() is null for a method whose only declared return type is
-        // "tentative" — the mechanism every internal interface method PHP 8.1+
-        // ships with (ArrayAccess::offsetGet(), Countable::count(), Iterator::
-        // current(), etc.) uses while its return type is still being phased in as
-        // enforced. Falling back to getTentativeReturnType() here is what stops a
-        // generated override of e.g. ArrayAccess::offsetExists() from being built
-        // with no return type at all — which PHP accepts, but flags as a
-        // deprecated incompatibility against the interface's own tentative one.
+        // "tentative" — the mechanism built-in interfaces like ArrayAccess and
+        // Countable use while a return type is still being phased in as enforced.
+        // Falling back to getTentativeReturnType() stops the override from being
+        // built with no return type at all, which PHP flags as a deprecated
+        // incompatibility against the interface's tentative one.
         $returnType = $method->getReturnType() ?? ($method->hasTentativeReturnType() ? $method->getTentativeReturnType() : null);
         $returnTypeString = $returnType !== null ? $this->stringifyType($returnType) : null;
         $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
@@ -402,16 +338,11 @@ final class ClassGenerator
         );
 
         // A by-reference-returning method (`function &foo()`) requires the override to
-        // be declared with the same leading "&", or PHP rejects it as an incompatible
-        // signature — a fatal error at eval() time, the same failure shape the
-        // magic-method and static-method checks elsewhere in this class already guard
-        // against, just for a third, unrelated reason a signature can mismatch.
-        // `return $call;` directly (the ordinary body below) triggers its own separate
-        // issue once the method is declared by-reference: PHP allows returning a
-        // temporary by reference, but emits "Only variable references should be
-        // returned by reference" on every single call, since intercept()'s own result
-        // isn't itself a reference. Assigning to a real local variable first, then
-        // returning that variable, is what a by-ref return actually needs to be silent.
+        // declare the same leading "&", or PHP rejects it as incompatible at eval()
+        // time. Once declared by-reference, `return $call;` directly also fails —
+        // "Only variable references should be returned by reference," since
+        // intercept()'s result isn't itself a reference — so assigning to a local
+        // variable first is what makes the by-ref return actually silent.
         $reference = $method->returnsReference() ? '&' : '';
         $body = match (true) {
             $reference !== '' => sprintf("\$__td_result = %s;\n\n        return \$__td_result;", $call),

@@ -5,17 +5,8 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 /**
- * Thrown when expects()/allows()/received() is configured for a method that
- * exists on the double's target but is static. A generated double's
- * overridden methods only ever run through an instance (see
- * ClassGenerator::overridableMethods()'s docblock for why static methods
- * are never among them) — a static call to the double's target always
- * reaches the real, unstubbed implementation instead, so an expectation
- * configured here could never be satisfied, and a received() assertion
- * here could never see anything the real static method didn't actually do.
- * Rejected up front, the same way UnknownMethodException rejects a method
- * that does not exist at all, rather than left to fail confusingly later at
- * verify() time with no indication of why.
+ * Thrown when expects()/allows()/received() is configured for a static
+ * method on the double's target.
  */
 class StaticMethodException extends TestDoubleException
 {

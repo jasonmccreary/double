@@ -10,11 +10,9 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 
 /**
  * The properties, constructor, and message for "one or more expects()
- * expectations were never satisfied" — shared, by both
- * UnsatisfiedExpectationException and
- * Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException. See
- * UnexpectedCallFields's docblock for why a trait, and why
- * TestDoubleException:: rather than self:: for the shared prose helper.
+ * expectations were never satisfied" — shared with
+ * Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException via a trait
+ * (see UnexpectedCallFields).
  */
 trait UnsatisfiedExpectationFields
 {

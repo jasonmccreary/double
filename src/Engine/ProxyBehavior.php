@@ -11,22 +11,13 @@ use JMac\Testing\TestDouble;
  * @internal
  *
  * The call-interception logic every generated double's overridden methods
- * funnel through. Takes the double instance itself (not just its
- * DoubleState) because resolving a self/static safe-default return needs
- * the actual object to return (see SafeDefaultResolver).
- *
- * Matching rule: last-registered expectation whose arguments match wins.
- * No exhaustion-based fallthrough to an earlier expectation once one is
- * selected.
- *
- * A matched expectation with no configured return, and Loose mode's
- * unmatched-call fallback, both resolve through the same
- * SafeDefaultResolver::resolveForMethod() — there is only one
- * safe-default-by-return-type resolver in the codebase, used at both call
- * sites.
+ * funnel through.
  */
 final class ProxyBehavior
 {
+    // Takes the double instance itself, not just its DoubleState, because
+    // resolving a self/static safe-default return needs the actual object
+    // to return (see SafeDefaultResolver).
     public static function intercept(object $double, string $method, array $arguments): mixed
     {
         $state = TestDouble::stateFor($double);
@@ -55,12 +46,16 @@ final class ProxyBehavior
         }
 
         if (! $expectation->hasReturnConfigured()) {
+            // Same safe-default-by-return-type resolver as Loose mode's
+            // unmatched-call fallback below — there's only one in the codebase.
             return SafeDefaultResolver::resolveForMethod($state, $method, $double);
         }
 
         return $expectation->resolveReturn($arguments);
     }
 
+    // Last-registered expectation whose arguments match wins — no
+    // exhaustion-based fallthrough to an earlier expectation once one is found.
     private static function findMatch(DoubleState $state, string $method, array $arguments): ?MethodExpectation
     {
         $candidates = $state->expectationsFor($method);
@@ -75,14 +70,8 @@ final class ProxyBehavior
     }
 
     /**
-     * Orthogonal to findMatch() above, not part of it. Only ever runs against
-     * whichever expectation findMatch() already selected; never changes
-     * that selection. A no-op unless $expectation itself was marked
-     * inOrder(). Rejects only regression (a slot behind the furthest one
-     * already reached) — reaching a later slot without every slot in
-     * between having fired is allowed, mirroring Mockery's own
-     * validateOrder(); a skipped required step still surfaces separately,
-     * via the ordinary unmet-expectation check at verify() time.
+     * Enforces inOrder() sequencing for whichever expectation findMatch()
+     * already selected; never changes that selection.
      */
     private static function enforceOrder(DoubleState $state, MethodExpectation $expectation): void
     {
@@ -93,6 +82,10 @@ final class ProxyBehavior
         $ordered = $state->orderedExpectations();
         $slot = array_search($expectation, $ordered, true);
 
+        // Reject only regression to before the furthest slot already reached —
+        // reaching a later slot without every slot in between firing is allowed.
+        // A skipped required step still surfaces via the ordinary
+        // unmet-expectation check at verify() time.
         if ($slot < $state->orderCursor()) {
             throw ExceptionFactory::outOfOrderCall(
                 $state->label(),

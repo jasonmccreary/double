@@ -8,11 +8,9 @@ use JMac\Testing\Diagnostics\Pluralizer;
 
 /**
  * The properties, constructor, and message for "a call exceeded its
- * expectation's configured maximum" — shared, by both
- * ExpectationCallLimitExceededException and
- * Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException. See
- * UnexpectedCallFields's docblock for why a trait, and why
- * TestDoubleException:: rather than self:: for the shared prose helpers.
+ * expectation's configured maximum" — shared with
+ * Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException via a
+ * trait (see UnexpectedCallFields).
  */
 trait ExpectationCallLimitExceededFields
 {

@@ -106,10 +106,7 @@ final class MethodExpectation
      * Sequential, same as returns(): the first call throws $exceptions[0],
      * the second throws $exceptions[1], and so on, holding at the last one
      * for every call past the end of the list — exactly returns()'s
-     * resolveReturn() indexing, not a separate mechanism. Mirrors Mockery's
-     * own andThrowExceptions(), which (confirmed against Mockery's source)
-     * is implemented as literally the same return-value queue as
-     * andReturn(), just with a "throw instead of return" flag set.
+     * resolveReturn() indexing, not a separate mechanism.
      */
     public function throws(\Throwable ...$exceptions): static
     {
@@ -139,28 +136,16 @@ final class MethodExpectation
     }
 
     /**
-     * The one count verb, overloaded rather than split across atLeast()/
-     * atMost()/between() the way Mockery needs three separate verbs for
-     * this (confirmed against Mockery's source: Expectation::between() is
-     * literally atLeast()->times($min)->atMost()->times($max), three verbs
-     * standing in for one range) — no aliases policy, one word, still
-     * covers every bound shape:
-     *
-     *   times(3)                    exactly 3        min=3,   max=3
-     *   times(1, 3)                 between 1 and 3  min=1,   max=3
-     *   times(minimum: 1)           at least 1       min=1,   max=∞
-     *   times(maximum: 3)           at most 3        min=0,   max=3
-     *   times(minimum: 1, maximum: 3)  same as times(1, 3)
-     *
-     * $count is the positional slot: alone, it's the exact count; paired
-     * with $maximum, it's the lower bound of a range (so times(1, 3) and
-     * times(minimum: 1, maximum: 3) resolve identically). $minimum exists
-     * only so "at least" can be expressed without also implying an exact
-     * upper bound — supplying both $count and $minimum is rejected as
-     * ambiguous (they're both trying to set the same lower bound).
+     * The one count verb, overloaded to cover every bound shape — exact, at
+     * least, at most, or a range — instead of a separate verb per shape.
+     * $count is the positional slot: alone, it's the exact count; paired with
+     * $maximum, it's the lower bound of a range. $minimum exists only so
+     * "at least" can be expressed without implying an exact upper bound.
      */
     public function times(?int $count = null, ?int $maximum = null, ?int $minimum = null): static
     {
+        // $count and $minimum are both trying to set the same lower bound, so
+        // passing both is rejected as ambiguous rather than picking one silently.
         if ($count !== null && $minimum !== null) {
             throw new \InvalidArgumentException(
                 '`times()` can\'t take both a positional count and a named minimum — use one or the other.',
@@ -203,12 +188,9 @@ final class MethodExpectation
 
     /**
      * Marks this expectation as participating in call-order enforcement.
-     * Deliberately just a flag: this class stays a self-contained value
-     * object with zero knowledge of the double it's registered against or
-     * of any other expectation. The actual slot bookkeeping and violation
-     * check live in DoubleState/ProxyBehavior, which already have
-     * registration-order visibility across every expectation on a
-     * double — this class doesn't need to.
+     * Deliberately just a flag — the slot bookkeeping and violation check
+     * live in DoubleState/ProxyBehavior, which already have
+     * registration-order visibility across every expectation on a double.
      */
     public function inOrder(): static
     {
@@ -261,16 +243,11 @@ final class MethodExpectation
     }
 
     /**
-     * @param  list<mixed>  $arguments  The real call arguments, used only to
-     *                                  feed any Argument::capture() matcher
-     *                                  configured via with() — matches()
-     *                                  itself must stay side-effect-free
-     *                                  since it's called speculatively on
-     *                                  losing candidates too (see
-     *                                  ProxyBehavior::findMatch()). Capture
-     *                                  only ever fires here, once, on the
-     *                                  expectation already confirmed to be
-     *                                  the real match.
+     * @param  list<mixed>  $arguments  Real call arguments, used only to feed any
+     *                                  Argument::capture() matcher — matches()
+     *                                  itself must stay side-effect-free since
+     *                                  it's called speculatively on losing
+     *                                  candidates too (see ProxyBehavior::findMatch()).
      */
     public function recordMatch(array $arguments = []): void
     {

@@ -6,11 +6,9 @@ namespace JMac\Testing\Exceptions;
 
 /**
  * The properties, constructor, and message for "an inOrder()-marked
- * expectation was called out of sequence" — shared, by both
- * OutOfOrderCallException and
- * Integrations\PHPUnit\PHPUnitOutOfOrderCallException. See
- * UnexpectedCallFields's docblock for why a trait, and why
- * TestDoubleException:: rather than self:: for the shared prose helper.
+ * expectation was called out of sequence" — shared with
+ * Integrations\PHPUnit\PHPUnitOutOfOrderCallException via a trait (see
+ * UnexpectedCallFields).
  */
 trait OutOfOrderCallFields
 {

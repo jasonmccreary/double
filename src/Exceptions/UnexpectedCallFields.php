@@ -8,21 +8,11 @@ use JMac\Testing\Diagnostics\CallListFormatter;
 
 /**
  * The properties, constructor, and message for "Strict mode got an
- * unexpected call" — shared, by both UnexpectedCallException and
- * Integrations\PHPUnit\PHPUnitUnexpectedCallException, since a trait is the
- * only way PHP lets two classes with different, already-fixed parents
- * (TestDoubleException vs. AssertionFailedError) share real code instead
- * of hand-duplicating it.
- * Each class still gets its own real, independent instance — this only
- * removes the duplication, not the two-classes-per-diagnostic split itself.
- *
- * parent::__construct(...) below resolves against whichever class actually
- * uses this trait — standard PHP trait semantics, not something special to
- * this codebase. TestDoubleException:: (rather than self::) is used for the
- * two shared-prose helpers because PHPUnitUnexpectedCallException doesn't
- * extend TestDoubleException and so doesn't inherit them; explicit
- * TestDoubleException:: reaches the exact same final static methods either
- * way, since they were never overridable in the first place.
+ * unexpected call" — shared with
+ * Integrations\PHPUnit\PHPUnitUnexpectedCallException via a trait, since two
+ * classes with different fixed parents (TestDoubleException vs.
+ * AssertionFailedError) can't share code any other way. Each class still
+ * gets its own real, independent instance.
  */
 trait UnexpectedCallFields
 {
@@ -77,6 +67,8 @@ trait UnexpectedCallFields
     {
         return sprintf(
             'For example: `$%s->allows(\'%s\')->returns(...)`.',
+            // TestDoubleException::, not self:: — PHPUnitUnexpectedCallException
+            // doesn't extend TestDoubleException, so it can't inherit this helper.
             TestDoubleException::suggestedVariableName($label),
             $method,
         );

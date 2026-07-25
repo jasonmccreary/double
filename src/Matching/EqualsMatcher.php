@@ -7,14 +7,9 @@ namespace JMac\Testing\Matching;
 use JMac\Testing\Diagnostics\ValueFormatter;
 
 /**
- * The default a bare literal is wrapped in at the with() boundary. Objects
- * still compare with == ("an equivalent
- * value was passed" is the more common assertion for them); everything else
- * (scalars, arrays) compares with === instead, since for same-type values
- * === and == never disagree — only cross-type surprises like '0' == 0 are
- * removed, never a legitimate same-type match. Object identity has its own
- * matcher, Argument::same(), rather than changing what a bare literal
- * means for objects.
+ * For same-type values, === and == never disagree — using === for
+ * everything but objects only removes cross-type surprises like '0' == 0,
+ * never a legitimate same-type match.
  */
 final class EqualsMatcher implements Matcher
 {
