@@ -1216,6 +1216,8 @@ into the trait.
 - `ClassGenerator` uses `eval()` (same technique Mockery/Prophecy use) and
   currently would regenerate a class on every `TestDouble::for()` call — a
   real implementation should cache generated classes per target type.
+  Resolved — see "ClassGenerator caching: closing the scaffold-era memory
+  gap" below.
 - `final` classes cannot be doubled via `extends` — detect at setup time
   with a clear error.
 - Static analysis of *this library's own* `src/` will have real blind spots
@@ -1955,3 +1957,69 @@ run unconditionally — skipped, not touched at all, on the 8.3 CI job.
 Confirmed the guard is load-bearing, not just reasoned about: temporarily
 disabling `assertNoAbstractPropertyHooks()` reproduces the exact original
 crash, severe enough to kill the PHPUnit process outright.
+
+## ClassGenerator caching: closing the scaffold-era memory gap (resolved)
+
+"Known scaffold-era limitations" flagged this as a real gap from the very
+first scaffold: `ClassGenerator` regenerated a class on every call, and
+PHP never frees a declared class, so any test that doubles the same
+target repeatedly (a data provider, a tight loop, a fuzz test) grew
+process memory with no ceiling. A dogfooding session against a real
+downstream consumer (a ~390-file, ~260-mock-site PHPUnit suite converting
+Mockery usages to `TestDouble::for()`) turned that prediction into
+measured numbers: an isolated microbenchmark (no PHPUnit, no autoloader
+noise — PHPUnit's own `memory_get_peak_usage(true)`-based reporting is too
+coarse-grained to see this at all) found ~14.75KB per call for a
+10-method interface and ~120KB per call for a 122-method class, both with
+zero reuse — cost scales with the target's method count, roughly
+1KB–1.5KB per method either way. That included a real crash (`Allowed
+memory size ... exhausted`) reproduced from inside `ClassGenerator`'s own
+`eval()`'d code, thrown around the 1,000th double of one 122-method class
+at PHP's default `memory_limit=128M`.
+
+**Built, mirroring Mockery's own `CachingGenerator` (confirmed against its
+source, `library/Mockery/Generator/CachingGenerator.php`: a decorator
+keyed on a hash of the mock's full configuration, reusing the generated
+class on a hash hit instead of regenerating):** `ClassGenerator` now caches the
+generated class name per distinct target combination, module-static, same
+process lifetime as `$counter`. `generate()` and
+`generateForIntersection()` both funnel through
+`generateFromReflections()`, which now checks the cache before doing any
+validation or `eval()` work at all — a cache hit skips
+`assertNoReservedNameCollisions()`/`assertNoAbstractStaticMethods()`/etc.
+too, which is sound: those checks only ever reject a target, never
+depend on call-specific state, so a target that passed them once will
+pass them identically on every later call for as long as the process
+runs.
+
+**Cache key is the sorted target list, not the positional one.** Nothing
+`buildSource()` reads varies per call beyond which targets are involved
+(no per-double method-exclusion list exists yet to also key on) — and
+`generateForIntersection()` already merges overridable methods across
+targets without regard to argument order, so
+`generateForIntersection([Fillable::class, Sized::class])` and
+`generateForIntersection([Sized::class, Fillable::class])` are the same
+request and now share one cached class instead of generating two
+functionally-identical ones.
+
+**The counter-suffix naming scheme (`generateClassName()`) was kept, not
+dropped**, despite an initial instinct that it could be dropped entirely
+once the cache exists (a single stable name per target becomes viable —
+a cache hit never calls `eval()` a second time for the same target).
+Kept because it's the mechanism that already guarantees no name collision
+between two distinct targets that happen to share a short class name
+(e.g. two different namespaces both declaring a class called `Foo`) — a
+real risk this library has no other guard against — and removing it
+would trade a solved problem for a cosmetic readability gain. The
+practical readability win — a stable name per target across a test run,
+instead of a new suffix on every repeated double of the same target —
+falls out of the cache directly anyway: `generateClassName()` now only
+ever runs once per distinct target combination (a cache miss), since
+every later call for that same combination returns the cached name
+without reaching it again.
+
+Confirmed with a standalone microbenchmark (no PHPUnit, isolated process,
+same shape as the reproduction above): 5,000 doubles of the same
+10-method interface via `TestDouble::for()` now costs a flat ~155KB total
+— one generated class — versus the ~14.75KB *per double* (~73MB total)
+measured before this fix.

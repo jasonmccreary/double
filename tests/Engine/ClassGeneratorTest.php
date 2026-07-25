@@ -105,16 +105,51 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('bool', (string) $returnType);
     }
 
-    public function test_each_call_to_generate_produces_a_distinct_class_for_the_same_target(): void
+    /**
+     * Caching regression: a measured microbenchmark found every generate()
+     * call eval()'d a brand-new class, permanently, for the life of the
+     * process — ~14.75KB per call for a 10-method interface, ~120KB per call
+     * for a 122-method class, zero reuse. Mirroring Mockery's own
+     * CachingGenerator, repeated calls for the same target now return the
+     * same already-declared class instead of generating a fresh one each
+     * time — see ARCHITECTURE.md's "ClassGenerator caching: closing the
+     * scaffold-era memory gap."
+     */
+    public function test_repeated_calls_to_generate_reuse_the_same_class_for_the_same_target(): void
     {
         $generator = new ClassGenerator;
 
         $first = $generator->generate(BookRepositoryInterface::class);
         $second = $generator->generate(BookRepositoryInterface::class);
 
-        $this->assertNotSame($first, $second);
+        $this->assertSame($first, $second);
         $this->assertTrue(class_exists($first));
-        $this->assertTrue(class_exists($second));
+    }
+
+    public function test_generate_still_produces_a_distinct_class_per_distinct_target(): void
+    {
+        $generator = new ClassGenerator;
+
+        $repository = $generator->generate(BookRepositoryInterface::class);
+        $logger = $generator->generate(ConcreteLogger::class);
+
+        $this->assertNotSame($repository, $logger);
+    }
+
+    /**
+     * The cache key is the sorted target list (see ClassGenerator::cacheKey()'s
+     * own docblock) precisely so a structurally-identical intersection request
+     * in a different argument order reuses the same generated class rather
+     * than generating a second, functionally-equivalent one.
+     */
+    public function test_repeated_intersection_calls_reuse_the_same_class_regardless_of_target_order(): void
+    {
+        $generator = new ClassGenerator;
+
+        $first = $generator->generateForIntersection([Fillable::class, Sized::class]);
+        $second = $generator->generateForIntersection([Sized::class, Fillable::class]);
+
+        $this->assertSame($first, $second);
     }
 
     public function test_rejects_a_non_existent_target(): void

@@ -56,11 +56,13 @@ use JMac\Testing\TestDouble;
  *   level past the limit "anyway" on the reasoning that an honestly-typed
  *   value beats a cap enforced by crashing; in practice that made the limit
  *   not actually a limit; a sufficiently deep unconfigured call chain would
- *   keep fabricating indefinitely, silently, with a fresh eval()'d class per
- *   hop (ClassGenerator does not cache generated classes — see its own
- *   docblock). That is worse than a bare TypeError, not better: it is a
- *   silent, unbounded cost with no stack trace pointing at the real gap in
- *   test setup. A clear, named, immediately-thrown exception — the same
+ *   keep fabricating indefinitely. That would still be worse than a bare
+ *   TypeError, not better — a chain deep enough to matter is exactly the
+ *   kind of gap this resolver should surface, not paper over with more
+ *   fabrication — so a hard limit stays the rule even though
+ *   ClassGenerator's own per-target cache (see its docblock) means a deep
+ *   chain no longer also costs a fresh eval()'d class per hop the way it
+ *   used to. A clear, named, immediately-thrown exception — the same
  *   "explain what to do about it" standard every other diagnostic in this
  *   library is held to — is the correct failure mode here, not silence.
  */

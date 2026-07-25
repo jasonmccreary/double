@@ -15,10 +15,16 @@ use JMac\Testing\TestDoubleInterface;
  * extends or implements it, overriding every overridable method to funnel
  * through ProxyBehavior::intercept(). Uses the same eval() technique as
  * Mockery/Prophecy (see ARCHITECTURE.md's "Known scaffold-era
- * limitations") and does not yet cache generated classes per target —
- * each call to generate() produces a freshly named class, which sidesteps
- * "cannot redeclare class" without needing a cache; caching purely as a
- * performance improvement is explicitly deferred, not required for M1.
+ * limitations", now resolved — see "ClassGenerator caching: closing the
+ * scaffold-era memory gap"), and caches the generated class per distinct
+ * target combination (module-static, same lifetime as $counter below),
+ * mirroring Mockery's own CachingGenerator: a second call to
+ * generate()/generateForIntersection() for the same target(s) returns the
+ * already-declared class name instead of eval()ing a fresh one. This is
+ * what keeps repeatedly doubling the same target (a data provider, a
+ * tight loop, a fuzz test) from costing unbounded process memory —
+ * uncached, this cost ~1KB-1.5KB of process memory per public method on
+ * the target, per call, permanently, for the life of the process.
  *
  * Signature reconstruction always derives parameter/return type text from
  * Reflection's own type objects (never from re-parsing source), which is
@@ -54,6 +60,11 @@ final class ClassGenerator
     private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'verify'];
 
     private static int $counter = 0;
+
+    /**
+     * @var array<string, string> cache key (see cacheKey()) => already-declared generated class name
+     */
+    private static array $cache = [];
 
     public function generate(string $target): string
     {
@@ -124,6 +135,12 @@ final class ClassGenerator
      */
     private function generateFromReflections(array $reflections, array $targets, string $keyword): string
     {
+        $cacheKey = $this->cacheKey($targets);
+
+        if (isset(self::$cache[$cacheKey])) {
+            return self::$cache[$cacheKey];
+        }
+
         $this->assertNoReservedNameCollisions($targets, $reflections);
         $this->assertNoAbstractStaticMethods($targets, $reflections);
         $this->assertNoAbstractMagicMethods($targets, $reflections);
@@ -133,7 +150,27 @@ final class ClassGenerator
 
         eval($this->buildSource($className, $keyword, $targets, $reflections));
 
-        return $className;
+        return self::$cache[$cacheKey] = $className;
+    }
+
+    /**
+     * Nothing buildSource() reads varies per call beyond the target list
+     * itself (no per-double method-exclusion list exists yet — see this
+     * class's own docblock) — so the sorted target list is a sufficient
+     * cache key today. Sorted rather than positional: generateForIntersection()
+     * merges overridable methods across targets without regard to argument
+     * order (PHP's own intersection-type rules already require compatible
+     * signatures across constituents), so `[A, B]` and `[B, A]` are the same
+     * request and should share one cached class rather than generating twice.
+     *
+     * @param  list<string>  $targets
+     */
+    private function cacheKey(array $targets): string
+    {
+        $sorted = $targets;
+        sort($sorted);
+
+        return implode('&', $sorted);
     }
 
     /**
