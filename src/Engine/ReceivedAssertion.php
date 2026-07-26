@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\ArgumentFormatter;
+
 /**
  * @internal
  *
@@ -83,7 +85,9 @@ final class ReceivedAssertion
 
         $this->checked = true;
 
-        foreach ($this->state->callsFor($this->method) as $call) {
+        $calls = $this->state->callsFor($this->method);
+
+        foreach ($calls as $call) {
             if ($this->expectation->matchesArguments($call)) {
                 $this->expectation->recordMatch($call);
             }
@@ -97,6 +101,8 @@ final class ReceivedAssertion
             $this->state->label(),
             $this->expectation->describe(),
             $this->state->isFabricated(),
+            $this->method,
+            array_map(ArgumentFormatter::describe(...), $calls),
         );
     }
 }

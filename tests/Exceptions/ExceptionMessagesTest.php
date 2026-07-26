@@ -358,6 +358,36 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unsatisfied-received-assertion-fabricated', $exception->getMessage());
     }
 
+    /**
+     * The motivating scenario, mirrored from
+     * test_renders_unsatisfied_expectation_with_call_correlation: a
+     * received('event')->with(...) assertion fails on argument mismatch, even
+     * though the method really was called — just with something else.
+     */
+    public function test_renders_unsatisfied_received_assertion_with_call_correlation(): void
+    {
+        $exception = new UnsatisfiedReceivedAssertionException(
+            'AnalyticsHelper',
+            "expected `event('this text does not match what was actually logged')` to be called at least 1 time, but it was called 0 times",
+            method: 'event',
+            otherObservedCalls: ["'found usages of renamed pagination methods'"],
+        );
+
+        $this->assertMatchesGolden('unsatisfied-received-assertion-with-correlation', $exception->getMessage());
+    }
+
+    public function test_renders_unsatisfied_received_assertion_with_capped_call_correlation(): void
+    {
+        $exception = new UnsatisfiedReceivedAssertionException(
+            'AnalyticsHelper',
+            'expected `event(6)` to be called at least 1 time, but it was called 0 times',
+            method: 'event',
+            otherObservedCalls: ['1', '2', '3', '4'],
+        );
+
+        $this->assertMatchesGolden('unsatisfied-received-assertion-with-correlation-capped', $exception->getMessage());
+    }
+
     public function test_renders_reserved_name_collision_for_a_single_method(): void
     {
         $exception = ReservedNameCollisionException::forCollisions('ExpectsCollisionInterface', ['expects']);

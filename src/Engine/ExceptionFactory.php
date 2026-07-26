@@ -106,16 +106,21 @@ final class ExceptionFactory
         return new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
     }
 
+    /**
+     * @param  list<string>  $otherObservedCalls
+     */
     public static function unsatisfiedReceivedAssertion(
         string $label,
         string $description,
         bool $fabricated,
+        string $method = '',
+        array $otherObservedCalls = [],
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
-            return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated);
+            return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls);
         }
 
-        return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated);
+        return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls);
     }
 
     // A `use` import alone never triggers autoloading, so this file stays

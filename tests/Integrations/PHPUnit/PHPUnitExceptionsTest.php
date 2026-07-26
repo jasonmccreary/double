@@ -108,4 +108,24 @@ final class PHPUnitExceptionsTest extends TestCase
         $this->assertSame($plain->getMessage(), $phpunit->getMessage());
         $this->assertSame($phpunit, $phpunit->getDiagnostic());
     }
+
+    public function test_unsatisfied_received_assertion_variant_with_correlation_is_an_assertion_failure_with_identical_prose(): void
+    {
+        $plain = new UnsatisfiedReceivedAssertionException(
+            'AnalyticsHelper',
+            "expected `event('nope')` to be called at least 1 time, but it was called 0 times",
+            method: 'event',
+            otherObservedCalls: ["'found usages of renamed pagination methods'"],
+        );
+        $phpunit = new PHPUnitUnsatisfiedReceivedAssertionException(
+            'AnalyticsHelper',
+            "expected `event('nope')` to be called at least 1 time, but it was called 0 times",
+            method: 'event',
+            otherObservedCalls: ["'found usages of renamed pagination methods'"],
+        );
+
+        $this->assertInstanceOf(AssertionFailedError::class, $phpunit);
+        $this->assertSame($plain->getMessage(), $phpunit->getMessage());
+        $this->assertSame($phpunit, $phpunit->getDiagnostic());
+    }
 }
