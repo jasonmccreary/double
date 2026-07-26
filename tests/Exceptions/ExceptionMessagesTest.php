@@ -18,6 +18,7 @@ use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
+use JMac\Testing\Exceptions\UnusedAssertionException;
 
 final class ExceptionMessagesTest extends GoldenFileTestCase
 {
@@ -386,6 +387,34 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
 
         $this->assertMatchesGolden('unsatisfied-received-assertion-with-correlation-capped', $exception->getMessage());
+    }
+
+    public function test_renders_unused_assertion(): void
+    {
+        $exception = new UnusedAssertionException('Logger', ["info('hello')"]);
+
+        $this->assertMatchesGolden('unused-assertion', $exception->getMessage());
+    }
+
+    public function test_renders_unused_assertion_across_multiple_methods(): void
+    {
+        $exception = new UnusedAssertionException('Logger', ["info('hello')", "error('uh oh')"]);
+
+        $this->assertMatchesGolden('unused-assertion-multiple-methods', $exception->getMessage());
+    }
+
+    public function test_renders_unused_assertion_on_a_fabricated_double(): void
+    {
+        $exception = new UnusedAssertionException('SecondLink', ['open()'], fabricated: true);
+
+        $this->assertMatchesGolden('unused-assertion-fabricated', $exception->getMessage());
+    }
+
+    public function test_renders_unused_assertion_with_capped_call_list(): void
+    {
+        $exception = new UnusedAssertionException('AnalyticsHelper', ['event(1)', 'event(2)', 'event(3)', 'event(4)']);
+
+        $this->assertMatchesGolden('unused-assertion-capped', $exception->getMessage());
     }
 
     public function test_renders_reserved_name_collision_for_a_single_method(): void

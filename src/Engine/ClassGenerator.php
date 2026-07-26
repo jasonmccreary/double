@@ -17,7 +17,7 @@ use JMac\Testing\TestDoubleInterface;
  */
 final class ClassGenerator
 {
-    private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'verify'];
+    private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'unused', 'verify'];
 
     private static int $counter = 0;
 

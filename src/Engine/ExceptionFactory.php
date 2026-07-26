@@ -12,12 +12,14 @@ use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
+use JMac\Testing\Exceptions\UnusedAssertionException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnusedAssertionException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -121,6 +123,18 @@ final class ExceptionFactory
         }
 
         return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls);
+    }
+
+    /**
+     * @param  list<string>  $calls
+     */
+    public static function unusedAssertion(string $label, array $calls, bool $fabricated): Diagnostic&\Throwable
+    {
+        if (self::phpUnitIsAvailable()) {
+            return new PHPUnitUnusedAssertionException($label, $calls, $fabricated);
+        }
+
+        return new UnusedAssertionException($label, $calls, $fabricated);
     }
 
     // A `use` import alone never triggers autoloading, so this file stays

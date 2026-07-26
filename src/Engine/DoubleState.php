@@ -224,6 +224,20 @@ final class DoubleState
     }
 
     /**
+     * Every call recorded on this double, across every method — the
+     * unfiltered counterpart to callsFor(). Only TestDouble::unused()
+     * needs this: an assertion about the double as a whole, not any one
+     * method, so it can't narrow by method name up front the way callsFor()
+     * does.
+     *
+     * @return list<array{method: string, arguments: array}>
+     */
+    public function calls(): array
+    {
+        return $this->calls;
+    }
+
+    /**
      * @return list<MethodExpectation>
      */
     public function unmetExpectations(): array

@@ -11,12 +11,14 @@ use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
+use JMac\Testing\Exceptions\UnusedAssertionException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnusedAssertionException;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\SelfDescribing;
 use PHPUnit\Framework\TestCase;
@@ -123,6 +125,16 @@ final class PHPUnitExceptionsTest extends TestCase
             method: 'event',
             otherObservedCalls: ["'found usages of renamed pagination methods'"],
         );
+
+        $this->assertInstanceOf(AssertionFailedError::class, $phpunit);
+        $this->assertSame($plain->getMessage(), $phpunit->getMessage());
+        $this->assertSame($phpunit, $phpunit->getDiagnostic());
+    }
+
+    public function test_unused_assertion_variant_is_an_assertion_failure_with_identical_prose(): void
+    {
+        $plain = new UnusedAssertionException('Logger', ["info('hello')", "error('uh oh')"]);
+        $phpunit = new PHPUnitUnusedAssertionException('Logger', ["info('hello')", "error('uh oh')"]);
 
         $this->assertInstanceOf(AssertionFailedError::class, $phpunit);
         $this->assertSame($plain->getMessage(), $phpunit->getMessage());

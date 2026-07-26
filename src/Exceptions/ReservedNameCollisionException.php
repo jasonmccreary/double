@@ -7,7 +7,7 @@ namespace JMac\Testing\Exceptions;
 /**
  * Thrown at TestDouble::for() time when the target declares a real public
  * method with the same name as one of TestDouble's own control verbs
- * (expects, allows, strict, passthru, received, verify) — a deliberate,
+ * (expects, allows, strict, passthru, received, unused, verify) — a deliberate,
  * permanent trade-off (see DoubleControlMethods), not a later hardening pass.
  */
 class ReservedNameCollisionException extends TestDoubleException

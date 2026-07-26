@@ -14,6 +14,7 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnusedAssertionException;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
@@ -667,6 +668,45 @@ final class TestDoubleTest extends TestCase
         $this->expectExceptionMessage('magic method');
 
         $double->received('__toString');
+    }
+
+    public function test_unused_passes_when_nothing_was_called_at_all(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->unused();
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_unused_fails_when_any_method_was_called(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->delete(1);
+
+        $this->expectException(PHPUnitUnusedAssertionException::class);
+        $this->expectExceptionMessage('Test double `BookRepositoryInterface` expected no calls at all, but received: `delete(1)`.');
+
+        $double->unused();
+    }
+
+    /**
+     * The gap this exists to close: a spy that should never have been
+     * touched, across every method it declares, not just one you happened
+     * to name — see DoubleControlMethods::unused()'s docblock.
+     */
+    public function test_unused_fails_and_lists_every_call_across_different_methods(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+
+        $double->save(new Book('Dune'));
+        $double->delete(1);
+
+        $this->expectException(PHPUnitUnusedAssertionException::class);
+        $this->expectExceptionMessageMatches('/received: `save\(.*Book.*\)`, `delete\(1\)`/');
+
+        $double->unused();
     }
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void

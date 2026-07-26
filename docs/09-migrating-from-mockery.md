@@ -18,6 +18,7 @@ page maps the concepts you're used to onto the equivalent here.
 | `shouldReceive('foo')->andReturnUsing($fn)` | `allows('foo')->resolves($fn)` |
 | `shouldHaveReceived('foo')` | `received('foo')` |
 | `shouldNotHaveReceived('foo')` | `received('foo')->never()` |
+| `shouldNotHaveBeenCalled()` | `unused()` — see [the trap below](#theres-no-separate-spy) |
 | `once()` / `twice()` | `times(1)` / `times(2)` |
 | `atLeast()->times($n)` | `times(minimum: $n)` |
 | `atMost()->times($n)` | `times(maximum: $n)` |
@@ -68,6 +69,13 @@ regardless of how it was created or which mode it's in. You don't choose
 a "spy" up front; you reach for `received()` whenever you want to check
 after the fact, on the same double you'd otherwise configure with
 `expects()`/`allows()`. See [Verification](06-verification.md).
+
+Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this
+spy received no calls," but Mockery only checks whether the mock was
+invoked as a callable — it says nothing about calls to its methods, which
+is what most people actually mean and expect it to check. That's the trap
+`unused()` exists to close: it asserts the double received zero calls to
+any method, which is almost certainly what you meant in the first place.
 
 ## Ordering
 

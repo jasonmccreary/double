@@ -4,7 +4,7 @@
 code under test runs. Verification is the other half — confirming,
 afterward, that things happened the way you set up.
 
-There are two things you may check, and two ways to check them.
+There are three things you may check, and two ways to check them.
 
 ## Checking Your Expectations: `verify()`
 
@@ -68,3 +68,32 @@ variable — there's no guarantee it's checked right away. Using the
 [PHPUnit `VerifiesDoubles` trait](08-phpunit-integration.md) removes this
 concern entirely: every `received()` assertion made during a test is
 checked once that test ends, regardless of what you did with it.
+
+## Checking Nothing Happened: `unused()`
+
+`received($method)->never()` checks one named method. Sometimes you want
+something stronger — a double that a code path should never have touched
+at all, regardless of which of its methods that would have been:
+
+```php
+$service->create($book);
+
+$logger->unused();
+```
+
+`unused()` fails the moment any method was called on the double, naming
+every call it actually saw:
+
+```
+Test double `Logger` expected no calls at all, but received: `info('something happened')`.
+```
+
+Unlike `received()`, there's no fluent chain to wait on — `unused()`
+checks immediately, the same way `verify()` does, rather than deferring
+until the statement (or the test) finishes.
+
+This is also the fix for a well-known Mockery trap: `shouldNotHaveBeenCalled()`
+sounds like "this spy received no calls," but it only checks whether the
+mock itself was invoked as a callable — it says nothing about calls to
+its methods, which is what most people actually mean. `unused()` checks
+exactly that: every method, zero calls.

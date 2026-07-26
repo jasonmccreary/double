@@ -9,10 +9,10 @@ use JMac\Testing\TestDouble;
 /**
  * @internal
  *
- * Mixed into every generated double by ClassGenerator. These six methods
- * (expects, allows, strict, passthru, received, verify) are the reserved
- * control API — ClassGenerator's collision check runs before a double using
- * this trait is ever generated.
+ * Mixed into every generated double by ClassGenerator. These seven methods
+ * (expects, allows, strict, passthru, received, unused, verify) are the
+ * reserved control API — ClassGenerator's collision check runs before a
+ * double using this trait is ever generated.
  */
 trait DoubleControlMethods
 {
@@ -60,6 +60,15 @@ trait DoubleControlMethods
     public function received(string $method): ReceivedAssertion
     {
         return TestDouble::received($this, $method);
+    }
+
+    /**
+     * Asserts the double as a whole never received a single call, to any
+     * method — unlike received($method), which checks one named method.
+     */
+    public function unused(): void
+    {
+        TestDouble::unused($this);
     }
 
     public function verify(): void

@@ -122,6 +122,10 @@ page maps the concepts you're used to onto the equivalent here.</p>
 <td><code>received('foo')-&gt;never()</code></td>
 </tr>
 <tr>
+<td><code>shouldNotHaveBeenCalled()</code></td>
+<td><code>unused()</code> — see <a href="#theres-no-separate-spy">the trap below</a></td>
+</tr>
+<tr>
 <td><code>once()</code> / <code>twice()</code></td>
 <td><code>times(1)</code> / <code>times(2)</code></td>
 </tr>
@@ -239,6 +243,12 @@ regardless of how it was created or which mode it's in. You don't choose
 a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check
 after the fact, on the same double you'd otherwise configure with
 <code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
+<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this
+spy received no calls,&quot; but Mockery only checks whether the mock was
+invoked as a callable — it says nothing about calls to its methods, which
+is what most people actually mean and expect it to check. That's the trap
+<code>unused()</code> exists to close: it asserts the double received zero calls to
+any method, which is almost certainly what you meant in the first place.</p>
 <h2 id="ordering">Ordering</h2>
 <p>Mockery orders calls per-mock by default, with <code>globally()</code> available for
 a single sequence shared across every mock in a test. This library keeps

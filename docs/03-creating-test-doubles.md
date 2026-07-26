@@ -67,10 +67,10 @@ double is involved without hunting through generated class names.
 
 Configuration lives directly on the double itself, which is what makes
 `$repository->expects(...)` possible without a separate builder object.
-The trade-off is that six method names are reserved on every double:
+The trade-off is that seven method names are reserved on every double:
 
 ```
-expects, allows, strict, passthru, received, verify
+expects, allows, strict, passthru, received, unused, verify
 ```
 
 If the class or interface you're doubling declares a real method with one
@@ -86,7 +86,7 @@ interface AuthorizerInterface
 TestDouble::for(AuthorizerInterface::class);
 // Can't create a test double for "AuthorizerInterface": allows collides
 // with TestDouble's own control verbs (expects/allows/strict/passthru/
-// received/verify) — a method can't be both a real one and a
+// received/unused/verify) — a method can't be both a real one and a
 // configuration verb.
 ```
 

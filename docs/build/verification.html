@@ -69,7 +69,7 @@
 <p><code>expects()</code> and <code>allows()</code> describe what you expect to happen before the
 code under test runs. Verification is the other half — confirming,
 afterward, that things happened the way you set up.</p>
-<p>There are two things you may check, and two ways to check them.</p>
+<p>There are three things you may check, and two ways to check them.</p>
 <h2 id="checking-your-expectations-verify">Checking Your Expectations: <code>verify()</code></h2>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">create</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">verify</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
 <p><code>verify()</code> looks at every <code>expects()</code> you configured on the double and
@@ -103,6 +103,23 @@ variable — there's no guarantee it's checked right away. Using the
 <a href="phpunit-integration.html">PHPUnit <code>VerifiesDoubles</code> trait</a> removes this
 concern entirely: every <code>received()</code> assertion made during a test is
 checked once that test ends, regardless of what you did with it.</p>
+<h2 id="checking-nothing-happened-unused">Checking Nothing Happened: <code>unused()</code></h2>
+<p><code>received($method)-&gt;never()</code> checks one named method. Sometimes you want
+something stronger — a double that a code path should never have touched
+at all, regardless of which of its methods that would have been:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">create</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">unused</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
+<p><code>unused()</code> fails the moment any method was called on the double, naming
+every call it actually saw:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double `Logger` expected no calls at all, but received: `info('something happened')`.
+</code></pre></div>
+<p>Unlike <code>received()</code>, there's no fluent chain to wait on — <code>unused()</code>
+checks immediately, the same way <code>verify()</code> does, rather than deferring
+until the statement (or the test) finishes.</p>
+<p>This is also the fix for a well-known Mockery trap: <code>shouldNotHaveBeenCalled()</code>
+sounds like &quot;this spy received no calls,&quot; but it only checks whether the
+mock itself was invoked as a callable — it says nothing about calls to
+its methods, which is what most people actually mean. <code>unused()</code> checks
+exactly that: every method, zero calls.</p>
 
       </article>
       <nav class="pager" aria-label="Chapter navigation"><a href="argument-matching.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Argument Matching</span></a><a href="failure-messages.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Failure Messages</span></a></nav>
@@ -113,6 +130,7 @@ checked once that test ends, regardless of what you did with it.</p>
     <ol role="list">
         <li><a href="#checking-your-expectations-verify">Checking Your Expectations: <code>verify()</code></a></li>
         <li><a href="#checking-what-happened-received">Checking What Happened: <code>received()</code></a></li>
+        <li><a href="#checking-nothing-happened-unused">Checking Nothing Happened: <code>unused()</code></a></li>
 
     </ol>
   </aside>

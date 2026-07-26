@@ -47,4 +47,32 @@ final class CallListFormatterTest extends TestCase
             CallListFormatter::describe('find', ['1', '2', '3', '4', '5']),
         );
     }
+
+    /**
+     * describeCalls() is describe()'s counterpart for unused(): each
+     * entry already carries its own method name, since the calls it
+     * describes span whatever methods were actually invoked, not one fixed
+     * method — same capping rule, applied to already-rendered "method(args)"
+     * strings instead of args-only ones.
+     */
+    public function test_a_single_call_across_methods_is_shown_with_no_truncation(): void
+    {
+        $this->assertSame('`find(1)`', CallListFormatter::describeCalls(['find(1)']));
+    }
+
+    public function test_calls_across_different_methods_are_all_shown_up_to_the_cap(): void
+    {
+        $this->assertSame(
+            '`find(1)`, `save(2)`, `delete(3)`',
+            CallListFormatter::describeCalls(['find(1)', 'save(2)', 'delete(3)']),
+        );
+    }
+
+    public function test_calls_across_different_methods_past_the_cap_summarize_the_rest(): void
+    {
+        $this->assertSame(
+            '`find(1)`, `save(2)`, and 2 more',
+            CallListFormatter::describeCalls(['find(1)', 'save(2)', 'delete(3)', 'close(4)']),
+        );
+    }
 }

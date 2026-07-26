@@ -272,6 +272,31 @@ final class TestDouble
     }
 
     /**
+     * @internal Used only by DoubleControlMethods::unused(). Unlike
+     * received(), there's no fluent chain to wait on — "no calls at all" is
+     * a complete assertion on its own, so this checks immediately, the same
+     * way verify() does, rather than deferring to __destruct()/verifyAll().
+     */
+    public static function unused(object $double): void
+    {
+        $state = self::stateFor($double);
+        $calls = $state->calls();
+
+        if ($calls === []) {
+            return;
+        }
+
+        throw ExceptionFactory::unusedAssertion(
+            $state->label(),
+            array_map(
+                static fn (array $call): string => sprintf('%s(%s)', $call['method'], ArgumentFormatter::describe($call['arguments'])),
+                $calls,
+            ),
+            $state->isFabricated(),
+        );
+    }
+
+    /**
      * Shared by registerExpectation() and received(): both need the same
      * three checks before they can do anything with $method — that it
      * exists, that it isn't static, and that it isn't magic.

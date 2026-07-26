@@ -21,25 +21,48 @@ final class CallListFormatter
      */
     public static function describe(string $method, array $callDescriptions): string
     {
-        $total = count($callDescriptions);
+        return self::capAndJoin(array_map(
+            static fn (string $call): string => sprintf('`%s(%s)`', $method, $call),
+            $callDescriptions,
+        ));
+    }
+
+    /**
+     * Same capped rendering as describe(), for TestDouble::unused() — whose
+     * calls span whatever methods were actually invoked, not one fixed
+     * $method, so each entry already carries its own method name.
+     *
+     * @param  list<string>  $callDescriptions  one pre-formatted "method(args)" call per entry
+     */
+    public static function describeCalls(array $callDescriptions): string
+    {
+        return self::capAndJoin(array_map(
+            static fn (string $call): string => sprintf('`%s`', $call),
+            $callDescriptions,
+        ));
+    }
+
+    /**
+     * @param  list<string>  $rendered  already-backticked call descriptions
+     */
+    private static function capAndJoin(array $rendered): string
+    {
+        $total = count($rendered);
         $shown = $total <= self::CAP
-            ? $callDescriptions
+            ? $rendered
             // Show CAP - 1, not CAP, once truncating: "3 of 4, and 1 more"
             // reads as arbitrary (why not just show the 4th?), where "and 2
             // more" reads as a deliberate summary.
-            : array_slice($callDescriptions, 0, self::CAP - 1);
+            : array_slice($rendered, 0, self::CAP - 1);
         $remaining = $total - count($shown);
 
-        $rendered = implode(', ', array_map(
-            static fn (string $call): string => sprintf('`%s(%s)`', $method, $call),
-            $shown,
-        ));
+        $joined = implode(', ', $shown);
 
         if ($remaining > 0) {
-            $rendered .= sprintf(', and %d more', $remaining);
+            $joined .= sprintf(', and %d more', $remaining);
         }
 
-        return $rendered;
+        return $joined;
     }
 
     /**
