@@ -1,0 +1,3 @@
+Test double `foo` expected `bar('baz')` to be called exactly 1 time, but it was never called.
+
+The following calls to `bar` were made during this test: `bar('Baz')`

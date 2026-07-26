@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+(function () {
+  var stored = localStorage.getItem('td-theme');
+  if (stored === 'light' || stored === 'dark') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introduction · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html" aria-current="page">Introduction</a></li>
+        <li><a href="installation.html">Installation</a></li>
+        <li><a href="creating-test-doubles.html">Creating Test Doubles</a></li>
+        <li><a href="expectations.html">Expectations</a></li>
+        <li><a href="argument-matching.html">Argument Matching</a></li>
+        <li><a href="verification.html">Verification</a></li>
+        <li><a href="failure-messages.html">Failure Messages</a></li>
+        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <h1 class="page-title">Introduction</h1>
+<p><a href="https://github.com/jasonmccreary/test-double">Test Double</a> is a modern
+PHP test double library that puts developer experience first. It was
+built, from the ground up, on four goals:</p>
+<ul>
+<li><strong>Zero learning curve.</strong> Create a <code>TestDouble</code> and start testing
+immediately. There's no taxonomy to memorize and no upfront decision
+between a mock, a spy, or a partial — every double behaves the same way,
+and you add whatever behavior a test needs as you go: stub a return
+value here, assert a call happened there, fall back to a real object
+where it's useful.</li>
+<li><strong>Failures for humans.</strong> When an expectation isn't met, the message
+names the double, names the call, and points at the fix — not just that
+something, somewhere, didn't match. No terse output, no internal class
+identifiers to decode.</li>
+<li><strong>One clean API.</strong> A handful of methods, no aliases, no hidden nuance.
+You won't find <code>andReturn()</code> sitting next to <code>returns()</code>, or
+<code>shouldReceive()</code> next to <code>expects()</code>. If you can guess the method name,
+you're probably right.</li>
+<li><strong>Ready for contribution.</strong> Small, well-bounded internals mean no
+reverse-engineering the whole library for your first PR. New capability
+gets added once real use shows it's needed, not speculatively.</li>
+</ul>
+<p>Code speaks louder than words:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\</span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">CatalogService</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">lookup</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">recordView</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
+<p>Testing often means providing a stand-in for a real dependency — a fake
+<code>BookRepository</code> that behaves how you need it to, without touching a real
+database. This library calls that stand-in a <strong>test double</strong>, and the
+snippet above is the shape of most tests you'll write with it: create a
+double, describe what you expect from it, run your code, and check what
+it did.</p>
+<h2 id="one-verb-per-concept">One Verb per Concept</h2>
+<p>Every fluent method reads like a plain sentence, and there's exactly one
+way to say each thing:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);   </span><span style="color: #637777;">//</span><span style="color: #637777;"> called exactly once</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #82AAFF;">true</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> called any number of times</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">999</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">throws</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">NotFoundException</span><span style="color: #D6DEEB;">());</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">save</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> check it after the fact</span></div></code></pre></div>
+<p>If you've used Mockery or PHPUnit's built-in mocking before, the ideas
+here will already feel familiar — the words are just tidied up.
+<a href="migrating-from-mockery.html">Migrating from Mockery</a> has a full
+side-by-side reference if you're coming from there.</p>
+<h2 id="where-to-next">Where to Next</h2>
+<ul>
+<li><a href="installation.html">Installation</a> — get it into your project.</li>
+<li><a href="creating-test-doubles.html">Creating Test Doubles</a> — make your first
+double and choose how it behaves.</li>
+<li><a href="expectations.html">Expectations</a> — the verbs you'll reach for in
+nearly every test.</li>
+</ul>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><span></span><a href="installation.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Installation</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#one-verb-per-concept">One Verb per Concept</a></li>
+        <li><a href="#where-to-next">Where to Next</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

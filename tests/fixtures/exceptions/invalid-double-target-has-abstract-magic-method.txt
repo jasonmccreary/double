@@ -1,0 +1,1 @@
+Can't create a test double for `MagicMethodInterface` since it declares a magic method (`__toString`). Magic methods can't be doubled.

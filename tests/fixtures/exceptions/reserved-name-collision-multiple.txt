@@ -1,0 +1,1 @@
+Can't create a test double for `Fillable&Sized`. It contains `expects` and `verify` which collide with TestDouble's internal methods.

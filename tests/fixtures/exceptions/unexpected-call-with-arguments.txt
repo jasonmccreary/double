@@ -1,0 +1,1 @@
+Test double `BookRepository` received an unexpected call to `save(5, 'Alice')`. Strict mode requires every call to be configured. For example: `$bookRepository->allows('save')->returns(...)`.

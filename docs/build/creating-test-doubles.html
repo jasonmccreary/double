@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+(function () {
+  var stored = localStorage.getItem('td-theme');
+  if (stored === 'light' || stored === 'dark') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creating Test Doubles · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html">Introduction</a></li>
+        <li><a href="installation.html">Installation</a></li>
+        <li><a href="creating-test-doubles.html" aria-current="page">Creating Test Doubles</a></li>
+        <li><a href="expectations.html">Expectations</a></li>
+        <li><a href="argument-matching.html">Argument Matching</a></li>
+        <li><a href="verification.html">Verification</a></li>
+        <li><a href="failure-messages.html">Failure Messages</a></li>
+        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <h1 class="page-title">Creating Test Doubles</h1>
+<p>You may create a test double for any class or interface using
+<code>TestDouble::for()</code>:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\</span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
+<p>This returns a real object. It satisfies <code>instanceof BookRepository</code>, it
+passes any type hint that expects one, and you may hand it straight to
+whatever you're testing:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">CatalogService</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
+<p>Nothing about the double is configured yet — for that, see
+<a href="expectations.html">Expectations</a>. This page covers the double itself:
+how to create one, what it's called in failure messages, and how it
+behaves before you've told it anything.</p>
+<h2 id="doubling-more-than-one-thing-at-once">Doubling More Than One Thing at Once</h2>
+<p>Sometimes the code you're testing needs a single object that satisfies
+more than one contract — a logger that's also flushable, for example. You
+may pass more than one target to <code>for()</code> to get one double implementing
+all of them:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">LoggerInterface</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">, </span><span style="color: #FFCB8B;">FlushableInterface</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">instanceof</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">LoggerInterface</span><span style="color: #D6DEEB;">;    </span><span style="color: #637777;">//</span><span style="color: #637777;"> true</span></div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #D6DEEB;"> </span><span style="color: #7FDBCA;">instanceof</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">FlushableInterface</span><span style="color: #D6DEEB;">; </span><span style="color: #637777;">//</span><span style="color: #637777;"> true</span></div></code></pre></div>
+<p>Every target after the first must be an interface, the same rule PHP
+applies to intersection types, since a class may only extend one parent.</p>
+<h2 id="wrapping-a-real-instance">Wrapping a Real Instance</h2>
+<p>If you already have a real object in hand — built by a factory, resolved
+from a container, or otherwise — you may pass the instance itself to
+<code>for()</code> instead of a class name:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$double</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$realBook</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">passthru</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
+<p><code>TestDouble::for($realBook)</code> doubles <code>$realBook</code>'s class and remembers the
+instance, so a later <code>-&gt;passthru()</code> call knows what to delegate to without
+you needing to repeat yourself (<code>TestDouble::for(Book::class)-&gt;passthru($realBook)</code>
+would work just as well). More on what <code>passthru()</code> does in
+<a href="#modes">Modes</a> below.</p>
+<h2 id="labels">Labels</h2>
+<p>Every double is given a label, derived from its class or interface name —
+<code>BookRepository::class</code> becomes <code>&quot;BookRepository&quot;</code>. This label appears in
+every failure message the double produces (see
+<a href="failure-messages.html">Failure Messages</a>), so you always know which
+double is involved without hunting through generated class names.</p>
+<h2 id="reserved-method-names">Reserved Method Names</h2>
+<p>Configuration lives directly on the double itself, which is what makes
+<code>$repository-&gt;expects(...)</code> possible without a separate builder object.
+The trade-off is that seven method names are reserved on every double:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>expects, allows, strict, passthru, received, unused, verify
+</code></pre></div>
+<p>If the class or interface you're doubling declares a real method with one
+of these names, <code>TestDouble::for()</code> throws right away, naming the exact
+method:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">interface</span><span style="color: #D6DEEB;"> AuthorizerInterface</span></div><div class='line'><span style="color: #D6DEEB;">{</span></div><div class='line'><span style="color: #D6DEEB;">    </span><span style="color: #C792EA;">public</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">function</span><span style="color: #D6DEEB;"> </span><span style="color: #82AAFF;">allows</span><span style="color: #D9F5DD;">(</span><span style="color: #C792EA;">string</span><span style="color: #D6DEEB;"> </span><span style="color: #BEC5D4;">$ability</span><span style="color: #D9F5DD;">)</span><span style="color: #7FDBCA;">:</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">bool</span><span style="color: #D6DEEB;">;</span></div><div class='line'><span style="color: #D6DEEB;">}</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">AuthorizerInterface</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> Can&#39;t create a test double for &quot;AuthorizerInterface&quot;: allows collides</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> with TestDouble&#39;s own control verbs (expects/allows/strict/passthru/</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> received/unused/verify) — a method can&#39;t be both a real one and a</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> configuration verb.</span></div></code></pre></div>
+<p>This does come up in practice — <code>allows()</code> is part of Laravel's own
+<code>Gate</code> contract, for instance — so it's worth knowing about early rather
+than discovering it as a confusing test failure later.</p>
+<h2 id="what-cant-be-doubled">What Can't Be Doubled</h2>
+<p>A couple of things are rejected when you call <code>for()</code>, with a clear
+reason, rather than failing in a confusing way later:</p>
+<ul>
+<li><strong>A <code>final</code> class.</strong> There's nothing for the double to extend.</li>
+<li><strong>A class or interface that doesn't exist.</strong> Usually a typo, or a
+missing <code>use</code>.</li>
+</ul>
+<p>Static methods are a related, separate case: you may create a double for
+a class that has one, but configuring it with
+<code>expects()</code>/<code>allows()</code>/<code>received()</code> is rejected, since there's no instance
+for a static call to run through. That's covered in
+<a href="expectations.html#static-methods">Expectations</a>.</p>
+<h2 id="modes">Modes</h2>
+<p>Every double has exactly one mode, chosen either when you create it or on
+the very next call, and it stays that way afterward. Mode answers one
+question: <strong>what happens when a call doesn't match anything you've
+configured?</strong> It never changes what <code>expects()</code>/<code>allows()</code> mean — those
+work the same way in every mode.</p>
+<h3 id="loose-the-default">Loose (the Default)</h3>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> $book</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">456</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> a safe default — see below</span></div></code></pre></div>
+<p>This is what you get from a plain <code>TestDouble::for(...)</code>, with nothing
+extra to opt into. An unconfigured call never throws — it returns a
+sensible, type-safe value based on the method's declared return type:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Return Type</th>
+<th>What You Get</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>void</code></td>
+<td>nothing</td>
+</tr>
+<tr>
+<td>no type, nullable, or <code>mixed</code></td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>int</code> / <code>float</code></td>
+<td><code>0</code> / <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>string</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>array</code> / <code>iterable</code></td>
+<td><code>[]</code></td>
+</tr>
+<tr>
+<td><code>self</code> / <code>static</code></td>
+<td>the double itself</td>
+</tr>
+<tr>
+<td>an enum</td>
+<td>its first case</td>
+</tr>
+<tr>
+<td>a union type</td>
+<td>the first branch that resolves cleanly, preferring <code>null</code> if it's an option</td>
+</tr>
+<tr>
+<td>a non-nullable class or interface</td>
+<td>a fresh double of that type, generated for you</td>
+</tr>
+</tbody>
+</table></div>
+<p>That last row is worth a moment: if <code>find()</code> is typed to return a
+non-nullable <code>Author</code>, an unconfigured call doesn't hand you <code>null</code> and a
+<code>TypeError</code> a few lines later — it hands you a real, freshly-generated
+<code>Author</code> double instead. This only happens once per call chain. If that
+generated double is then asked to produce something of its own, it stops
+and asks you to configure it explicitly:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Test double &quot;Book&quot; only fabricates one call chain deep — configure
+&quot;author()&quot; explicitly: $book-&gt;allows('author')-&gt;returns(...);
+</code></pre></div>
+<p>Loose mode doesn't stop you from configuring specific calls — you may
+freely mix &quot;stub these calls&quot; with &quot;fall back to a safe default for
+everything else.&quot;</p>
+<h3 id="strict">Strict</h3>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">BookRepository</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">strict</span><span style="color: #D6DEEB;">();</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> $book</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">456</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> throws — nothing was configured for this</span></div></code></pre></div>
+<p>Any call that doesn't match a configured expectation fails immediately,
+by name. Reach for this when you'd rather a test fail the moment its
+setup is incomplete, instead of discovering it indirectly further down.</p>
+<h3 id="passthru">Passthru</h3>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestDouble</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">Logger</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">passthru</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$realLogger</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">info</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">hello</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">);   </span><span style="color: #637777;">//</span><span style="color: #637777;"> delegates to $realLogger-&gt;info(&#39;hello&#39;)</span></div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">error</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">uh oh</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">);  </span><span style="color: #637777;">//</span><span style="color: #637777;"> still recorded, so received(&#39;error&#39;) works</span></div></code></pre></div>
+<p>Unconfigured calls delegate to a real object you supply. Anything you
+have configured still intercepts as usual, and every call — whether it
+was intercepted or delegated — is still recorded, so <code>received()</code> (see
+<a href="verification.html">Verification</a>) works the same as it does in any
+other mode.</p>
+<p>Calling <code>-&gt;passthru()</code> with no argument tries to build the real instance
+for you through reflection, and explains plainly if that isn't possible:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Can't auto-instantiate &quot;Logger&quot; to passthru to: constructing it threw:
+... Pass an existing instance instead: -&gt;passthru($existingInstance).
+</code></pre></div>
+<p>Passthru only applies to classes, since an interface has no
+implementation to delegate to.</p>
+<p>If you only want one specific call to delegate to a real object, rather
+than the whole double, <code>resolves()</code> is the better fit — see
+<a href="expectations.html">Expectations</a>.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="installation.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Installation</span></a><a href="expectations.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Expectations</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#doubling-more-than-one-thing-at-once">Doubling More Than One Thing at Once</a></li>
+        <li><a href="#wrapping-a-real-instance">Wrapping a Real Instance</a></li>
+        <li><a href="#labels">Labels</a></li>
+        <li><a href="#reserved-method-names">Reserved Method Names</a></li>
+        <li><a href="#what-cant-be-doubled">What Can't Be Doubled</a></li>
+        <li><a href="#modes">Modes</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Test double `BookRepository` is already "strict". You can't set its mode again.

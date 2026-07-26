@@ -1,82 +1,41 @@
-# Test Double
-Tired of remembering the difference between mocks, partials, and spies in Mockery? I am, which is why I created `double()` - a simple helper method to make using Mockery easier.
+<p align="right">
+    <a href="https://github.com/jasonmccreary/test-double/actions"><img src="https://github.com/jasonmccreary/test-double/workflows/CI/badge.svg" alt="Build Status"></a>
+    <a href="https://packagist.org/packages/jasonmccreary/test-double"><img src="https://poser.pugx.org/jasonmccreary/test-double/v/stable.svg" alt="Latest Stable Version"></a>
+    <a href="https://github.com/jasonmccreary/test-double/blob/master/LICENSE"><img src="https://poser.pugx.org/jasonmccreary/test-double/license.svg" alt="License"></a>
+</p>
 
-When writing tests I don't want to think about the differences between _fakes_, _mocks_, and _spies_. I just to create a generic _test double_ and focus on writing my test. This generalization is common in other testing frameworks such as [RSpec](https://relishapp.com/rspec/rspec-mocks/docs/basics/test-doubles), [td.js](https://github.com/testdouble/testdouble.js), and more.
+
+# Test Double
+
+A modern PHP test double library that puts developer experience first.
+
+- **Zero learning curve** — create a `TestDouble` and start testing immediately. No taxonomy to memorize, no upfront decisions about mocks vs. spies vs. partials.
+- **Failures for humans** — no terse output, no internal class identifiers to decode, just a plain-English next step.
+- **One clean API** — a handful of methods, no aliases, no hidden nuance. If you can guess the method name, you're probably right.
+- **Ready for contribution** — small, well-bounded internals mean no reverse-engineering the whole library for your first PR.
 
 ## Installation
-To install the latest version of the `double()` helper, run the command:
 
 ```sh
 composer require --dev jasonmccreary/test-double
 ```
 
 ## Usage
-Anytime you need to create a _test double_ simply call `double()`
-
-By default, `double()` returns an object that will allow you to stub methods as well as verify method calls.
 
 ```php
-<?php
-$td = double();
+$repository = TestDouble::for(BookRepository::class);
+$repository->expects('find')->with(123)->returns($book);
 
-$td->shouldReceive('someMethod')->andReturn(5);
+$service = new CatalogService($repository);
+$service->lookup(123);
 
-$td->someMethod();       // returns 5
-$td->unstubbedMethod();  // returns null, does not throw an exception
-
-$td->anotherMethod();
-$td->shouldHaveReceived('anotherMethod');
+$repository->received('recordView')->with($book);
 ```
 
-In Mockery, this _test double_ is equivalent to `Mockery::mock()->shouldIgnoreMissing()` or, in recent versions, `Mockery::spy()`.
+## Documentation
 
-You can also pass `double()` a reference to a class or interface. This will create a test object that extends the class or implements the interface. This allows the double to pass any type hints or type checking in your implementation.
+Full docs — creating doubles, modes (Loose/Strict/Passthru), argument matching, verification, failure messages, PHPUnit integration, and contributing — live at [testdoublephp.com](https://testdoublephp.com/).
 
-```php
-<?php
-$td = double(Str::class);
+## Contributing
 
-$td->shouldReceive('length')->andReturn(5);
-
-$td->length();           // 5
-$td->substr(1, 3);       // null
-
-$td instanceof Str;      // true
-
-$td->shouldHaveReceived('substr')->with(1, 3);
-```
-
-Finally, `double()` accepts a second argument of _passthru_. By default, _passthru_ is `false`. When set to `true`, the test object will pass any method calls through to the underlying object.
-
-In Mockery, this is equivalent to `Mockery::mock(Number::class)->shouldDeferMissing()`.
-
-```php
-<?php
-class Number
-{
-    public function one()
-    {
-        return 1;
-    }
-
-    public function random()
-    {
-        return 5;
-    }
-}
-
-$td = double(Number::class, true);
-
-$td->shouldReceive('random')->andReturn(21);
-
-$td->random();            // 21
-$td->one();               // 1
-
-$td instanceof Number;    // true
-
-$td->shouldHaveReceived('one');
-```
-
-Note: _passthru_ can only be used when creating a test double with a class reference as that is the only time an underlying implementation exists.
-
-In the end, `double()` is an opinionated way to create test objects for your underlying code. If it does not meet your needs, you can always create a `Mockery::mock()` directly. However, doing so is likely a smell you're testing your implementation in a way that does not reflect real world behavior. Remember, `double()` returns an object which implements the `MockeryInterface`. So it can be treated as any other `Mockery::mock()` object.
+Contributions should target the `master` branch, follow the project's code style, and include tests. See [Contributing](https://testdoublephp.com/contributing) for the project's standing policies (no aliases, module boundaries, frozen public API) and walkthroughs for adding a matcher or improving a failure message.

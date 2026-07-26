@@ -1,0 +1,1 @@
+Can't create a test double for `StaticMethodInterface` since it declares a static method (`make`). Static methods can't be doubled.

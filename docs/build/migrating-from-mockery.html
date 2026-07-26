@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+(function () {
+  var stored = localStorage.getItem('td-theme');
+  if (stored === 'light' || stored === 'dark') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrating from Mockery · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html">Introduction</a></li>
+        <li><a href="installation.html">Installation</a></li>
+        <li><a href="creating-test-doubles.html">Creating Test Doubles</a></li>
+        <li><a href="expectations.html">Expectations</a></li>
+        <li><a href="argument-matching.html">Argument Matching</a></li>
+        <li><a href="verification.html">Verification</a></li>
+        <li><a href="failure-messages.html">Failure Messages</a></li>
+        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html" aria-current="page">Migrating from Mockery</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <h1 class="page-title">Migrating from Mockery</h1>
+<p>Most of what you already know from Mockery carries over directly — this
+page maps the concepts you're used to onto the equivalent here.</p>
+<h2 id="quick-reference">Quick Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mockery</th>
+<th>This Library</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mockery::mock(Foo::class)</code></td>
+<td><code>TestDouble::for(Foo::class)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::spy(Foo::class)</code></td>
+<td><code>TestDouble::for(Foo::class)</code> — spy-style checking is <code>received()</code>, available on every double (see <a href="#theres-no-separate-spy">below</a>)</td>
+</tr>
+<tr>
+<td><code>Mockery::mock()-&gt;shouldIgnoreMissing()</code></td>
+<td><code>TestDouble::for(Foo::class)</code> — this is simply the default, see <a href="creating-test-doubles.html#modes">Modes</a></td>
+</tr>
+<tr>
+<td><code>Mockery::mock(Foo::class, [$args])-&gt;shouldDeferMissing()</code></td>
+<td><code>TestDouble::for(Foo::class)-&gt;passthru($realInstance)</code></td>
+</tr>
+<tr>
+<td><code>shouldReceive('foo')-&gt;once()-&gt;andReturn($x)</code></td>
+<td><code>expects('foo')-&gt;returns($x)</code> — exactly-once is <code>expects()</code>'s default</td>
+</tr>
+<tr>
+<td><code>shouldReceive('foo')-&gt;andReturn($x)</code></td>
+<td><code>allows('foo')-&gt;returns($x)</code></td>
+</tr>
+<tr>
+<td><code>shouldReceive('foo')-&gt;andReturn($a, $b)</code></td>
+<td><code>allows('foo')-&gt;returns($a, $b)</code></td>
+</tr>
+<tr>
+<td><code>shouldReceive('foo')-&gt;andThrow($e)</code></td>
+<td><code>allows('foo')-&gt;throws($e)</code></td>
+</tr>
+<tr>
+<td><code>shouldReceive('foo')-&gt;andReturnUsing($fn)</code></td>
+<td><code>allows('foo')-&gt;resolves($fn)</code></td>
+</tr>
+<tr>
+<td><code>shouldHaveReceived('foo')</code></td>
+<td><code>received('foo')</code></td>
+</tr>
+<tr>
+<td><code>shouldNotHaveReceived('foo')</code></td>
+<td><code>received('foo')-&gt;never()</code></td>
+</tr>
+<tr>
+<td><code>shouldNotHaveBeenCalled()</code></td>
+<td><code>unused()</code> — see <a href="#theres-no-separate-spy">the trap below</a></td>
+</tr>
+<tr>
+<td><code>once()</code> / <code>twice()</code></td>
+<td><code>times(1)</code> / <code>times(2)</code></td>
+</tr>
+<tr>
+<td><code>atLeast()-&gt;times($n)</code></td>
+<td><code>times(minimum: $n)</code></td>
+</tr>
+<tr>
+<td><code>atMost()-&gt;times($n)</code></td>
+<td><code>times(maximum: $n)</code></td>
+</tr>
+<tr>
+<td><code>between($min, $max)</code></td>
+<td><code>times($min, $max)</code></td>
+</tr>
+<tr>
+<td><code>ordered()</code></td>
+<td><code>inOrder()</code></td>
+</tr>
+<tr>
+<td><code>globally()</code></td>
+<td>not available — ordering applies per double, see <a href="#ordering">below</a></td>
+</tr>
+<tr>
+<td><code>Mockery::close()</code></td>
+<td><code>$double-&gt;verify()</code>, or <code>use VerifiesDoubles;</code> — see <a href="phpunit-integration.html">PHPUnit Integration</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="argument-matchers">Argument Matchers</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mockery</th>
+<th>This Library</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mockery::any()</code></td>
+<td><code>Argument::any()</code></td>
+</tr>
+<tr>
+<td><code>Mockery::type($type)</code></td>
+<td><code>Argument::type($type)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::on($callback)</code></td>
+<td><code>Argument::satisfies($callback)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::capture()</code></td>
+<td><code>Argument::capture($reference)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::pattern($regex)</code></td>
+<td><code>Argument::matches($regex)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::anyOf($a, $b)</code></td>
+<td><code>Argument::any($a, $b)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::notAnyOf($a, $b)</code></td>
+<td><code>Argument::not()-&gt;any($a, $b)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::not($value)</code></td>
+<td><code>Argument::not($value)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::contains(...)</code> / <code>hasKey(...)</code> / <code>hasValue(...)</code></td>
+<td><code>Argument::contains(...)</code> — see <a href="argument-matching.html#searching-a-collection">Searching a Collection</a></td>
+</tr>
+<tr>
+<td><code>Mockery::mustBe($value)</code> / <code>isEqual($value)</code></td>
+<td>a plain value passed to <code>with()</code> — already the default</td>
+</tr>
+<tr>
+<td><code>Mockery::isSame($value)</code></td>
+<td><code>Argument::same($value)</code></td>
+</tr>
+<tr>
+<td><code>Mockery::ducktype(...)</code></td>
+<td>not available — see <a href="#a-few-things-that-didnt-carry-over">below</a></td>
+</tr>
+<tr>
+<td><code>andAnyOtherArgs()</code></td>
+<td><code>Argument::remaining()</code></td>
+</tr>
+<tr>
+<td><code>withNoArgs()</code></td>
+<td><code>Argument::none()</code>, or <code>with()</code> with nothing passed — see <a href="argument-matching.html#no-arguments-at-all">No Arguments at All</a></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modes-not-mock-kinds">Modes, Not Mock Kinds</h2>
+<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here,
+there's one kind of thing — a test double — and the equivalent choice is
+a mode you add on top of it, covered fully in
+<a href="creating-test-doubles.html">Creating Test Doubles</a>:</p>
+<ul>
+<li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>,
+behaves like <strong>Loose</strong> mode here — which is simply the default, nothing
+to opt into.</li>
+<li>A strict <code>mock()</code> with no leniency maps to <strong>Strict</strong> mode
+(<code>-&gt;strict()</code>).</li>
+<li><code>shouldDeferMissing()</code> maps to <strong>Passthru</strong> mode
+(<code>-&gt;passthru($realInstance)</code>).</li>
+</ul>
+<h3 id="theres-no-separate-spy">There's No Separate &quot;Spy&quot;</h3>
+<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> — checking
+whether something was actually called — is available on every double,
+regardless of how it was created or which mode it's in. You don't choose
+a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check
+after the fact, on the same double you'd otherwise configure with
+<code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
+<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this
+spy received no calls,&quot; but Mockery only checks whether the mock was
+invoked as a callable — it says nothing about calls to its methods, which
+is what most people actually mean and expect it to check. That's the trap
+<code>unused()</code> exists to close: it asserts the double received zero calls to
+any method, which is almost certainly what you meant in the first place.</p>
+<h2 id="ordering">Ordering</h2>
+<p>Mockery orders calls per-mock by default, with <code>globally()</code> available for
+a single sequence shared across every mock in a test. This library keeps
+the per-double default and doesn't offer a global equivalent. If you find
+yourself needing a sequence that spans multiple doubles, it's worth
+pausing to consider whether the test is asserting more about call order
+than the behavior actually requires.</p>
+<h2 id="a-few-things-that-didnt-carry-over">A Few Things That Didn't Carry Over</h2>
+<p>A couple of Mockery features aren't available here, by design:</p>
+<ul>
+<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or
+other alternate spellings for the same concept, those don't exist
+here — each concept has exactly one verb. See
+<a href="index.html#one-verb-per-concept">One Verb per Concept</a>.</li>
+<li><strong><code>ducktype()</code></strong> — matching &quot;anything with these methods&quot; — isn't
+included. <code>Argument::satisfies()</code> covers the same need without a
+dedicated verb.</li>
+<li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own
+documentation already treats this as a last resort, and this library
+doesn't attempt to improve on it. See
+<a href="expectations.html#static-methods">Static Methods</a>.</li>
+</ul>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="phpunit-integration.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">PHPUnit Integration</span></a><a href="contributing.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Contributing</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#quick-reference">Quick Reference</a></li>
+        <li><a href="#argument-matchers">Argument Matchers</a></li>
+        <li><a href="#modes-not-mock-kinds">Modes, Not Mock Kinds</a></li>
+        <li><a href="#ordering">Ordering</a></li>
+        <li><a href="#a-few-things-that-didnt-carry-over">A Few Things That Didn't Carry Over</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

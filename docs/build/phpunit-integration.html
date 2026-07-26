@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+(function () {
+  var stored = localStorage.getItem('td-theme');
+  if (stored === 'light' || stored === 'dark') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHPUnit Integration · Test Double</title>
+<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="index.html">Introduction</a></li>
+        <li><a href="installation.html">Installation</a></li>
+        <li><a href="creating-test-doubles.html">Creating Test Doubles</a></li>
+        <li><a href="expectations.html">Expectations</a></li>
+        <li><a href="argument-matching.html">Argument Matching</a></li>
+        <li><a href="verification.html">Verification</a></li>
+        <li><a href="failure-messages.html">Failure Messages</a></li>
+        <li><a href="phpunit-integration.html" aria-current="page">PHPUnit Integration</a></li>
+        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
+        <li><a href="contributing.html">Contributing</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <h1 class="page-title">PHPUnit Integration</h1>
+<p>Nothing in this library requires PHPUnit. But if it's installed in your
+project, two things improve automatically.</p>
+<h2 id="failures-read-as-failures">Failures Read as Failures</h2>
+<p>PHPUnit only reports a thrown exception as a <strong>failure</strong> — attributed
+cleanly to the assertion that didn't hold — if it extends PHPUnit's own
+<code>AssertionFailedError</code>. Anything else is reported as an <strong>error</strong>
+instead. An unmatched call or an unmet expectation is very much the
+former, so when PHPUnit is present, this library's exceptions are
+automatically the failure-flavored version. There's nothing to
+configure — it's detected the moment your tests run, and it works the
+same way with both PHPUnit 11 and 12.</p>
+<p>Setup mistakes — a <code>final</code> class you tried to double, a reserved method
+name collision — remain <strong>errors</strong>, which is correct: those tell you the
+test can't run as written, not that an assertion about your code's
+behavior failed.</p>
+<h2 id="automatic-verification">Automatic Verification</h2>
+<p>You may add one trait to your base test case to stop calling <code>-&gt;verify()</code>
+yourself:</p>
+<div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\Integrations\PHPUnit\</span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestCase</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">extends</span><span style="color: #D6DEEB;"> \PHPUnit\Framework\</span><span style="color: #C5E478;">TestCase</span></div><div class='line'><span style="color: #D6DEEB;">{</span></div><div class='line'><span style="color: #D6DEEB;">    </span><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #D6DEEB;">;</span></div><div class='line'><span style="color: #D6DEEB;">}</span></div></code></pre></div>
+<p>From then on, every double created during a test — and every <code>received()</code>
+assertion made on one — is checked automatically once that test finishes.</p>
+<p><code>$double-&gt;verify()</code> still works, and remains the only option for every
+other test runner, or for PHPUnit users who'd rather call it explicitly.
+Adding the trait doesn't change what <code>verify()</code> does; it just gives you a
+way to stop calling it yourself.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><a href="failure-messages.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Failure Messages</span></a><a href="migrating-from-mockery.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Migrating from Mockery</span></a></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#failures-read-as-failures">Failures Read as Failures</a></li>
+        <li><a href="#automatic-verification">Automatic Verification</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Test Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

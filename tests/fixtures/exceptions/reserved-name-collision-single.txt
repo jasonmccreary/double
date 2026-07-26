@@ -1,0 +1,1 @@
+Can't create a test double for `ExpectsCollisionInterface`. It contains `expects` which collides with TestDouble's internal methods.

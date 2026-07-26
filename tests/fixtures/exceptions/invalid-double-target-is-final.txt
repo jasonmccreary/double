@@ -1,0 +1,1 @@
+Can't create a test double for `FinalLogger` since it's final and can't be extended.

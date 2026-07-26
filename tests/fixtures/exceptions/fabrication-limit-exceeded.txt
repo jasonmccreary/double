@@ -1,0 +1,1 @@
+Test double `SecondLink` was returned automatically. This only happens one level deep from the original test double. To respond to `toThird()`, you'll need to configure it explicitly. For example: `$secondLink->allows('toThird')->returns($anotherDouble)`.

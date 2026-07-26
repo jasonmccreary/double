@@ -1,0 +1,4 @@
+2 expectations were not satisfied on test double `BookRepository`:
+
+    expected `save(any arguments)` to be called exactly 1 time, but it was never called
+    expected `delete(any arguments)` to be called at least 1 time, but it was never called

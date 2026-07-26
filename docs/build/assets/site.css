@@ -1,0 +1,860 @@
+@import url('https://rsms.me/inter/inter.css');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-sans: "InterVariable", "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  --orange-400: #fb923c;
+  --orange-600: #ea580c;
+
+  --bg: #ffffff;
+  --bg-well: var(--zinc-100);
+  --ink: var(--zinc-900);
+  --ink-muted: var(--zinc-600);
+  --ink-faint: var(--zinc-500);
+  --accent: var(--orange-600);
+  --border: rgb(9 9 11 / 8%);
+  --border-strong: rgb(9 9 11 / 14%);
+  --focus-ring: #2563eb;
+  --search-backdrop: rgb(9 9 11 / 40%);
+}
+
+/* Default: follow the OS preference. The [data-theme] rule below lets
+   assets/theme-toggle.js override that choice explicitly; :not([data-theme="light"])
+   keeps an explicit light override winning even when the OS prefers dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: var(--zinc-950);
+    --bg-well: var(--zinc-900);
+    --ink: var(--zinc-100);
+    --ink-muted: var(--zinc-400);
+    --ink-faint: var(--zinc-500);
+    --accent: var(--orange-400);
+    --border: rgb(255 255 255 / 10%);
+    --border-strong: rgb(255 255 255 / 16%);
+    --search-backdrop: rgb(0 0 0 / 60%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: var(--zinc-950);
+  --bg-well: var(--zinc-900);
+  --ink: var(--zinc-100);
+  --ink-muted: var(--zinc-400);
+  --ink-faint: var(--zinc-500);
+  --accent: var(--orange-400);
+  --border: rgb(255 255 255 / 10%);
+  --border-strong: rgb(255 255 255 / 16%);
+  --search-backdrop: rgb(0 0 0 / 60%);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: var(--space-4);
+  align-items: center;
+}
+
+.wordmark {
+  grid-column: 1;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.wordmark span {
+  color: var(--accent);
+}
+
+/* Mirrors the sidebar/toc widths below (see .sidebar, .toc) so the search
+   box's center lines up with the prose column, not the full topbar width. */
+.topbar-search {
+  grid-column: 2;
+  justify-self: center;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-well);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-faint);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-trigger:hover {
+  color: var(--ink-muted);
+}
+
+.search-trigger-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.search-trigger-text {
+  flex: 1;
+}
+
+.search-trigger-key {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.search-dialog-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--search-backdrop);
+  padding: 10vh var(--space-4) var(--space-8);
+  overflow-y: auto;
+}
+
+.search-dialog-backdrop.is-open {
+  display: block;
+}
+
+.search-dialog {
+  max-width: 34rem;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1rem 3rem rgb(9 9 11 / 20%);
+  overflow: hidden;
+}
+
+.search-dialog-form {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-dialog-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+
+.search-dialog-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.search-dialog-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.search-dialog-results {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+.search-result[aria-selected="true"] {
+  background: var(--bg-well);
+}
+
+.search-result-path {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.search-result-title {
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.search-result-title mark {
+  background: none;
+  color: var(--accent);
+}
+
+.search-dialog-empty {
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ink-faint);
+}
+
+.search-dialog-footer {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+body.search-open {
+  overflow: hidden;
+}
+
+.topbar-links {
+  grid-column: 3;
+  justify-self: end;
+  display: none;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.topbar-link {
+  display: flex;
+  align-items: center;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.topbar-link:hover {
+  color: var(--ink);
+}
+
+.link-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+/* Toggled by assets/theme-toggle.js, which sets data-theme on <html> and
+   mirrors the override into localStorage. Shows the icon for the theme a
+   click would switch *to* — moon while light, sun while dark. */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+}
+
+.theme-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon {
+    display: none;
+  }
+}
+
+.menu-btn {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.menu-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.menu-btn .icon-close {
+  display: none;
+}
+
+.nav-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 64rem) {
+  .topbar-inner {
+    padding: var(--space-4) var(--space-8);
+    /* 17rem matches .sidebar's width exactly, so the search column below
+       lines up with .content instead of the full-width topbar. */
+    grid-template-columns: 17rem 1fr auto;
+    column-gap: 0;
+  }
+  .topbar-links {
+    display: flex;
+  }
+  .menu-btn {
+    display: none;
+  }
+}
+
+/* ---------- Shell (sidebar / content / toc) ---------- */
+
+.shell {
+  max-width: 90rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+}
+
+.scrim {
+  display: none;
+}
+
+.sidebar {
+  display: none;
+  flex-shrink: 0;
+  width: 17rem;
+  padding: var(--space-8) var(--space-6);
+  position: sticky;
+  top: 3.75rem;
+  max-height: calc(100dvh - 3.75rem);
+  overflow-y: auto;
+}
+
+.sidebar-heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+}
+
+.chapter-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.chapter-list a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.chapter-list a:hover {
+  background: var(--bg-well);
+  color: var(--ink);
+}
+
+.chapter-list a[aria-current="page"] {
+  border-left-color: var(--accent);
+  color: var(--ink);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-10) var(--space-4) var(--space-20);
+}
+
+.content-inner {
+  max-width: 72ch;
+  margin: 0 auto;
+}
+
+.toc {
+  display: none;
+  flex-shrink: 0;
+  width: 15rem;
+  padding: var(--space-10) var(--space-6);
+  position: sticky;
+  top: 3.75rem;
+  max-height: calc(100dvh - 3.75rem);
+  overflow-y: auto;
+}
+
+.toc-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+}
+
+.toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-left: 1px solid var(--border);
+}
+
+.toc a {
+  display: block;
+  padding: var(--space-1) 0 var(--space-1) var(--space-4);
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.toc a:hover {
+  color: var(--ink);
+  border-left-color: var(--border-strong);
+}
+
+/* Set by assets/toc-scrollspy.js as the user scrolls past each heading. */
+.toc a[aria-current="location"] {
+  color: var(--ink);
+  border-left-color: var(--accent);
+}
+
+@media (min-width: 64rem) {
+  .sidebar {
+    display: block;
+  }
+  .content {
+    padding: var(--space-12) var(--space-10) var(--space-20);
+  }
+}
+
+@media (min-width: 80rem) {
+  .toc {
+    display: block;
+  }
+  /* 15rem matches .toc's width, completing the mirror of the shell's
+     three columns so the search box centers on .content-inner. */
+  .topbar-inner {
+    grid-template-columns: 17rem 1fr 15rem;
+  }
+}
+
+/* Mobile nav drawer, via checkbox toggle (no JS) */
+@media (max-width: 63.9375rem) {
+  #nav-toggle:checked ~ .topbar .icon-open {
+    display: none;
+  }
+  #nav-toggle:checked ~ .topbar .icon-close {
+    display: block;
+  }
+  #nav-toggle:checked ~ .shell .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: 3.75rem;
+    z-index: 20;
+    background: rgb(9 9 11 / 40%);
+  }
+  #nav-toggle:checked ~ .shell .sidebar {
+    display: block;
+    position: fixed;
+    top: 3.75rem;
+    left: 0;
+    bottom: 0;
+    z-index: 21;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    width: 17.5rem;
+    max-width: 82vw;
+  }
+}
+
+/* ---------- Prose ---------- */
+
+.prose {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--ink-muted);
+}
+
+.prose > * + * {
+  margin-top: var(--space-5);
+}
+
+.page-title {
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 var(--space-8);
+  text-wrap: balance;
+}
+
+.prose h2 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: var(--space-12);
+  margin-bottom: 0;
+  text-wrap: balance;
+  scroll-margin-top: 5rem;
+}
+
+.prose h2 + * {
+  margin-top: var(--space-4);
+}
+
+.prose h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: var(--space-8);
+  margin-bottom: 0;
+  scroll-margin-top: 5rem;
+}
+
+.prose h3 + * {
+  margin-top: var(--space-3);
+}
+
+.prose p {
+  text-wrap: pretty;
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-color: rgb(234 88 12 / 35%);
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  text-decoration-color: currentColor;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.25em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prose li {
+  padding-left: 0.25em;
+}
+
+.prose li::marker {
+  color: var(--ink-faint);
+}
+
+.prose li > p {
+  margin: 0;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-top: var(--space-2);
+}
+
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--bg-well);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  color: var(--ink);
+}
+
+.code-block {
+  position: relative;
+  /* Fixed, not var(--bg-well): the Torchlight theme is always github-dark
+     (see docs/bin/build-docs.php), so the block must stay dark even when
+     the surrounding site is in light mode. */
+  background: #24292e;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.code-block .code-lang {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+
+.prose pre {
+  margin: 0;
+  padding: var(--space-5) var(--space-5);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--ink);
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Plain (non-highlighted) blocks have no per-token Torchlight color, so
+   they inherit this — fixed light gray, not var(--ink), to stay readable
+   against .code-block's fixed dark background regardless of site theme. */
+.code-block pre code {
+  color: #e1e4e8;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-4) var(--space-2) 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.prose td {
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.prose td code,
+.prose th code {
+  white-space: nowrap;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-8) 0;
+}
+
+/* ---------- Pager ---------- */
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-16);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.pager-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-decoration: none;
+  max-width: 48%;
+}
+
+.pager-link.next {
+  align-items: flex-end;
+  text-align: right;
+  margin-left: auto;
+}
+
+.pager-direction {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.pager-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pager-link:hover .pager-title {
+  color: var(--accent);
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+}
+
+.footer-inner {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  font-size: 0.875rem;
+  color: var(--ink-faint);
+}
+
+.footer-inner a {
+  display: flex;
+  align-items: center;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+.footer-inner a:hover {
+  color: var(--ink);
+}
+
+.footer-spacer {
+  margin-left: auto;
+}
+
+@media (min-width: 64rem) {
+  .footer-inner {
+    padding: var(--space-8) var(--space-8);
+  }
+}

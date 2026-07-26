@@ -1,0 +1,1 @@
+Can't create a test double for `Book` since it's a class. When multiple targets are passed to `TestDouble::for()`, they must all be interfaces.

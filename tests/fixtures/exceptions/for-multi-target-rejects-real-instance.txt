@@ -1,0 +1,1 @@
+`TestDouble::for()` can't accept a real instance as a target when passing multiple targets.

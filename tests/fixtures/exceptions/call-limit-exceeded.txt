@@ -1,0 +1,1 @@
+Test double `BookRepository` received 2 calls to `delete(1)`, but your expectation only allowed 1 call.

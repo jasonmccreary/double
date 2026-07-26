@@ -1,0 +1,1 @@
+Can't create a test double for `HookedPropertyInterface` since it declares a hooked property (`displayName`). Hooked properties can't be doubled.

@@ -1,0 +1,1 @@
+Test double `AnalyticsHelper` expected no calls at all, but received: `event(1)`, `event(2)`, and 2 more.
