@@ -11,6 +11,7 @@ use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\MethodExpectation;
+use JMac\Testing\Engine\PhpUnitIntegration;
 use JMac\Testing\Engine\ReceivedAssertion;
 use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\StaticMethodException;
@@ -163,6 +164,8 @@ final class TestDouble
         $unmet = $state->unmetExpectations();
 
         if ($unmet === []) {
+            PhpUnitIntegration::registerPass();
+
             return;
         }
 
@@ -283,6 +286,8 @@ final class TestDouble
         $calls = $state->calls();
 
         if ($calls === []) {
+            PhpUnitIntegration::registerPass();
+
             return;
         }
 

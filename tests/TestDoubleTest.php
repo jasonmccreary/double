@@ -120,7 +120,6 @@ final class TestDoubleTest extends TestCase
         $double->delete(1);
 
         $double->verify();
-        $this->addToAssertionCount(1);
     }
 
     public function test_expects_fails_verify_when_never_called(): void
@@ -251,7 +250,6 @@ final class TestDoubleTest extends TestCase
         $double->save(new Book('Dune'));
 
         $double->verify();
-        $this->addToAssertionCount(1);
     }
 
     public function test_sequential_returns_hold_at_the_last_value_on_further_calls(): void
@@ -376,8 +374,6 @@ final class TestDoubleTest extends TestCase
         $double->combine('-', 'a', 'b', 'c');
 
         $double->received('combine')->with('-', Argument::remaining());
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_never_forbids_any_call_at_all(): void
@@ -400,7 +396,6 @@ final class TestDoubleTest extends TestCase
         $double->delete(3);
 
         $double->verify();
-        $this->addToAssertionCount(1);
     }
 
     public function test_times_requires_exactly_that_many_calls(): void
@@ -412,7 +407,6 @@ final class TestDoubleTest extends TestCase
         $double->delete(2);
 
         $double->verify();
-        $this->addToAssertionCount(1);
     }
 
     public function test_times_with_a_range_requires_a_call_count_within_bounds(): void
@@ -424,7 +418,6 @@ final class TestDoubleTest extends TestCase
         $double->delete(2);
 
         $double->verify();
-        $this->addToAssertionCount(1);
     }
 
     public function test_times_with_a_named_maximum_fails_once_exceeded(): void
@@ -545,8 +538,6 @@ final class TestDoubleTest extends TestCase
 
         $double->delete(1);
         $double->received('delete');
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_received_fails_when_the_method_was_never_called(): void
@@ -566,8 +557,6 @@ final class TestDoubleTest extends TestCase
 
         $double->save($dune);
         $double->received('save')->with($dune);
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_received_with_fails_when_only_a_non_matching_call_was_observed(): void
@@ -586,8 +575,6 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $double->received('delete')->never();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_received_never_fails_when_the_method_was_called(): void
@@ -626,8 +613,6 @@ final class TestDoubleTest extends TestCase
         // at chain destruction, not eagerly on with() itself — see
         // ReceivedAssertion's docblock.
         $double->received('save')->with($protected)->never();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_received_rejects_an_undeclared_method_name(): void
@@ -675,8 +660,6 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $double->unused();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_unused_fails_when_any_method_was_called(): void
@@ -714,8 +697,6 @@ final class TestDoubleTest extends TestCase
         $double = TestDouble::for(BookRepositoryInterface::class);
 
         $double->verify();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_verify_failure_correlates_other_calls_observed_for_the_same_method(): void
@@ -750,8 +731,6 @@ final class TestDoubleTest extends TestCase
         $first->delete(1);
 
         TestDouble::verifyAll();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
@@ -785,8 +764,6 @@ final class TestDoubleTest extends TestCase
         $after->save(new Book('Dune'));
 
         TestDouble::verifyAll();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_verify_all_drains_pending_doubles_so_a_second_call_is_a_no_op(): void
@@ -802,8 +779,6 @@ final class TestDoubleTest extends TestCase
         // $double already left the pending list on the call above, so this
         // has nothing left to check regardless of $double's own state.
         TestDouble::verifyAll();
-
-        $this->addToAssertionCount(1);
     }
 
     /**
@@ -837,8 +812,6 @@ final class TestDoubleTest extends TestCase
         $this->heldAssertion = $double->received('save');
 
         TestDouble::verifyAll();
-
-        $this->addToAssertionCount(1);
     }
 
     public function test_verify_all_drains_pending_received_assertions_so_a_second_call_is_a_no_op(): void
@@ -855,7 +828,5 @@ final class TestDoubleTest extends TestCase
         // checked on the call above, so this has nothing left to check
         // regardless of its own state.
         TestDouble::verifyAll();
-
-        $this->addToAssertionCount(1);
     }
 }

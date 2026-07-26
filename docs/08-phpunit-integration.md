@@ -1,7 +1,7 @@
 # PHPUnit Integration
 
 Nothing in this library requires PHPUnit. But if it's installed in your
-project, two things improve automatically.
+project, three things improve automatically.
 
 ## Failures Read as Failures
 
@@ -18,6 +18,21 @@ Setup mistakes — a `final` class you tried to double, a reserved method
 name collision — remain **errors**, which is correct: those tell you the
 test can't run as written, not that an assertion about your code's
 behavior failed.
+
+## Passing Checks Count as Assertions
+
+PHPUnit flags a test "risky" when it runs to completion without ever
+touching its assertion counter — usually a sign the test forgot to check
+anything. A test whose only check is `$double->received(...)`,
+`$double->unused()`, or a satisfied `expects()`/`allows()` verified via
+`verify()` (or the `VerifiesDoubles` trait below) is a real, meaningful
+check, but without this integration PHPUnit would have no way to know
+that: nothing in this library ever touched PHPUnit's own assertion API.
+
+When PHPUnit is present, a passing verification registers a genuine
+PHPUnit assertion behind the scenes, so tests like these are never flagged
+as risky. Nothing to configure — this is on by default, and a failing
+check throws exactly as before.
 
 ## Automatic Verification
 

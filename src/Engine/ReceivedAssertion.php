@@ -94,6 +94,8 @@ final class ReceivedAssertion
         }
 
         if ($this->expectation->isSatisfied() && ! $this->expectation->exceedsMaximum()) {
+            PhpUnitIntegration::registerPass();
+
             return;
         }
 

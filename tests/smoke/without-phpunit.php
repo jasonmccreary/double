@@ -100,6 +100,23 @@ check(
     },
 );
 
+check(
+    'verify()/unused()/received() on a satisfied double succeed silently with no PHPUnit installed',
+    static function (): void {
+        $double = TestDouble::for(SmokeTestRepository::class);
+        $double->expects('save')->with('Dune')->returns(true);
+
+        $double->save('Dune');
+        $double->verify();
+
+        $spy = TestDouble::for(SmokeTestRepository::class);
+        $spy->unused();
+
+        $spy->find(1);
+        $spy->received('find');
+    },
+);
+
 if ($failures !== []) {
     fwrite(STDERR, sprintf("\n%d check(s) failed with PHPUnit genuinely absent.\n", count($failures)));
     exit(1);
