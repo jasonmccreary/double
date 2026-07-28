@@ -314,9 +314,10 @@ final class ClassGenerator
     {
         $name = $method->getName();
         $visibility = $method->isProtected() ? 'protected' : 'public';
+        $declaringClass = $method->getDeclaringClass();
 
         $parameters = implode(', ', array_map(
-            $this->buildParameter(...),
+            fn (\ReflectionParameter $parameter): string => $this->buildParameter($parameter, $declaringClass),
             $method->getParameters(),
         ));
 
@@ -327,7 +328,7 @@ final class ClassGenerator
         // built with no return type at all, which PHP flags as a deprecated
         // incompatibility against the interface's tentative one.
         $returnType = $method->getReturnType() ?? ($method->hasTentativeReturnType() ? $method->getTentativeReturnType() : null);
-        $returnTypeString = $returnType !== null ? $this->stringifyType($returnType) : null;
+        $returnTypeString = $returnType !== null ? $this->stringifyType($returnType, $declaringClass) : null;
         $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
         $isVoid = $returnTypeString === 'void';
 
@@ -361,10 +362,10 @@ final class ClassGenerator
         );
     }
 
-    private function buildParameter(\ReflectionParameter $parameter): string
+    private function buildParameter(\ReflectionParameter $parameter, \ReflectionClass $declaringClass): string
     {
         $type = $parameter->getType();
-        $typeDeclaration = $type !== null ? $this->stringifyType($type).' ' : '';
+        $typeDeclaration = $type !== null ? $this->stringifyType($type, $declaringClass).' ' : '';
 
         $byRef = $parameter->isPassedByReference() ? '&' : '';
         $variadic = $parameter->isVariadic() ? '...' : '';
@@ -391,29 +392,32 @@ final class ClassGenerator
         return str_contains($name, '::') && ! str_starts_with($name, '\\') ? '\\'.$name : $name;
     }
 
-    private function stringifyType(\ReflectionType $type): string
+    private function stringifyType(\ReflectionType $type, \ReflectionClass $declaringClass): string
     {
         if ($type instanceof \ReflectionNamedType) {
-            return $this->stringifyNamedType($type);
+            return $this->stringifyNamedType($type, $declaringClass);
         }
 
         if ($type instanceof \ReflectionIntersectionType) {
-            return $this->stringifyIntersectionType($type);
+            return $this->stringifyIntersectionType($type, $declaringClass);
         }
 
         // ReflectionUnionType: members are either ReflectionNamedType or,
         // for a member like (A&B)|C, a nested ReflectionIntersectionType.
         return implode('|', array_map(
             fn (\ReflectionType $member): string => $member instanceof \ReflectionIntersectionType
-                ? '('.$this->stringifyIntersectionType($member).')'
-                : $this->stringifyNamedType($member),
+                ? '('.$this->stringifyIntersectionType($member, $declaringClass).')'
+                : $this->stringifyNamedType($member, $declaringClass),
             $type->getTypes(),
         ));
     }
 
-    private function stringifyIntersectionType(\ReflectionIntersectionType $type): string
+    private function stringifyIntersectionType(\ReflectionIntersectionType $type, \ReflectionClass $declaringClass): string
     {
-        return implode('&', array_map($this->stringifyNamedType(...), $type->getTypes()));
+        return implode('&', array_map(
+            fn (\ReflectionNamedType $member): string => $this->stringifyNamedType($member, $declaringClass),
+            $type->getTypes(),
+        ));
     }
 
     /**
@@ -422,14 +426,30 @@ final class ClassGenerator
      * forces class/interface names absolute with a leading "\", which
      * __toString() does not do — necessary because the generated class lives
      * in its own namespace, not the target's.
+     *
+     * "self" and "parent" are resolved to the real class they refer to in the
+     * method's declaring class, rather than left as literal keywords. Left
+     * literal, they'd re-resolve inside the generated class's own body — e.g.
+     * "self" on a method declared in a grandparent would become the generated
+     * class itself, a narrower type than the original. That's fine for a
+     * covariant return type, but PHP rejects it on a parameter, which must
+     * stay the same or wider. "static" is left alone: it's return-type-only,
+     * so this contravariance problem can't apply, and rewriting it would
+     * break the late static binding it exists for.
      */
-    private function stringifyNamedType(\ReflectionNamedType $type): string
+    private function stringifyNamedType(\ReflectionNamedType $type, \ReflectionClass $declaringClass): string
     {
         $name = $type->getName();
         $lower = strtolower($name);
 
-        if (! $type->isBuiltin() && ! in_array($lower, ['self', 'static', 'parent'], true)) {
-            $name = '\\'.$name;
+        $name = match ($lower) {
+            'self' => $declaringClass->getName(),
+            'parent' => $declaringClass->getParentClass()->getName(),
+            default => $name,
+        };
+
+        if (! $type->isBuiltin() && $lower !== 'static') {
+            $name = '\\'.ltrim($name, '\\');
         }
 
         $nullablePrefix = $type->allowsNull() && ! in_array($lower, ['mixed', 'null'], true) ? '?' : '';

@@ -30,6 +30,9 @@ use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
 use JMac\Testing\Tests\Support\RefReturnInterface;
+use JMac\Testing\Tests\Support\SelfTypedParamBase;
+use JMac\Testing\Tests\Support\SelfTypedParamChild;
+use JMac\Testing\Tests\Support\SelfTypedParamGrandparent;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
@@ -540,6 +543,39 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertSame([], $notices);
         $this->assertSame(5, $result);
+    }
+
+    /**
+     * Regression check: SelfTypedParamBase::withSelf() declares a "self"
+     * parameter, inherited unoverridden by SelfTypedParamChild — the same
+     * shape as Illuminate\Database\Eloquent\Model::newPivot(self $parent, ...).
+     * Left as the literal keyword "self", it would resolve inside the
+     * generated class's own body to the generated class itself, which is
+     * narrower than the original parameter type — PHP rejects that as an
+     * incompatible override with an uncatchable fatal error. It must instead
+     * resolve to SelfTypedParamBase, the class that actually declared it.
+     */
+    public function test_reconstructs_a_self_typed_parameter_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(SelfTypedParamChild::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withSelf'))->getParameters()[0];
+
+        $this->assertSame(SelfTypedParamBase::class, (string) $parameter->getType());
+    }
+
+    /**
+     * Same regression, for a "parent" parameter type — must resolve to the
+     * declaring class's actual parent (SelfTypedParamGrandparent), not
+     * re-resolve against the generated class's own inheritance chain.
+     */
+    public function test_reconstructs_a_parent_typed_parameter_signature_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(SelfTypedParamChild::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withParent'))->getParameters()[0];
+
+        $this->assertSame(SelfTypedParamGrandparent::class, (string) $parameter->getType());
     }
 
     public function test_preserves_enum_case_default_values(): void
