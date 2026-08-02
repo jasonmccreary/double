@@ -18,7 +18,9 @@ jobs:
           # neither PHPUnit 11 nor 12 declares an upper PHP-version bound
           # (11.5.56's own composer.json just says "php >=8.2"), so there's
           # no technical reason to test only one PHPUnit major per PHP
-          # version.
+          # version. PHPUnit 13 is the exception: every 13.x release requires
+          # php >=8.4.1, so it's paired with 8.4+ only — there's no 8.3 row
+          # for it below, since that combination isn't installable.
           - php: '8.3'
             phpunit: '^11.0'
             allow-failure: false
@@ -31,11 +33,17 @@ jobs:
           - php: '8.4'
             phpunit: '^12.0'
             allow-failure: false
+          - php: '8.4'
+            phpunit: '^13.0.3'
+            allow-failure: false
           - php: '8.5'
             phpunit: '^11.0'
             allow-failure: false
           - php: '8.5'
             phpunit: '^12.0'
+            allow-failure: false
+          - php: '8.5'
+            phpunit: '^13.0.3'
             allow-failure: false
           # ClassGenerator's reflection-based codegen is the part of this
           # codebase most likely to break on a new PHP version. Catching

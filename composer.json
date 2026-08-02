@@ -21,7 +21,7 @@
     },
     "require-dev": {
         "laravel/pint": "^1.29",
-        "phpunit/phpunit": "^11.5.50 || ^12.5.8"
+        "phpunit/phpunit": "^11.5.50 || ^12.5.8 || ^13.0.3"
     },
     "autoload": {
         "psr-4": {
