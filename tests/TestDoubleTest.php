@@ -158,6 +158,55 @@ final class TestDoubleTest extends TestCase
         $this->assertSame($default, $double->find(456));
     }
 
+    public function test_a_generic_catch_all_no_longer_starves_an_earlier_specific_expectation_once_exhausted(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $specific = new Book('Specific');
+
+        $double->expects('find')->with(1)->returns($specific);
+        $double->expects('find'); // unconstrained catch-all, registered last
+
+        // First call: the last-registered, unconstrained expectation still
+        // has room, so it wins, same as before this fix.
+        $double->find(1);
+
+        // Second call: the catch-all's own times() budget (default: exactly
+        // once) is already spent, so matching now falls through to the
+        // earlier, still-unconsumed with(1) expectation instead of
+        // re-selecting the exhausted catch-all and throwing
+        // expectationCallLimitExceeded() for a call it was never meant to
+        // serve.
+        $this->assertSame($specific, $double->find(1));
+
+        $double->verify();
+    }
+
+    public function test_stacking_separate_expectations_for_the_same_method_and_args_no_longer_throws(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $first = new Book('First');
+        $second = new Book('Second');
+
+        // The direct Mockery habit: two separate expectation objects for
+        // the same method+args, meant to be consumed one after another.
+        // This used to throw on the second call, since matching always
+        // re-picked the same (already-exhausted) most-recently-registered
+        // expectation instead of falling through to the one registered
+        // before it. `times()->returns(...)` (see
+        // test_sequential_returns_hold_at_the_last_value_on_further_calls())
+        // stays the documented idiom for this — note that registration
+        // order isn't preserved as call order here: the more-recently
+        // registered expectation still wins first, for as long as it has
+        // room.
+        $double->expects('find')->with(1)->returns($first);
+        $double->expects('find')->with(1)->returns($second);
+
+        $this->assertSame($second, $double->find(1));
+        $this->assertSame($first, $double->find(1));
+
+        $double->verify();
+    }
+
     public function test_in_order_calls_made_in_declared_order_succeed(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);

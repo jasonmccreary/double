@@ -54,19 +54,30 @@ final class ProxyBehavior
         return $expectation->resolveReturn($arguments);
     }
 
-    // Last-registered expectation whose arguments match wins — no
-    // exhaustion-based fallthrough to an earlier expectation once one is found.
+    // Last-registered expectation whose arguments match *and still has room
+    // under its own times()/maximumCalls() budget* wins, falling through to
+    // less-recently-registered candidates once one is exhausted. Only once
+    // every matching candidate is exhausted does the most-recently-registered
+    // one get reused, purely so the "exceeds maximum" error still has a
+    // concrete expectation to report against.
     private static function findMatch(DoubleState $state, string $method, array $arguments): ?MethodExpectation
     {
         $candidates = $state->expectationsFor($method);
+        $fallback = null;
 
         for ($i = count($candidates) - 1; $i >= 0; $i--) {
-            if ($candidates[$i]->matchesArguments($arguments)) {
+            if (! $candidates[$i]->matchesArguments($arguments)) {
+                continue;
+            }
+
+            if ($candidates[$i]->timesMatched() < $candidates[$i]->maximumCalls()) {
                 return $candidates[$i];
             }
+
+            $fallback ??= $candidates[$i];
         }
 
-        return null;
+        return $fallback;
     }
 
     /**

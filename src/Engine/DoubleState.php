@@ -11,9 +11,10 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
  *
  * Holds everything about one double: the target it was created for, its
  * display label, its mode, every expectation registered against it (in
- * registration order, since matching is "last-registered-that-matches
- * wins"), and every call actually observed, regardless of whether it
- * matched anything.
+ * registration order, since matching prefers the last-registered candidate
+ * that both matches and still has remaining call capacity — see
+ * ProxyBehavior::findMatch()), and every call actually observed, regardless
+ * of whether it matched anything.
  */
 final class DoubleState
 {
