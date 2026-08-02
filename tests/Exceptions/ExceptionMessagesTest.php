@@ -113,6 +113,42 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('call-limit-exceeded', $exception->getMessage());
     }
 
+    /**
+     * Failure mode 1a's motivating scenario: a generic catch-all steals a
+     * call meant for a still-unconsumed, more-specific expectation and then
+     * throws once its own budget is spent — the reported expectation is
+     * never the real problem. Naming the other still-matching expectation(s)
+     * makes that self-diagnosing instead of requiring a source-level read of
+     * registration order.
+     */
+    public function test_renders_call_limit_exceeded_with_one_other_matching_expectation(): void
+    {
+        $exception = new ExpectationCallLimitExceededException(
+            'OutputInterface',
+            'writeln',
+            "' <fg=green;options=bold>DONE</>', 32",
+            1,
+            2,
+            otherMatchingExpectations: 1,
+        );
+
+        $this->assertMatchesGolden('call-limit-exceeded-with-other-match', $exception->getMessage());
+    }
+
+    public function test_renders_call_limit_exceeded_with_multiple_other_matching_expectations(): void
+    {
+        $exception = new ExpectationCallLimitExceededException(
+            'OutputInterface',
+            'writeln',
+            "' <fg=green;options=bold>DONE</>', 32",
+            1,
+            2,
+            otherMatchingExpectations: 2,
+        );
+
+        $this->assertMatchesGolden('call-limit-exceeded-with-other-matches', $exception->getMessage());
+    }
+
     public function test_renders_unexpected_call_on_a_fabricated_double_with_provenance_note(): void
     {
         $exception = new UnexpectedCallException('Book', 'getAuthor', '', fabricated: true);

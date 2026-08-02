@@ -207,6 +207,34 @@ final class TestDoubleTest extends TestCase
         $double->verify();
     }
 
+    /**
+     * Failure mode 1a's diagnostics improvement: once every matching
+     * expectation for a method+args is genuinely exhausted, the "exceeds
+     * maximum" error names how many *other* expectations also matched but
+     * weren't the one selected — the fact that made this failure mode take a
+     * source-level read of registration order to diagnose in the first
+     * place.
+     */
+    public function test_call_limit_exceeded_names_other_matching_expectations_left_unselected(): void
+    {
+        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double->expects('find')->with(1)->returns(new Book('First'));
+        $double->expects('find')->with(1)->returns(new Book('Second'));
+
+        $double->find(1);
+        $double->find(1);
+
+        try {
+            $double->find(1);
+            $this->fail('Expected PHPUnitExpectationCallLimitExceededException to be thrown.');
+        } catch (PHPUnitExpectationCallLimitExceededException $exception) {
+            $this->assertStringContainsString(
+                "Note: 1 other expectation for `find` also matches this call's arguments but was not selected — check registration order.",
+                $exception->getMessage(),
+            );
+        }
+    }
+
     public function test_in_order_calls_made_in_declared_order_succeed(): void
     {
         $double = TestDouble::for(BookRepositoryInterface::class);

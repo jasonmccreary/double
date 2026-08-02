@@ -42,6 +42,7 @@ final class ProxyBehavior
                 $expectation->maximumCalls(),
                 $expectation->timesMatched(),
                 $state->isFabricated(),
+                self::countOtherMatchingExpectations($state, $method, $arguments, $expectation),
             );
         }
 
@@ -78,6 +79,31 @@ final class ProxyBehavior
         }
 
         return $fallback;
+    }
+
+    /**
+     * How many *other* expectations registered for $method also match this
+     * call's arguments — walking the exact same candidate pool findMatch()
+     * already checked. Surfaced in expectationCallLimitExceeded()'s message
+     * so failure mode 1a (a starved expectation, not the one actually
+     * reported, is the real problem) is self-diagnosing instead of
+     * requiring a source-level read of registration order to spot.
+     */
+    private static function countOtherMatchingExpectations(
+        DoubleState $state,
+        string $method,
+        array $arguments,
+        MethodExpectation $selected,
+    ): int {
+        $count = 0;
+
+        foreach ($state->expectationsFor($method) as $candidate) {
+            if ($candidate !== $selected && $candidate->matchesArguments($arguments)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**

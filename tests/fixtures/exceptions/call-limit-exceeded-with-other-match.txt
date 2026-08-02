@@ -1,0 +1,1 @@
+Test double `OutputInterface` received 2 calls to `writeln(' <fg=green;options=bold>DONE</>', 32)`, but your expectation only allowed 1 call. Note: 1 other expectation for `writeln` also matches this call's arguments but was not selected — check registration order.

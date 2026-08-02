@@ -55,6 +55,7 @@ final class ExceptionFactory
         int $maximum,
         int $callNumber,
         bool $fabricated,
+        int $otherMatchingExpectations = 0,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
             return new PHPUnitExpectationCallLimitExceededException(
@@ -64,10 +65,19 @@ final class ExceptionFactory
                 $maximum,
                 $callNumber,
                 $fabricated,
+                $otherMatchingExpectations,
             );
         }
 
-        return new ExpectationCallLimitExceededException($label, $method, $argumentsDescription, $maximum, $callNumber, $fabricated);
+        return new ExpectationCallLimitExceededException(
+            $label,
+            $method,
+            $argumentsDescription,
+            $maximum,
+            $callNumber,
+            $fabricated,
+            $otherMatchingExpectations,
+        );
     }
 
     /**
