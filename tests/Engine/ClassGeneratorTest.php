@@ -29,6 +29,8 @@ use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\HookedPropertyInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
+use JMac\Testing\Tests\Support\NewInInitializerDefault;
+use JMac\Testing\Tests\Support\NewInInitializerParamInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
@@ -626,6 +628,73 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertTrue($parameter->isDefaultValueAvailable());
         $this->assertSame(Suit::Hearts, $parameter->getDefaultValue());
+    }
+
+    /**
+     * Regression check: Illuminate\Http\Resources\ConditionallyLoadsAttributes::when()
+     * declares an untyped `$default = new MissingValue` parameter — PHP 8.1+
+     * "new in initializers" syntax. ReflectionParameter::getDefaultValue()
+     * evaluates that into a real MissingValue instance, and the old code
+     * fed it straight to var_export(), which (for an object with no
+     * __set_state()) emits a `Class::__set_state(...)` static method call —
+     * not a legal constant expression in a parameter default, and an
+     * uncatchable compile-time fatal once the generated source was eval()'d.
+     * Doubling this shape must not crash at all.
+     */
+    public function test_generates_a_class_with_a_new_in_initializer_default_without_crashing(): void
+    {
+        $generated = (new ClassGenerator)->generate(NewInInitializerParamInterface::class);
+
+        $this->assertTrue(class_exists($generated));
+    }
+
+    /**
+     * The untyped parameter has no type to widen — its generated override
+     * substitutes a plain `null` default and stays untyped, same as any
+     * other untyped default (see test_does_not_add_a_spurious_nullable_marker_to_a_genuinely_untyped_parameter()).
+     */
+    public function test_new_in_initializer_default_on_an_untyped_parameter_becomes_a_bare_null(): void
+    {
+        $generated = (new ClassGenerator)->generate(NewInInitializerParamInterface::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'untyped'))->getParameters()[1];
+
+        $this->assertNull($parameter->getType());
+        $this->assertTrue($parameter->isDefaultValueAvailable());
+        $this->assertNull($parameter->getDefaultValue());
+    }
+
+    /**
+     * The typed parameter's declared type (NewInInitializerDefault) doesn't
+     * itself allow null, so substituting `= null` for the unreproducible
+     * `new NewInInitializerDefault` default requires widening the generated
+     * override's type to `?NewInInitializerDefault` to keep it legal —
+     * otherwise this would trade the original fatal for "Default value ...
+     * is not compatible with declared type".
+     */
+    public function test_new_in_initializer_default_on_a_typed_parameter_widens_to_nullable(): void
+    {
+        $generated = (new ClassGenerator)->generate(NewInInitializerParamInterface::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'typed'))->getParameters()[0];
+
+        $this->assertTrue($parameter->allowsNull());
+        $this->assertSame('?'.NewInInitializerDefault::class, (string) $parameter->getType());
+        $this->assertTrue($parameter->isDefaultValueAvailable());
+        $this->assertNull($parameter->getDefaultValue());
+    }
+
+    /**
+     * Behavioral coverage to go with the signature-level assertions above:
+     * the double is actually callable end-to-end, including with the
+     * parameter omitted entirely (exercising the generated default).
+     */
+    public function test_calls_a_method_with_a_new_in_initializer_default_without_error(): void
+    {
+        $instance = TestDouble::for(NewInInitializerParamInterface::class);
+        $instance->allows('untyped')->returns('ok');
+
+        $this->assertSame('ok', $instance->untyped(true));
     }
 
     public function test_generated_double_satisfies_type_hints_in_real_collaborators(): void

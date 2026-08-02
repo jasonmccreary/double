@@ -365,20 +365,60 @@ final class ClassGenerator
     private function buildParameter(\ReflectionParameter $parameter, \ReflectionClass $declaringClass): string
     {
         $type = $parameter->getType();
-        $typeDeclaration = $type !== null ? $this->stringifyType($type, $declaringClass).' ' : '';
 
         $byRef = $parameter->isPassedByReference() ? '&' : '';
         $variadic = $parameter->isVariadic() ? '...' : '';
 
         $default = '';
+        $forceNullable = false;
 
         if (! $parameter->isVariadic() && $parameter->isDefaultValueAvailable()) {
-            $default = ' = '.($parameter->isDefaultValueConstant()
-                ? $this->qualifyConstantName($parameter->getDefaultValueConstantName(), $declaringClass)
-                : var_export($parameter->getDefaultValue(), true));
+            if ($parameter->isDefaultValueConstant()) {
+                $default = ' = '.$this->qualifyConstantName($parameter->getDefaultValueConstantName(), $declaringClass);
+            } elseif ($this->isReproducibleDefault($value = $parameter->getDefaultValue())) {
+                $default = ' = '.var_export($value, true);
+            } else {
+                // Not a scalar/array/enum-case/resolvable-constant — in valid PHP this can
+                // only be a PHP 8.1+ "new in initializers" object default (e.g. `= new
+                // MissingValue`), which getDefaultValue() already evaluated into a real
+                // instance. var_export() on an arbitrary object without __set_state()
+                // emits a static method call, which isn't a legal constant expression in
+                // a parameter default — a compile-time fatal once eval()'d. The generated
+                // override only ever forwards through func_get_args() anyway (see
+                // buildMethod()), so the real default value is never actually needed here:
+                // substitute a benign `null` and widen the type to accept it if it doesn't
+                // already.
+                $default = ' = null';
+                $forceNullable = $type !== null && ! $type->allowsNull();
+            }
         }
 
+        $typeDeclaration = $type !== null ? $this->stringifyType($type, $declaringClass, $forceNullable).' ' : '';
+
         return sprintf('%s%s%s$%s%s', $typeDeclaration, $byRef, $variadic, $parameter->getName(), $default);
+    }
+
+    /**
+     * Whether $value round-trips through var_export() as a legal PHP constant
+     * expression: scalars, null, enum cases (var_export() has emitted these as
+     * `\Enum::CASE` since PHP 8.1), and arrays composed only of those,
+     * recursively. A plain object doesn't have this property — var_export()
+     * falls back to `Class::__set_state(...)`, a static method call, which
+     * PHP does not allow in a default-value position.
+     */
+    private function isReproducibleDefault(mixed $value): bool
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (! $this->isReproducibleDefault($item)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $value === null || is_scalar($value) || $value instanceof \UnitEnum;
     }
 
     /**
@@ -416,24 +456,36 @@ final class ClassGenerator
             : "\\{$resolved}::{$const}";
     }
 
-    private function stringifyType(\ReflectionType $type, \ReflectionClass $declaringClass): string
+    /**
+     * $forceNullable is only ever set by buildParameter() substituting a
+     * benign `null` default for an unreproducible one (see
+     * isReproducibleDefault()) on a type that didn't already allow null —
+     * widening the type to match is what keeps `= null` legal there.
+     */
+    private function stringifyType(\ReflectionType $type, \ReflectionClass $declaringClass, bool $forceNullable = false): string
     {
         if ($type instanceof \ReflectionNamedType) {
-            return $this->stringifyNamedType($type, $declaringClass);
+            return $this->stringifyNamedType($type, $declaringClass, $forceNullable);
         }
 
         if ($type instanceof \ReflectionIntersectionType) {
-            return $this->stringifyIntersectionType($type, $declaringClass);
+            $intersection = $this->stringifyIntersectionType($type, $declaringClass);
+
+            // Plain intersection types have no nullable-shorthand syntax of their
+            // own — DNF (PHP 8.2+) is what makes "(A&B)|null" legal.
+            return $forceNullable ? "({$intersection})|null" : $intersection;
         }
 
         // ReflectionUnionType: members are either ReflectionNamedType or,
         // for a member like (A&B)|C, a nested ReflectionIntersectionType.
-        return implode('|', array_map(
+        $members = implode('|', array_map(
             fn (\ReflectionType $member): string => $member instanceof \ReflectionIntersectionType
                 ? '('.$this->stringifyIntersectionType($member, $declaringClass).')'
                 : $this->stringifyNamedType($member, $declaringClass),
             $type->getTypes(),
         ));
+
+        return $forceNullable && ! $type->allowsNull() ? "{$members}|null" : $members;
     }
 
     private function stringifyIntersectionType(\ReflectionIntersectionType $type, \ReflectionClass $declaringClass): string
@@ -461,7 +513,7 @@ final class ClassGenerator
      * so this contravariance problem can't apply, and rewriting it would
      * break the late static binding it exists for.
      */
-    private function stringifyNamedType(\ReflectionNamedType $type, \ReflectionClass $declaringClass): string
+    private function stringifyNamedType(\ReflectionNamedType $type, \ReflectionClass $declaringClass, bool $forceNullable = false): string
     {
         $name = $type->getName();
         $lower = strtolower($name);
@@ -476,7 +528,7 @@ final class ClassGenerator
             $name = '\\'.ltrim($name, '\\');
         }
 
-        $nullablePrefix = $type->allowsNull() && ! in_array($lower, ['mixed', 'null'], true) ? '?' : '';
+        $nullablePrefix = ($type->allowsNull() || $forceNullable) && ! in_array($lower, ['mixed', 'null'], true) ? '?' : '';
 
         return $nullablePrefix.$name;
     }
