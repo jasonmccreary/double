@@ -374,7 +374,7 @@ final class ClassGenerator
 
         if (! $parameter->isVariadic() && $parameter->isDefaultValueAvailable()) {
             $default = ' = '.($parameter->isDefaultValueConstant()
-                ? $this->qualifyConstantName($parameter->getDefaultValueConstantName())
+                ? $this->qualifyConstantName($parameter->getDefaultValueConstantName(), $declaringClass)
                 : var_export($parameter->getDefaultValue(), true));
         }
 
@@ -386,10 +386,34 @@ final class ClassGenerator
      * default (an enum case, a ::class constant) must be forced absolute —
      * otherwise PHP resolves it relative to the generated namespace instead
      * of the one the original signature was written in.
+     *
+     * "self"/"parent" prefixes are resolved against the declaring class first,
+     * same reasoning as stringifyNamedType(): left as literal keywords, they'd
+     * re-resolve inside the generated class's own body instead of the class
+     * that actually declared the default. Unlike a type, there's no
+     * contravariance escape hatch here — "\self::CONST" is simply an invalid
+     * class name, an eval()-time fatal rather than a compatibility rejection.
+     * "static" is left as a bare keyword (never backslash-qualified) for the
+     * same late-static-binding reason stringifyNamedType() leaves it alone.
      */
-    private function qualifyConstantName(string $name): string
+    private function qualifyConstantName(string $name, \ReflectionClass $declaringClass): string
     {
-        return str_contains($name, '::') && ! str_starts_with($name, '\\') ? '\\'.$name : $name;
+        if (! str_contains($name, '::')) {
+            return $name;
+        }
+
+        [$prefix, $const] = explode('::', $name, 2);
+
+        $resolved = match (strtolower($prefix)) {
+            'self' => $declaringClass->getName(),
+            'parent' => $declaringClass->getParentClass()->getName(),
+            'static' => $prefix,
+            default => $prefix,
+        };
+
+        return $resolved === 'static' || str_starts_with($resolved, '\\')
+            ? "{$resolved}::{$const}"
+            : "\\{$resolved}::{$const}";
     }
 
     private function stringifyType(\ReflectionType $type, \ReflectionClass $declaringClass): string

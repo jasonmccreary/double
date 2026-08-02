@@ -16,6 +16,9 @@ use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ByRefParamInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\ConstDefaultBase;
+use JMac\Testing\Tests\Support\ConstDefaultChild;
+use JMac\Testing\Tests\Support\ConstDefaultGrandparent;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
@@ -576,6 +579,43 @@ final class ClassGeneratorTest extends TestCase
         $parameter = (new \ReflectionMethod($generated, 'withParent'))->getParameters()[0];
 
         $this->assertSame(SelfTypedParamGrandparent::class, (string) $parameter->getType());
+    }
+
+    /**
+     * Regression check: ConstDefaultBase::withSelfConstant() defaults its
+     * parameter to "self::SELF_MODE", inherited unoverridden by
+     * ConstDefaultChild — the same shape as
+     * Illuminate\Console\OutputStyle::writeln(int $type = self::OUTPUT_NORMAL).
+     * Left unqualified against the declaring class, "self" would be
+     * backslash-prefixed literally ("\self::SELF_MODE") when re-emitted
+     * inside the generated class's own body — an outright "'\self' is an
+     * invalid class name" fatal at eval() time, not just an incompatible
+     * override. It must instead resolve to ConstDefaultBase, the class that
+     * actually declared it.
+     */
+    public function test_reconstructs_a_self_qualified_constant_default_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(ConstDefaultChild::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withSelfConstant'))->getParameters()[0];
+
+        $this->assertTrue($parameter->isDefaultValueAvailable());
+        $this->assertSame(ConstDefaultBase::SELF_MODE, $parameter->getDefaultValue());
+    }
+
+    /**
+     * Same regression, for a "parent::"-qualified constant default — must
+     * resolve to the declaring class's actual parent (ConstDefaultGrandparent),
+     * not re-emit the literal "parent" keyword.
+     */
+    public function test_reconstructs_a_parent_qualified_constant_default_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(ConstDefaultChild::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withParentConstant'))->getParameters()[0];
+
+        $this->assertTrue($parameter->isDefaultValueAvailable());
+        $this->assertSame(ConstDefaultGrandparent::PARENT_MODE, $parameter->getDefaultValue());
     }
 
     public function test_preserves_enum_case_default_values(): void
