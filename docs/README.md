@@ -1,16 +1,8 @@
 # Documentation
 
-Building the site: from this directory, run `composer install` once, then
-`composer build` to render these chapters into `build/*.html`. The page
-shell lives in `templates/*.html`, and hand-maintained assets (CSS, etc.)
-live in `assets/` — both are plain files you can edit directly; `build/`
-is regenerated from them and from the Markdown chapters on every run. Set
-`TORCHLIGHT_TOKEN` (from https://torchlight.dev) in the environment first
-to get syntax-highlighted code blocks; without it, code renders as plain
-text.
+Building the site: from this directory, run `composer install` once, then `composer build` to render these chapters into `build/*.html`. The page shell lives in `templates/*.html`, and hand-maintained assets (CSS, etc.) live in `assets/` — both are plain files you can edit directly; `build/` is regenerated from them and from the Markdown chapters on every run. Set `TORCHLIGHT_TOKEN` (from https://torchlight.dev) in the environment first to get syntax-highlighted code blocks; without it, code renders as plain text.
 
-This directory has its own `composer.json`, separate from the library's,
-since it's expected to move into its own project eventually.
+This directory has its own `composer.json`, separate from the library's, since it's expected to move into its own project eventually.
 
 1. [Introduction](01-introduction.md)
 2. [Installation](02-installation.md)

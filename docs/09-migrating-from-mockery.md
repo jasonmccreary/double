@@ -1,7 +1,6 @@
 # Migrating from Mockery
 
-Most of what you already know from Mockery carries over directly — this
-page maps the concepts you're used to onto the equivalent here.
+Most of what you already know from Mockery carries over directly — this page maps the concepts you're used to onto the equivalent here.
 
 ## Quick Reference
 
@@ -25,6 +24,7 @@ page maps the concepts you're used to onto the equivalent here.
 | `between($min, $max)` | `times($min, $max)` |
 | `ordered()` | `inOrder()` |
 | `globally()` | not available — ordering applies per double, see [below](#ordering) |
+| `byDefault()` | not available — see [below](#a-few-things-that-didnt-carry-over) |
 | `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;` — see [PHPUnit Integration](08-phpunit-integration.md) |
 
 ## Argument Matchers
@@ -48,56 +48,27 @@ page maps the concepts you're used to onto the equivalent here.
 
 ## Modes, Not Mock Kinds
 
-Mockery starts with a choice: a mock, a spy, or a partial mock. Here,
-there's one kind of thing — a test double — and the equivalent choice is
-a mode you add on top of it, covered fully in
-[Creating Test Doubles](03-creating-test-doubles.md):
+Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing — a test double — and the equivalent choice is a mode you add on top of it, covered fully in [Creating Test Doubles](03-creating-test-doubles.md):
 
-- Mockery's plain `mock()`, once you call `shouldIgnoreMissing()`,
-  behaves like **Loose** mode here — which is simply the default, nothing
-  to opt into.
-- A strict `mock()` with no leniency maps to **Strict** mode
-  (`->strict()`).
-- `shouldDeferMissing()` maps to **Passthru** mode
-  (`->passthru($realInstance)`).
+- Mockery's plain `mock()`, once you call `shouldIgnoreMissing()`, behaves like **Loose** mode here — which is simply the default, nothing to opt into.
+- A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).
+- `shouldDeferMissing()` maps to **Passthru** mode (`->passthru($realInstance)`).
 
 ### There's No Separate "Spy"
 
-In Mockery, `spy()` is its own constructor. Here, `received()` — checking
-whether something was actually called — is available on every double,
-regardless of how it was created or which mode it's in. You don't choose
-a "spy" up front; you reach for `received()` whenever you want to check
-after the fact, on the same double you'd otherwise configure with
-`expects()`/`allows()`. See [Verification](06-verification.md).
+In Mockery, `spy()` is its own constructor. Here, `received()` — checking whether something was actually called — is available on every double, regardless of how it was created or which mode it's in. You don't choose a "spy" up front; you reach for `received()` whenever you want to check after the fact, on the same double you'd otherwise configure with `expects()`/`allows()`. See [Verification](06-verification.md).
 
-Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this
-spy received no calls," but Mockery only checks whether the mock was
-invoked as a callable — it says nothing about calls to its methods, which
-is what most people actually mean and expect it to check. That's the trap
-`unused()` exists to close: it asserts the double received zero calls to
-any method, which is almost certainly what you meant in the first place.
+Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy received no calls," but Mockery only checks whether the mock was invoked as a callable — it says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap `unused()` exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.
 
 ## Ordering
 
-Mockery orders calls per-mock by default, with `globally()` available for
-a single sequence shared across every mock in a test. This library keeps
-the per-double default and doesn't offer a global equivalent. If you find
-yourself needing a sequence that spans multiple doubles, it's worth
-pausing to consider whether the test is asserting more about call order
-than the behavior actually requires.
+Mockery orders calls per-mock by default, with `globally()` available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.
 
 ## A Few Things That Didn't Carry Over
 
 A couple of Mockery features aren't available here, by design:
 
-- **Aliases.** If you're used to `shouldReceive()`, `andReturn()`, or
-  other alternate spellings for the same concept, those don't exist
-  here — each concept has exactly one verb. See
-  [One Verb per Concept](01-introduction.md#one-verb-per-concept).
-- **`ducktype()`** — matching "anything with these methods" — isn't
-  included. `Argument::satisfies()` covers the same need without a
-  dedicated verb.
-- **Static method mocking** (Mockery's `alias:` mocks). Mockery's own
-  documentation already treats this as a last resort, and this library
-  doesn't attempt to improve on it. See
-  [Static Methods](04-expectations.md#static-methods).
+- **Aliases.** If you're used to `shouldReceive()`, `andReturn()`, or other alternate spellings for the same concept, those don't exist here — each concept has exactly one verb. See [One Verb per Concept](01-introduction.md#one-verb-per-concept).
+- **`ducktype()`** — matching "anything with these methods" — isn't included. `Argument::satisfies()` covers the same need without a dedicated verb.
+- **Static method mocking** (Mockery's `alias:` mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See [Static Methods](04-expectations.md#static-methods).
+- **`byDefault()`** — marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, `allows()` with no `times()`/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's `with()` constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior — a `byDefault()` expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at `verify()`.
