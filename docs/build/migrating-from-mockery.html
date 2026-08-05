@@ -14,8 +14,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Migrating from Mockery · Test Double</title>
-<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<title>Migrating from Mockery · Double</title>
+<meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body class="antialiased">
@@ -39,7 +39,7 @@
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
       </button>
-      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
     </nav>
   </div>
 </header>
@@ -50,7 +50,7 @@
       <ol class="chapter-list" role="list">
         <li><a href="index.html">Introduction</a></li>
         <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-test-doubles.html">Creating Test Doubles</a></li>
+        <li><a href="creating-doubles.html">Creating Doubles</a></li>
         <li><a href="expectations.html">Expectations</a></li>
         <li><a href="argument-matching.html">Argument Matching</a></li>
         <li><a href="verification.html">Verification</a></li>
@@ -66,8 +66,7 @@
     <div class="content-inner">
       <article class="prose">
         <h1 class="page-title">Migrating from Mockery</h1>
-<p>Most of what you already know from Mockery carries over directly — this
-page maps the concepts you're used to onto the equivalent here.</p>
+<p>Most of what you already know from Mockery carries over directly — this page maps the concepts you're used to onto the equivalent here.</p>
 <h2 id="quick-reference">Quick Reference</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -79,19 +78,19 @@ page maps the concepts you're used to onto the equivalent here.</p>
 <tbody>
 <tr>
 <td><code>Mockery::mock(Foo::class)</code></td>
-<td><code>TestDouble::for(Foo::class)</code></td>
+<td><code>Double::for(Foo::class)</code></td>
 </tr>
 <tr>
 <td><code>Mockery::spy(Foo::class)</code></td>
-<td><code>TestDouble::for(Foo::class)</code> — spy-style checking is <code>received()</code>, available on every double (see <a href="#theres-no-separate-spy">below</a>)</td>
+<td><code>Double::for(Foo::class)</code> — spy-style checking is <code>received()</code>, available on every double (see <a href="#theres-no-separate-spy">below</a>)</td>
 </tr>
 <tr>
 <td><code>Mockery::mock()-&gt;shouldIgnoreMissing()</code></td>
-<td><code>TestDouble::for(Foo::class)</code> — this is simply the default, see <a href="creating-test-doubles.html#modes">Modes</a></td>
+<td><code>Double::for(Foo::class)</code> — this is simply the default, see <a href="creating-doubles.html#modes">Modes</a></td>
 </tr>
 <tr>
 <td><code>Mockery::mock(Foo::class, [$args])-&gt;shouldDeferMissing()</code></td>
-<td><code>TestDouble::for(Foo::class)-&gt;passthru($realInstance)</code></td>
+<td><code>Double::for(Foo::class)-&gt;passthru($realInstance)</code></td>
 </tr>
 <tr>
 <td><code>shouldReceive('foo')-&gt;once()-&gt;andReturn($x)</code></td>
@@ -148,6 +147,10 @@ page maps the concepts you're used to onto the equivalent here.</p>
 <tr>
 <td><code>globally()</code></td>
 <td>not available — ordering applies per double, see <a href="#ordering">below</a></td>
+</tr>
+<tr>
+<td><code>byDefault()</code></td>
+<td>not available — see <a href="#a-few-things-that-didnt-carry-over">below</a></td>
 </tr>
 <tr>
 <td><code>Mockery::close()</code></td>
@@ -223,53 +226,24 @@ page maps the concepts you're used to onto the equivalent here.</p>
 </tbody>
 </table></div>
 <h2 id="modes-not-mock-kinds">Modes, Not Mock Kinds</h2>
-<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here,
-there's one kind of thing — a test double — and the equivalent choice is
-a mode you add on top of it, covered fully in
-<a href="creating-test-doubles.html">Creating Test Doubles</a>:</p>
+<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing — a double — and the equivalent choice is a mode you add on top of it, covered fully in <a href="creating-doubles.html">Creating Doubles</a>:</p>
 <ul>
-<li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>,
-behaves like <strong>Loose</strong> mode here — which is simply the default, nothing
-to opt into.</li>
-<li>A strict <code>mock()</code> with no leniency maps to <strong>Strict</strong> mode
-(<code>-&gt;strict()</code>).</li>
-<li><code>shouldDeferMissing()</code> maps to <strong>Passthru</strong> mode
-(<code>-&gt;passthru($realInstance)</code>).</li>
+<li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>, behaves like <strong>Loose</strong> mode here — which is simply the default, nothing to opt into.</li>
+<li>A strict <code>mock()</code> with no leniency maps to <strong>Strict</strong> mode (<code>-&gt;strict()</code>).</li>
+<li><code>shouldDeferMissing()</code> maps to <strong>Passthru</strong> mode (<code>-&gt;passthru($realInstance)</code>).</li>
 </ul>
 <h3 id="theres-no-separate-spy">There's No Separate &quot;Spy&quot;</h3>
-<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> — checking
-whether something was actually called — is available on every double,
-regardless of how it was created or which mode it's in. You don't choose
-a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check
-after the fact, on the same double you'd otherwise configure with
-<code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
-<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this
-spy received no calls,&quot; but Mockery only checks whether the mock was
-invoked as a callable — it says nothing about calls to its methods, which
-is what most people actually mean and expect it to check. That's the trap
-<code>unused()</code> exists to close: it asserts the double received zero calls to
-any method, which is almost certainly what you meant in the first place.</p>
+<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> — checking whether something was actually called — is available on every double, regardless of how it was created or which mode it's in. You don't choose a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check after the fact, on the same double you'd otherwise configure with <code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
+<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this spy received no calls,&quot; but Mockery only checks whether the mock was invoked as a callable — it says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap <code>unused()</code> exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.</p>
 <h2 id="ordering">Ordering</h2>
-<p>Mockery orders calls per-mock by default, with <code>globally()</code> available for
-a single sequence shared across every mock in a test. This library keeps
-the per-double default and doesn't offer a global equivalent. If you find
-yourself needing a sequence that spans multiple doubles, it's worth
-pausing to consider whether the test is asserting more about call order
-than the behavior actually requires.</p>
+<p>Mockery orders calls per-mock by default, with <code>globally()</code> available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.</p>
 <h2 id="a-few-things-that-didnt-carry-over">A Few Things That Didn't Carry Over</h2>
 <p>A couple of Mockery features aren't available here, by design:</p>
 <ul>
-<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or
-other alternate spellings for the same concept, those don't exist
-here — each concept has exactly one verb. See
-<a href="index.html#one-verb-per-concept">One Verb per Concept</a>.</li>
-<li><strong><code>ducktype()</code></strong> — matching &quot;anything with these methods&quot; — isn't
-included. <code>Argument::satisfies()</code> covers the same need without a
-dedicated verb.</li>
-<li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own
-documentation already treats this as a last resort, and this library
-doesn't attempt to improve on it. See
-<a href="expectations.html#static-methods">Static Methods</a>.</li>
+<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or other alternate spellings for the same concept, those don't exist here — each concept has exactly one verb. See <a href="index.html#one-verb-per-concept">One Verb per Concept</a>.</li>
+<li><strong><code>ducktype()</code></strong> — matching &quot;anything with these methods&quot; — isn't included. <code>Argument::satisfies()</code> covers the same need without a dedicated verb.</li>
+<li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See <a href="expectations.html#static-methods">Static Methods</a>.</li>
+<li><strong><code>byDefault()</code></strong> — marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, <code>allows()</code> with no <code>times()</code>/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's <code>with()</code> constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior — a <code>byDefault()</code> expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at <code>verify()</code>.</li>
 </ul>
 
       </article>
@@ -291,9 +265,9 @@ doesn't attempt to improve on it. See
 </div>
 <footer class="site-footer">
   <div class="footer-inner">
-    <span>Test Double</span>
+    <span>Double</span>
     <span>MIT Licensed</span>
-    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <a href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
     <span class="footer-spacer">jasonmccreary/test-double</span>
   </div>
 </footer>

@@ -14,8 +14,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Verification · Test Double</title>
-<meta name="description" content="Documentation for Test Double, a modern, human-friendly PHP test double library.">
+<title>Verification · Double</title>
+<meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body class="antialiased">
@@ -39,7 +39,7 @@
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
       </button>
-      <a class="topbar-link" href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
     </nav>
   </div>
 </header>
@@ -50,7 +50,7 @@
       <ol class="chapter-list" role="list">
         <li><a href="index.html">Introduction</a></li>
         <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-test-doubles.html">Creating Test Doubles</a></li>
+        <li><a href="creating-doubles.html">Creating Doubles</a></li>
         <li><a href="expectations.html">Expectations</a></li>
         <li><a href="argument-matching.html">Argument Matching</a></li>
         <li><a href="verification.html" aria-current="page">Verification</a></li>
@@ -66,60 +66,30 @@
     <div class="content-inner">
       <article class="prose">
         <h1 class="page-title">Verification</h1>
-<p><code>expects()</code> and <code>allows()</code> describe what you expect to happen before the
-code under test runs. Verification is the other half — confirming,
-afterward, that things happened the way you set up.</p>
+<p><code>expects()</code> and <code>allows()</code> describe what you expect to happen before the code under test runs. Verification is the other half — confirming, afterward, that things happened the way you set up.</p>
 <p>There are three things you may check, and two ways to check them.</p>
 <h2 id="checking-your-expectations-verify">Checking Your Expectations: <code>verify()</code></h2>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">create</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">verify</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
-<p><code>verify()</code> looks at every <code>expects()</code> you configured on the double and
-fails if any of them weren't met. If you're using PHPUnit, you don't need
-to call this yourself at all — see
-<a href="phpunit-integration.html">PHPUnit Integration</a> for a trait that runs it
-automatically at the end of every test. Otherwise, call it once, wherever
-your test naturally ends.</p>
-<p>When something's unmet, the message doesn't just say it didn't happen —
-it shows you what did happen instead, if anything, which is usually
-enough to spot a typo or a stale value at a glance. See
-<a href="failure-messages.html">Failure Messages</a> for an example.</p>
+<p><code>verify()</code> looks at every <code>expects()</code> you configured on the double and fails if any of them weren't met. If you're using PHPUnit, you don't need to call this yourself at all — see <a href="phpunit-integration.html">PHPUnit Integration</a> for a trait that runs it automatically at the end of every test. Otherwise, call it once, wherever your test naturally ends.</p>
+<p>When something's unmet, the message doesn't just say it didn't happen — it shows you what did happen instead, if anything, which is usually enough to spot a typo or a stale value at a glance. See <a href="failure-messages.html">Failure Messages</a> for an example.</p>
 <h2 id="checking-what-happened-received">Checking What Happened: <code>received()</code></h2>
-<p>Sometimes you'd rather not declare an expectation up front, and just look
-back afterward to confirm something happened:</p>
+<p>Sometimes you'd rather not declare an expectation up front, and just look back afterward to confirm something happened:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">create</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
 <p>You may compose it the same way you would an expectation:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">times</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">2</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">delete</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">never</span><span style="color: #D6DEEB;">();</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">atLeastOnce</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
-<p>Leave every modifier off and <code>received('save')</code> already means &quot;was this
-called at least once.&quot; Add <code>with()</code> to narrow it to specific arguments,
-and <code>never()</code>/<code>times()</code>/<code>atLeastOnce()</code> to be precise about the count.</p>
+<p>Leave every modifier off and <code>received('save')</code> already means &quot;was this called at least once.&quot; Add <code>with()</code> to narrow it to specific arguments, and <code>never()</code>/<code>times()</code>/<code>atLeastOnce()</code> to be precise about the count.</p>
 <h3 id="when-the-check-runs">When the Check Runs</h3>
-<p>A <code>received()</code> call doesn't check anything the moment you write it,
-since it doesn't yet know whether you're about to chain <code>-&gt;with()</code> or
-<code>-&gt;never()</code> onto it. The check runs once the chain is finished, which for
-most test code is the instant the statement completes:</p>
+<p>A <code>received()</code> call doesn't check anything the moment you write it, since it doesn't yet know whether you're about to chain <code>-&gt;with()</code> or <code>-&gt;never()</code> onto it. The check runs once the chain is finished, which for most test code is the instant the statement completes:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">never</span><span style="color: #D6DEEB;">(); </span><span style="color: #637777;">//</span><span style="color: #637777;"> checked right here</span></div></code></pre></div>
-<p>If you assign a <code>received()</code> chain to something that outlives the
-statement — a property on the test case, say, rather than a local
-variable — there's no guarantee it's checked right away. Using the
-<a href="phpunit-integration.html">PHPUnit <code>VerifiesDoubles</code> trait</a> removes this
-concern entirely: every <code>received()</code> assertion made during a test is
-checked once that test ends, regardless of what you did with it.</p>
+<p>If you assign a <code>received()</code> chain to something that outlives the statement — a property on the test case, say, rather than a local variable — there's no guarantee it's checked right away. Using the <a href="phpunit-integration.html">PHPUnit <code>VerifiesDoubles</code> trait</a> removes this concern entirely: every <code>received()</code> assertion made during a test is checked once that test ends, regardless of what you did with it.</p>
 <h2 id="checking-nothing-happened-unused">Checking Nothing Happened: <code>unused()</code></h2>
-<p><code>received($method)-&gt;never()</code> checks one named method. Sometimes you want
-something stronger — a double that a code path should never have touched
-at all, regardless of which of its methods that would have been:</p>
+<p><code>received($method)-&gt;never()</code> checks one named method. Sometimes you want something stronger — a double that a code path should never have touched at all, regardless of which of its methods that would have been:</p>
 <div class="code-block"><span class="code-lang">php</span><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$service</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">create</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$logger</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">unused</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
-<p><code>unused()</code> fails the moment any method was called on the double, naming
-every call it actually saw:</p>
-<div class="code-block"><span class="code-lang">text</span><pre><code>Test double `Logger` expected no calls at all, but received: `info('something happened')`.
+<p><code>unused()</code> fails the moment any method was called on the double, naming every call it actually saw:</p>
+<div class="code-block"><span class="code-lang">text</span><pre><code>Double `Logger` expected no calls at all, but received: `info('something happened')`.
 </code></pre></div>
-<p>Unlike <code>received()</code>, there's no fluent chain to wait on — <code>unused()</code>
-checks immediately, the same way <code>verify()</code> does, rather than deferring
-until the statement (or the test) finishes.</p>
-<p>This is also the fix for a well-known Mockery trap: <code>shouldNotHaveBeenCalled()</code>
-sounds like &quot;this spy received no calls,&quot; but it only checks whether the
-mock itself was invoked as a callable — it says nothing about calls to
-its methods, which is what most people actually mean. <code>unused()</code> checks
-exactly that: every method, zero calls.</p>
+<p>Unlike <code>received()</code>, there's no fluent chain to wait on — <code>unused()</code> checks immediately, the same way <code>verify()</code> does, rather than deferring until the statement (or the test) finishes.</p>
+<p>This is also the fix for a well-known Mockery trap: <code>shouldNotHaveBeenCalled()</code> sounds like &quot;this spy received no calls,&quot; but it only checks whether the mock itself was invoked as a callable — it says nothing about calls to its methods, which is what most people actually mean. <code>unused()</code> checks exactly that: every method, zero calls.</p>
 
       </article>
       <nav class="pager" aria-label="Chapter navigation"><a href="argument-matching.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Argument Matching</span></a><a href="failure-messages.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Failure Messages</span></a></nav>
@@ -138,9 +108,9 @@ exactly that: every method, zero calls.</p>
 </div>
 <footer class="site-footer">
   <div class="footer-inner">
-    <span>Test Double</span>
+    <span>Double</span>
     <span>MIT Licensed</span>
-    <a href="https://github.com/jasonmccreary/test-double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <a href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
     <span class="footer-spacer">jasonmccreary/test-double</span>
   </div>
 </footer>
