@@ -362,14 +362,59 @@ if ($collector->blocks) {
     }
 }
 
-// --- copy hand-maintained assets (CSS, etc.) into the build output ---
+// --- copy hand-maintained assets (CSS, images, etc.) into the build output ---
 
-if (! is_dir($siteDir.'/assets')) {
-    mkdir($siteDir.'/assets', 0755, true);
+/**
+ * Recursively copies a file or directory from $from to $to.
+ */
+function copy_asset(string $from, string $to): void
+{
+    if (is_dir($from)) {
+        if (! is_dir($to)) {
+            mkdir($to, 0755, true);
+        }
+
+        foreach (scandir($from) as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            copy_asset($from.'/'.$entry, $to.'/'.$entry);
+        }
+
+        return;
+    }
+
+    copy($from, $to);
 }
 
+/**
+ * Recursively deletes a directory, so stale output doesn't outlive files
+ * removed from the source since the last build.
+ */
+function remove_directory(string $dir): void
+{
+    if (! is_dir($dir)) {
+        return;
+    }
+
+    foreach (scandir($dir) as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+
+        $path = $dir.'/'.$entry;
+        is_dir($path) ? remove_directory($path) : unlink($path);
+    }
+
+    rmdir($dir);
+}
+
+remove_directory($siteDir.'/assets');
+mkdir($siteDir.'/assets', 0755, true);
+
 foreach (glob($assetsDir.'/*') as $asset) {
-    copy($asset, $siteDir.'/assets/'.basename($asset));
+    copy_asset($asset, $siteDir.'/assets/'.basename($asset));
 }
 
 // --- assemble and write each page ---

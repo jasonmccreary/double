@@ -141,16 +141,29 @@ svg {
 
 .wordmark {
   grid-column: 1;
-  font-size: 1.0625rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
   text-decoration: none;
-  color: var(--ink);
   white-space: nowrap;
 }
 
-.wordmark span {
-  color: var(--accent);
+.wordmark-logo {
+  height: 2rem;
+  width: auto;
+  display: block;
+}
+
+.wordmark-logo text {
+  font-family: var(--font-mono);
+  fill: var(--ink);
+}
+
+.wordmark-logo .dot-a {
+  fill: var(--ink-muted);
+}
+
+.wordmark-logo .dot-b {
+  fill: var(--accent);
 }
 
 /* Mirrors the sidebar/toc widths below (see .sidebar, .toc) so the search

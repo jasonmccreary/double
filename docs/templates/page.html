@@ -17,12 +17,23 @@
 <title>{{TITLE}} · {{SITE_NAME}}</title>
 <meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="assets/site.css">
+<link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
 </head>
 <body class="antialiased">
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="index.html" class="wordmark" aria-label="Homepage">Test<span>Double</span></a>
+    <a href="index.html" class="wordmark" aria-label="Homepage">
+      <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
+        <text x="0" y="36" font-weight="500" font-size="32">Double</text>
+        <g transform="translate(119,17.6) scale(0.25)">
+          <circle cx="29" cy="19" r="12.5" class="dot-a"></circle>
+          <circle cx="29" cy="61" r="12.5" class="dot-a"></circle>
+          <circle cx="71" cy="19" r="12.5" class="dot-b"></circle>
+          <circle cx="71" cy="61" r="12.5" class="dot-b"></circle>
+        </g>
+      </svg>
+    </a>
 {{SEARCH_BUTTON}}
     <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
       <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
