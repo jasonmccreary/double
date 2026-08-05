@@ -113,8 +113,8 @@ does not exist. Did you mean `save`?
 only allowed 3 calls.
 </code></pre></div>
 <h2 id="a-call-happened-out-of-order">A Call Happened Out of Order</h2>
-<p>For expectations marked <a href="expectations.html#keeping-calls-in-order"><code>inOrder()</code></a>, a call that arrives too early fails immediately, naming both methods involved:</p>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `Connection` received `open()` out of order. Using `inOrder`,
+<p>For expectations marked <a href="expectations.html#keeping-calls-in-order"><code>ordered()</code></a>, a call that arrives too early fails immediately, naming both methods involved:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `Connection` received `open()` out of order. Using `ordered`,
 this was expected to be called before `close()` was called.
 </code></pre></div>
 <h2 id="setup-mistakes">Setup Mistakes</h2>

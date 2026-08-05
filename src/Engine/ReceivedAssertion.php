@@ -29,7 +29,7 @@ final class ReceivedAssertion
         private readonly DoubleState $state,
         private readonly string $method,
     ) {
-        $this->expectation = (new MethodExpectation($method, required: false))->atLeastOnce();
+        $this->expectation = (new MethodExpectation($method, required: false))->times(minimum: 1);
     }
 
     public function with(mixed ...$arguments): static
@@ -46,13 +46,6 @@ final class ReceivedAssertion
         return $this;
     }
 
-    public function atLeastOnce(): static
-    {
-        $this->expectation->atLeastOnce();
-
-        return $this;
-    }
-
     public function never(): static
     {
         $this->expectation->never();
@@ -60,7 +53,7 @@ final class ReceivedAssertion
         return $this;
     }
 
-    // Checked lazily, not eagerly from with()/times()/atLeastOnce()/never()
+    // Checked lazily, not eagerly from with()/times()/never()
     // themselves — only the final accumulated state, once the fluent chain
     // is done, means anything. That's what makes `->with($book)->never()`
     // work as one composed check. Fires when an unassigned statement's last

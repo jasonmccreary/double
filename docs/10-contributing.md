@@ -4,7 +4,7 @@ This page covers the standing policies behind the library's design, plus two wal
 
 ## No Aliases
 
-This library has exactly one canonical verb per concept: `expects()` / `allows()` for configuration, `returns()` / `throws()` / `resolves()` for outcomes, `with()` for argument constraints, counts (`times()`, `atLeastOnce()`, `never()`), and `received()` for spy-style assertions. There are no aliases for any of these, not for familiarity with Mockery, PHPUnit's native mocks, Prophecy, or Phake, and not ever. See [One Clean API](01-introduction.md#one-clean-api) for the reasoning, and [Migrating from Mockery](09-migrating-from-mockery.md) if you're looking for the familiar name instead of adding one.
+This library has exactly one canonical verb per concept: `expects()` / `allows()` for configuration, `returns()` / `throws()` / `resolves()` for outcomes, `with()` for argument constraints, counts (`times()`, `never()`), and `received()` for spy-style assertions. There are no aliases for any of these, not for familiarity with Mockery, PHPUnit's native mocks, Prophecy, or Phake, and not ever. See [One Clean API](01-introduction.md#one-clean-api) for the reasoning, and [Migrating from Mockery](09-migrating-from-mockery.md) if you're looking for the familiar name instead of adding one.
 
 Counts specifically: `times()` is overloaded (`times(3)` exact, `times(1, 3)` between, `times(minimum: 2)` at least, `times(maximum: 5)` at most) rather than growing into `once()`/`twice()`/`atMost()`/`between()` as separate words. `never()` is the one exception kept as its own verb rather than folded into `times(0)`.
 

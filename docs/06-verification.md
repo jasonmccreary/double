@@ -33,10 +33,9 @@ You may compose it the same way you would an expectation:
 ```php
 $repository->received('save')->with($book)->times(2);
 $repository->received('delete')->never();
-$repository->received('save')->atLeastOnce();
 ```
 
-Leave every modifier off and `received('save')` already means "was this called at least once." Add `with()` to narrow it to specific arguments, and `never()`/`times()`/`atLeastOnce()` to be precise about the count.
+Leave every modifier off and `received('save')` already means "was this called at least once." Add `with()` to narrow it to specific arguments, and `never()`/`times()` to be precise about the count.
 
 ### When the Check Runs
 

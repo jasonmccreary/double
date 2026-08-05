@@ -1,1 +1,1 @@
-Double `Connection` received `open()` out of order. Using `inOrder`, this was expected to be called before `close()` was called.
+Double `Connection` received `open()` out of order. Using `ordered`, this was expected to be called before `close()` was called.

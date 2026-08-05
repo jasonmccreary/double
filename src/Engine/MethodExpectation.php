@@ -176,11 +176,6 @@ final class MethodExpectation
         return $this;
     }
 
-    public function atLeastOnce(): static
-    {
-        return $this->times(minimum: 1);
-    }
-
     public function never(): static
     {
         return $this->times(0);
@@ -192,7 +187,7 @@ final class MethodExpectation
      * live in DoubleState/ProxyBehavior, which already have
      * registration-order visibility across every expectation on a double.
      */
-    public function inOrder(): static
+    public function ordered(): static
     {
         $this->ordered = true;
 

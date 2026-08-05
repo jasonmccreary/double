@@ -152,9 +152,9 @@ final class DoubleStateTest extends TestCase
     public function test_ordered_expectations_filters_to_only_those_marked_in_order_and_preserves_registration_order(): void
     {
         $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
-        $find = (new MethodExpectation('find', required: false))->inOrder();
+        $find = (new MethodExpectation('find', required: false))->ordered();
         $save = new MethodExpectation('save', required: false);
-        $delete = (new MethodExpectation('delete', required: false))->inOrder();
+        $delete = (new MethodExpectation('delete', required: false))->ordered();
 
         $state->registerExpectation($find);
         $state->registerExpectation($save);

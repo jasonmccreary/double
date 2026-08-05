@@ -107,7 +107,7 @@ final class ProxyBehavior
     }
 
     /**
-     * Enforces inOrder() sequencing for whichever expectation findMatch()
+     * Enforces ordered() sequencing for whichever expectation findMatch()
      * already selected; never changes that selection.
      */
     private static function enforceOrder(DoubleState $state, MethodExpectation $expectation): void

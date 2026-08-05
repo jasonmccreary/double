@@ -162,7 +162,7 @@ final class CallDescriptionMessagesTest extends GoldenFileTestCase
     public function test_renders_at_least_count_bound(): void
     {
         $expectation = new MethodExpectation('delete', required: false);
-        $expectation->atLeastOnce();
+        $expectation->times(minimum: 1);
 
         $this->assertMatchesGolden('describe-count-at-least', $this->unmetExpectation('delete', $expectation));
     }

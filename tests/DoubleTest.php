@@ -238,9 +238,9 @@ final class DoubleTest extends TestCase
     public function test_in_order_calls_made_in_declared_order_succeed(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->allows('find')->inOrder();
-        $double->allows('save')->inOrder();
-        $double->allows('delete')->inOrder();
+        $double->allows('find')->ordered();
+        $double->allows('save')->ordered();
+        $double->allows('delete')->ordered();
 
         $double->find(1);
         $double->save(new Book('Dune'));
@@ -252,13 +252,13 @@ final class DoubleTest extends TestCase
     public function test_in_order_calls_out_of_declared_order_throw_immediately(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->allows('find')->inOrder();
-        $double->allows('save')->inOrder();
+        $double->allows('find')->ordered();
+        $double->allows('save')->ordered();
 
         $double->save(new Book('Dune'));
 
         $this->expectException(PHPUnitOutOfOrderCallException::class);
-        $this->expectExceptionMessage('received `find()` out of order. Using `inOrder`, this was expected to be called before `save()` was called.');
+        $this->expectExceptionMessage('received `find()` out of order. Using `ordered`, this was expected to be called before `save()` was called.');
 
         // find() is earlier in the declared sequence than save(), which
         // already happened — calling it now is a regression.
@@ -268,8 +268,8 @@ final class DoubleTest extends TestCase
     public function test_in_order_ignores_calls_to_expectations_not_themselves_marked_in_order(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->allows('find')->inOrder();
-        $double->allows('delete')->inOrder();
+        $double->allows('find')->ordered();
+        $double->allows('delete')->ordered();
         $double->allows('save')->returns(true); // not ordered
 
         $double->find(1);
@@ -282,9 +282,9 @@ final class DoubleTest extends TestCase
     public function test_in_order_allows_skipping_ahead_without_every_step_occurring(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->allows('find')->inOrder();
-        $double->allows('save')->inOrder();
-        $double->allows('delete')->inOrder();
+        $double->allows('find')->ordered();
+        $double->allows('save')->ordered();
+        $double->allows('delete')->ordered();
 
         // save() (the middle step) never happens — jumping straight from
         // find() to delete() is a forward skip, not a regression, and is
@@ -302,10 +302,10 @@ final class DoubleTest extends TestCase
         $first = Double::for(BookRepositoryInterface::class);
         $second = Double::for(BookRepositoryInterface::class);
 
-        $first->allows('find')->inOrder();
-        $first->allows('save')->inOrder();
-        $second->allows('delete')->inOrder();
-        $second->allows('count')->inOrder();
+        $first->allows('find')->ordered();
+        $first->allows('save')->ordered();
+        $second->allows('delete')->ordered();
+        $second->allows('count')->ordered();
 
         // Interleaved across two doubles — each double's own declared
         // sequence is independent, so this is a violation on neither.
@@ -320,8 +320,8 @@ final class DoubleTest extends TestCase
     public function test_in_order_works_with_expects_as_well_as_allows(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->expects('find')->returns(null)->inOrder();
-        $double->expects('save')->returns(true)->inOrder();
+        $double->expects('find')->returns(null)->ordered();
+        $double->expects('save')->returns(true)->ordered();
 
         $double->find(1);
         $double->save(new Book('Dune'));
@@ -466,7 +466,7 @@ final class DoubleTest extends TestCase
     public function test_at_least_once_is_satisfied_by_multiple_calls(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
-        $double->expects('delete')->returns(null)->atLeastOnce();
+        $double->expects('delete')->returns(null)->times(minimum: 1);
 
         $double->delete(1);
         $double->delete(2);

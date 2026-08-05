@@ -71,10 +71,10 @@ only allowed 3 calls.
 
 ## A Call Happened Out of Order
 
-For expectations marked [`inOrder()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
+For expectations marked [`ordered()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
 
 ```
-Double `Connection` received `open()` out of order. Using `inOrder`,
+Double `Connection` received `open()` out of order. Using `ordered`,
 this was expected to be called before `close()` was called.
 ```
 

@@ -392,14 +392,14 @@ final class MethodExpectationTest extends TestCase
 
         $this->assertFalse($expectation->isOrdered());
 
-        $expectation->inOrder();
+        $expectation->ordered();
 
         $this->assertTrue($expectation->isOrdered());
     }
 
     public function test_in_order_is_chainable(): void
     {
-        $expectation = (new MethodExpectation('find', required: false))->inOrder();
+        $expectation = (new MethodExpectation('find', required: false))->ordered();
 
         $this->assertInstanceOf(MethodExpectation::class, $expectation);
         $this->assertTrue($expectation->isOrdered());

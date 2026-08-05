@@ -64,11 +64,10 @@ $repository->expects('save')->times(3);                 // exactly 3
 $repository->expects('save')->times(1, 3);               // between 1 and 3
 $repository->expects('save')->times(minimum: 2);         // at least 2
 $repository->allows('save')->times(maximum: 5);          // at most 5
-$repository->expects('save')->atLeastOnce();             // shorthand for times(minimum: 1)
 $repository->allows('save')->never();                    // shorthand for times(0)
 ```
 
-One overloaded verb covers every count you'd want, rather than a separate word for each shape. `atLeastOnce()` and `never()` remain as their own methods because they read more naturally than the equivalent `times()` call for those two common cases.
+One overloaded verb covers every count you'd want, rather than a separate word for each shape. `never()` remains as its own method because it reads more naturally than the equivalent `times()` call for that common case.
 
 ## Matching Order
 
@@ -83,15 +82,15 @@ This mirrors how you'd naturally write the setup: state a broad default, then la
 
 ## Keeping Calls in Order
 
-Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract: you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `inOrder()`:
+Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract: you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `ordered()`:
 
 ```php
-$connection->expects('open')->inOrder();
-$connection->expects('write')->inOrder();
-$connection->expects('close')->inOrder();
+$connection->expects('open')->ordered();
+$connection->expects('write')->ordered();
+$connection->expects('close')->ordered();
 ```
 
-Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `inOrder()` are unaffected, and ordering is only checked within a single double.
+Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
 
 ## Static Methods
 

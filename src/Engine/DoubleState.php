@@ -38,8 +38,8 @@ final class DoubleState
     private int $fabricationDepth = 0;
 
     /**
-     * The furthest slot reached so far by an inOrder()-marked call — see
-     * orderedExpectations(). 0 is a safe starting sentinel: the first inOrder()-marked
+     * The furthest slot reached so far by an ordered()-marked call — see
+     * orderedExpectations(). 0 is a safe starting sentinel: the first ordered()-marked
      * expectation's own slot is always index 0, and comparing a slot against
      * itself never counts as a regression.
      */
@@ -250,7 +250,7 @@ final class DoubleState
     }
 
     /**
-     * Every inOrder()-marked expectation registered on this double, in
+     * Every ordered()-marked expectation registered on this double, in
      * registration order. An expectation's position in this list is its slot for call-order
      * enforcement (see ProxyBehavior); no separate slot-numbering
      * bookkeeping is needed since $expectations is already

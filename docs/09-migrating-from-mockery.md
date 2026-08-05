@@ -22,7 +22,7 @@ Most of what you already know from Mockery carries over directly. This page maps
 | `atLeast()->times($n)` | `times(minimum: $n)` |
 | `atMost()->times($n)` | `times(maximum: $n)` |
 | `between($min, $max)` | `times($min, $max)` |
-| `ordered()` | `inOrder()` |
+| `ordered()` | `ordered()` |
 | `globally()` | not available. Ordering applies per double; see [below](#ordering) |
 | `byDefault()` | not available. See [below](#a-few-things-that-didnt-carry-over) |
 | `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [PHPUnit Integration](08-phpunit-integration.md) |
