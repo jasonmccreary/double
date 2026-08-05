@@ -20,9 +20,9 @@ declare(strict_types=1);
 
 require __DIR__.'/../../vendor/autoload.php';
 
+use JMac\Testing\Double;
 use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
-use JMac\Testing\TestDouble;
 use PHPUnit\Framework\TestCase;
 
 interface SmokeTestRepository
@@ -60,7 +60,7 @@ check(
 check(
     'creating and configuring a double works with no PHPUnit installed',
     static function (): void {
-        $double = TestDouble::for(SmokeTestRepository::class);
+        $double = Double::for(SmokeTestRepository::class);
         $double->allows('find')->with(123)->returns('Dune');
 
         if ($double->find(123) !== 'Dune') {
@@ -72,7 +72,7 @@ check(
 check(
     'an unmatched call in Strict mode throws the plain exception, never the PHPUnit sibling',
     static function (): void {
-        $double = TestDouble::for(SmokeTestRepository::class)->strict();
+        $double = Double::for(SmokeTestRepository::class)->strict();
 
         try {
             $double->find(1);
@@ -87,7 +87,7 @@ check(
 check(
     'verify() on an unmet expectation throws the plain exception, never the PHPUnit sibling',
     static function (): void {
-        $double = TestDouble::for(SmokeTestRepository::class);
+        $double = Double::for(SmokeTestRepository::class);
         $double->expects('save')->with('Dune')->returns(true);
 
         try {
@@ -103,13 +103,13 @@ check(
 check(
     'verify()/unused()/received() on a satisfied double succeed silently with no PHPUnit installed',
     static function (): void {
-        $double = TestDouble::for(SmokeTestRepository::class);
+        $double = Double::for(SmokeTestRepository::class);
         $double->expects('save')->with('Dune')->returns(true);
 
         $double->save('Dune');
         $double->verify();
 
-        $spy = TestDouble::for(SmokeTestRepository::class);
+        $spy = Double::for(SmokeTestRepository::class);
         $spy->unused();
 
         $spy->find(1);

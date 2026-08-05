@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 /**
- * Thrown at TestDouble::for() time when the target declares a real public
- * method with the same name as one of TestDouble's own control verbs
+ * Thrown at Double::for() time when the target declares a real public
+ * method with the same name as one of Double's own control verbs
  * (expects, allows, strict, passthru, received, unused, verify) — a deliberate,
  * permanent trade-off (see DoubleControlMethods), not a later hardening pass.
  */
-class ReservedNameCollisionException extends TestDoubleException
+class ReservedNameCollisionException extends DoubleException
 {
     /**
      * @param  string[]  $collisions
@@ -38,7 +38,7 @@ class ReservedNameCollisionException extends TestDoubleException
         $names = $backtickedNames === [] ? $last : implode(', ', $backtickedNames).' and '.$last;
 
         return sprintf(
-            'Can\'t create a test double for `%s`. It contains %s which %s with TestDouble\'s internal methods.',
+            'Can\'t create a double for `%s`. It contains %s which %s with Double\'s internal methods.',
             $this->target,
             $names,
             count($this->collisions) === 1 ? 'collides' : 'collide',

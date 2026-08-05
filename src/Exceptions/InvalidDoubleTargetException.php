@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 /**
- * Thrown at TestDouble::for() time when the requested target cannot be
+ * Thrown at Double::for() time when the requested target cannot be
  * doubled at all: it doesn't exist, or it's a final class (which can't be
  * extended).
  */
-class InvalidDoubleTargetException extends TestDoubleException
+class InvalidDoubleTargetException extends DoubleException
 {
     public function __construct(
         public readonly string $target,
@@ -30,7 +30,7 @@ class InvalidDoubleTargetException extends TestDoubleException
 
     public static function mustBeInterface(string $target): self
     {
-        return new self($target, "it's a class. When multiple targets are passed to `TestDouble::for()`, they must all be interfaces");
+        return new self($target, "it's a class. When multiple targets are passed to `Double::for()`, they must all be interfaces");
     }
 
     public static function duplicateTarget(string $target): self
@@ -83,7 +83,7 @@ class InvalidDoubleTargetException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t create a test double for `%s` since %s.',
+            'Can\'t create a double for `%s` since %s.',
             $this->target,
             $this->reason,
         );

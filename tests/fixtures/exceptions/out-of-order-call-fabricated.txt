@@ -1,3 +1,3 @@
-Test double `SecondLink` received `open()` out of order. Using `inOrder`, this was expected to be called before `close()` was called.
+Double `SecondLink` received `open()` out of order. Using `inOrder`, this was expected to be called before `close()` was called.
 
-Note: this test double was returned automatically. You will need to configure it explicitly if you want it to behave differently.
+Note: this double was returned automatically. You will need to configure it explicitly if you want it to behave differently.

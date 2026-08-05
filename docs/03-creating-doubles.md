@@ -1,11 +1,11 @@
-# Creating Test Doubles
+# Creating Doubles
 
-You may create a test double for any class or interface using `TestDouble::for()`:
+You may create a double for any class or interface using `Double::for()`:
 
 ```php
-use JMac\Testing\TestDouble;
+use JMac\Testing\Double;
 
-$repository = TestDouble::for(BookRepository::class);
+$repository = Double::for(BookRepository::class);
 ```
 
 This returns a real object. It satisfies `instanceof BookRepository`, it passes any type hint that expects one, and you may hand it straight to whatever you're testing:
@@ -21,7 +21,7 @@ Nothing about the double is configured yet — for that, see [Expectations](04-e
 Sometimes the code you're testing needs a single object that satisfies more than one contract — a logger that's also flushable, for example. You may pass more than one target to `for()` to get one double implementing all of them:
 
 ```php
-$logger = TestDouble::for(LoggerInterface::class, FlushableInterface::class);
+$logger = Double::for(LoggerInterface::class, FlushableInterface::class);
 
 $logger instanceof LoggerInterface;    // true
 $logger instanceof FlushableInterface; // true
@@ -34,10 +34,10 @@ Every target after the first must be an interface, the same rule PHP applies to 
 If you already have a real object in hand — built by a factory, resolved from a container, or otherwise — you may pass the instance itself to `for()` instead of a class name:
 
 ```php
-$double = TestDouble::for($realBook)->passthru();
+$double = Double::for($realBook)->passthru();
 ```
 
-`TestDouble::for($realBook)` doubles `$realBook`'s class and remembers the instance, so a later `->passthru()` call knows what to delegate to without you needing to repeat yourself (`TestDouble::for(Book::class)->passthru($realBook)` would work just as well). More on what `passthru()` does in [Modes](#modes) below.
+`Double::for($realBook)` doubles `$realBook`'s class and remembers the instance, so a later `->passthru()` call knows what to delegate to without you needing to repeat yourself (`Double::for(Book::class)->passthru($realBook)` would work just as well). More on what `passthru()` does in [Modes](#modes) below.
 
 ## Labels
 
@@ -51,7 +51,7 @@ Configuration lives directly on the double itself, which is what makes `$reposit
 expects, allows, strict, passthru, received, unused, verify
 ```
 
-If the class or interface you're doubling declares a real method with one of these names, `TestDouble::for()` throws right away, naming the exact method:
+If the class or interface you're doubling declares a real method with one of these names, `Double::for()` throws right away, naming the exact method:
 
 ```php
 interface AuthorizerInterface
@@ -59,9 +59,9 @@ interface AuthorizerInterface
     public function allows(string $ability): bool;
 }
 
-TestDouble::for(AuthorizerInterface::class);
-// Can't create a test double for "AuthorizerInterface": allows collides
-// with TestDouble's own control verbs (expects/allows/strict/passthru/
+Double::for(AuthorizerInterface::class);
+// Can't create a double for "AuthorizerInterface": allows collides
+// with Double's own control verbs (expects/allows/strict/passthru/
 // received/unused/verify) — a method can't be both a real one and a
 // configuration verb.
 ```
@@ -84,7 +84,7 @@ Every double has exactly one mode, chosen either when you create it or on the ve
 ### Loose (the Default)
 
 ```php
-$repository = TestDouble::for(BookRepository::class);
+$repository = Double::for(BookRepository::class);
 
 $repository->allows('find')->with(123)->returns($book);
 
@@ -92,7 +92,7 @@ $repository->find(123); // $book
 $repository->find(456); // a safe default — see below
 ```
 
-This is what you get from a plain `TestDouble::for(...)`, with nothing extra to opt into. An unconfigured call never throws — it returns a sensible, type-safe value based on the method's declared return type:
+This is what you get from a plain `Double::for(...)`, with nothing extra to opt into. An unconfigured call never throws — it returns a sensible, type-safe value based on the method's declared return type:
 
 | Return Type | What You Get |
 |---|---|
@@ -110,7 +110,7 @@ This is what you get from a plain `TestDouble::for(...)`, with nothing extra to 
 That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later — it hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
 
 ```
-Test double "Book" only fabricates one call chain deep — configure
+Double "Book" only fabricates one call chain deep — configure
 "author()" explicitly: $book->allows('author')->returns(...);
 ```
 
@@ -119,7 +119,7 @@ Loose mode doesn't stop you from configuring specific calls — you may freely m
 ### Strict
 
 ```php
-$repository = TestDouble::for(BookRepository::class)->strict();
+$repository = Double::for(BookRepository::class)->strict();
 
 $repository->allows('find')->with(123)->returns($book);
 
@@ -132,7 +132,7 @@ Any call that doesn't match a configured expectation fails immediately, by name.
 ### Passthru
 
 ```php
-$logger = TestDouble::for(Logger::class)->passthru($realLogger);
+$logger = Double::for(Logger::class)->passthru($realLogger);
 
 $logger->info('hello');   // delegates to $realLogger->info('hello')
 $logger->error('uh oh');  // still recorded, so received('error') works

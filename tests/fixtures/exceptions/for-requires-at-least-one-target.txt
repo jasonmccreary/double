@@ -1,1 +1,1 @@
-`TestDouble::for()` requires at least one target.
+`Double::for()` requires at least one target.

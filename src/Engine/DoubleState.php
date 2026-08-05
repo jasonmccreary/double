@@ -28,7 +28,7 @@ final class DoubleState
 
     private ?object $passthruTarget = null;
 
-    // A real instance supplied directly to TestDouble::for($instance). Remembered
+    // A real instance supplied directly to Double::for($instance). Remembered
     // independent of mode, so a later ->passthru() with no argument can reuse it
     // instead of auto-instantiating a fresh one — kept separate from
     // $passthruTarget since knowing about a real instance and actually being in
@@ -71,7 +71,7 @@ final class DoubleState
      * The first target candidate (see targetCandidates()) that declares the
      * given method, or null if none does. Used by callers that need to
      * reflect a method (e.g. SafeDefaultResolver) or check it exists
-     * (TestDouble::registerExpectation).
+     * (Double::registerExpectation).
      */
     public function declaringCandidate(string $method): ?string
     {
@@ -162,7 +162,7 @@ final class DoubleState
     }
 
     /**
-     * @internal used only by TestDouble::create()
+     * @internal used only by Double::create()
      */
     public function rememberRealInstance(object $instance): void
     {
@@ -175,7 +175,7 @@ final class DoubleState
     }
 
     /**
-     * @internal used only by TestDouble::fabricate()/fabricateIntersection()
+     * @internal used only by Double::fabricate()/fabricateIntersection()
      */
     public function markFabricated(int $depth): void
     {
@@ -226,7 +226,7 @@ final class DoubleState
 
     /**
      * Every call recorded on this double, across every method — the
-     * unfiltered counterpart to callsFor(). Only TestDouble::unused()
+     * unfiltered counterpart to callsFor(). Only Double::unused()
      * needs this: an assertion about the double as a whole, not any one
      * method, so it can't narrow by method name up front the way callsFor()
      * does.

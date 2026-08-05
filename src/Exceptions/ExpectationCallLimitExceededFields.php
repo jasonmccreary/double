@@ -44,7 +44,7 @@ trait ExpectationCallLimitExceededFields
         int $otherMatchingExpectations = 0,
     ): string {
         $message = sprintf(
-            'Test double `%s` received %s to `%s(%s)`, but your expectation only allowed %s.',
+            'Double `%s` received %s to `%s(%s)`, but your expectation only allowed %s.',
             $label,
             Pluralizer::pluralize($callNumber, 'call', 'calls'),
             $method,
@@ -70,6 +70,6 @@ trait ExpectationCallLimitExceededFields
                 );
         }
 
-        return $message.TestDoubleException::fabricatedNote($fabricated);
+        return $message.DoubleException::fabricatedNote($fabricated);
     }
 }

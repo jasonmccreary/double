@@ -1,6 +1,6 @@
 {
-    "name": "jasonmccreary/test-double-docs",
-    "description": "Documentation site build for Test Double.",
+    "name": "jasonmccreary/double-docs",
+    "description": "Documentation site build for Double.",
     "type": "project",
     "license": "MIT",
     "require": {

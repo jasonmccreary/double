@@ -1,1 +1,1 @@
-Test double `BookRepository` received an unexpected call to `count()`. Strict mode requires every call to be configured. For example: `$bookRepository->allows('count')->returns(...)`.
+Double `BookRepository` received an unexpected call to `count()`. Strict mode requires every call to be configured. For example: `$bookRepository->allows('count')->returns(...)`.

@@ -10,7 +10,7 @@ namespace JMac\Testing\Exceptions;
  * fourth call to something configured with ->times(3), or any call at all
  * to something configured with ->never()).
  */
-class ExpectationCallLimitExceededException extends TestDoubleException
+class ExpectationCallLimitExceededException extends DoubleException
 {
     use ExpectationCallLimitExceededFields;
 }

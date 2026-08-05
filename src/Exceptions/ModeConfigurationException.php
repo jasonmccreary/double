@@ -9,7 +9,7 @@ namespace JMac\Testing\Exceptions;
  * code tries to set it more than once, e.g. ->strict()->strict() or
  * ->strict()->passthru($x).
  */
-class ModeConfigurationException extends TestDoubleException
+class ModeConfigurationException extends DoubleException
 {
     public function __construct(
         public readonly string $label,
@@ -23,7 +23,7 @@ class ModeConfigurationException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Test double `%s` is already "%s". You can\'t set its mode again.%s',
+            'Double `%s` is already "%s". You can\'t set its mode again.%s',
             $this->label,
             strtolower($this->current),
             self::fabricatedNote($this->fabricated),

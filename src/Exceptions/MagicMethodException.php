@@ -11,7 +11,7 @@ namespace JMac\Testing\Exceptions;
  * so an expectation configured here could never be satisfied — rejected up
  * front instead of failing confusingly later.
  */
-class MagicMethodException extends TestDoubleException
+class MagicMethodException extends DoubleException
 {
     public function __construct(
         public readonly string $target,
@@ -26,7 +26,7 @@ class MagicMethodException extends TestDoubleException
         // No fabricatedNote() here, unlike its siblings: like the static-method
         // restriction, this holds regardless of how the double came to exist.
         return sprintf(
-            'Can\'t configure `%s` on a test double for `%s` since it\'s a magic method. Magic methods can\'t be doubled.',
+            'Can\'t configure `%s` on a double for `%s` since it\'s a magic method. Magic methods can\'t be doubled.',
             $this->method,
             $this->target,
         );

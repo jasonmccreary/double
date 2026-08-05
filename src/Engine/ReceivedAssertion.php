@@ -72,9 +72,9 @@ final class ReceivedAssertion
     }
 
     /**
-     * @internal Also called directly by TestDouble::verifyAll(), when
+     * @internal Also called directly by Double::verifyAll(), when
      * VerifiesDoubles registers this assertion up front (see
-     * TestDouble::received()). $checked makes running it twice safe —
+     * Double::received()). $checked makes running it twice safe —
      * whichever path fires first wins and the other becomes a no-op.
      */
     public function check(): void

@@ -10,7 +10,7 @@ namespace JMac\Testing\Exceptions;
  * silent, and not unbounded recursion — a clear, named stop telling the
  * person to configure that call themselves.
  */
-class FabricationLimitExceededException extends TestDoubleException
+class FabricationLimitExceededException extends DoubleException
 {
     use FabricationLimitExceededFields;
 }

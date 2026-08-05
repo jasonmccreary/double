@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Engine;
 
 use JMac\Testing\Diagnostics\ArgumentFormatter;
-use JMac\Testing\TestDouble;
+use JMac\Testing\Double;
 
 /**
  * @internal
@@ -20,7 +20,7 @@ final class ProxyBehavior
     // to return (see SafeDefaultResolver).
     public static function intercept(object $double, string $method, array $arguments): mixed
     {
-        $state = TestDouble::stateFor($double);
+        $state = Double::stateFor($double);
 
         $state->recordCall($method, $arguments);
 

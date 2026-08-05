@@ -8,7 +8,7 @@ namespace JMac\Testing\Exceptions;
  * Thrown when ->passthru() is called with no argument and reflection-based
  * auto-instantiation of the target fails.
  */
-class PassthruAutoInstantiationException extends TestDoubleException
+class PassthruAutoInstantiationException extends DoubleException
 {
     public function __construct(
         public readonly string $target,

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
+use JMac\Testing\Double;
+use JMac\Testing\DoubleInterface;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
-use JMac\Testing\TestDouble;
-use JMac\Testing\TestDoubleInterface;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
 use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
@@ -74,7 +74,7 @@ final class ClassGeneratorTest extends TestCase
     }
 
     /**
-     * TestDouble::for()'s @template/@return T&TestDoubleInterface docblock is
+     * Double::for()'s @template/@return T&DoubleInterface docblock is
      * only sound if this is genuinely true at runtime, for both the
      * `implements` and `extends` code paths in buildSource() — not just a
      * docblock claim nothing enforces.
@@ -83,14 +83,14 @@ final class ClassGeneratorTest extends TestCase
     {
         $generated = (new ClassGenerator)->generate(BookRepositoryInterface::class);
 
-        $this->assertTrue(is_subclass_of($generated, TestDoubleInterface::class));
+        $this->assertTrue(is_subclass_of($generated, DoubleInterface::class));
     }
 
     public function test_generates_a_class_implementing_test_double_interface_for_a_class_target(): void
     {
         $generated = (new ClassGenerator)->generate(ConcreteLogger::class);
 
-        $this->assertTrue(is_subclass_of($generated, TestDoubleInterface::class));
+        $this->assertTrue(is_subclass_of($generated, DoubleInterface::class));
     }
 
     /**
@@ -340,7 +340,7 @@ final class ClassGeneratorTest extends TestCase
 
     public function test_generated_methods_with_explicit_nullable_parameters_trigger_no_deprecation(): void
     {
-        $instance = TestDouble::for(NullableParamInterface::class);
+        $instance = Double::for(NullableParamInterface::class);
 
         $deprecations = [];
         set_error_handler(static function (int $errno, string $errstr) use (&$deprecations): bool {
@@ -372,7 +372,7 @@ final class ClassGeneratorTest extends TestCase
 
     public function test_supports_union_typed_parameters_and_returns(): void
     {
-        $instance = TestDouble::for(UnionTypeInterface::class);
+        $instance = Double::for(UnionTypeInterface::class);
 
         $instance->allows('accept')->returns('ok');
 
@@ -415,7 +415,7 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('string|int|null', (string) $method->getParameters()[0]->getType());
         $this->assertSame('string|int|null', (string) $method->getReturnType());
 
-        $instance = TestDouble::for(UnionTypeInterface::class);
+        $instance = Double::for(UnionTypeInterface::class);
         $instance->allows('acceptNullableUnion')->returns(null);
 
         $this->assertNull($instance->acceptNullableUnion(null));
@@ -423,7 +423,7 @@ final class ClassGeneratorTest extends TestCase
 
     public function test_supports_variadic_parameters(): void
     {
-        $instance = TestDouble::for(VariadicInterface::class);
+        $instance = Double::for(VariadicInterface::class);
 
         $instance->allows('combine')->returns('a-b-c');
 
@@ -494,7 +494,7 @@ final class ClassGeneratorTest extends TestCase
      */
     public function test_calls_a_method_with_a_by_reference_parameter_without_error(): void
     {
-        $instance = TestDouble::for(ByRefParamInterface::class);
+        $instance = Double::for(ByRefParamInterface::class);
         $instance->allows('increment')->returns(null);
 
         $value = 5;
@@ -530,7 +530,7 @@ final class ClassGeneratorTest extends TestCase
      */
     public function test_calls_a_by_reference_returning_method_without_notice(): void
     {
-        $instance = TestDouble::for(RefReturnInterface::class);
+        $instance = Double::for(RefReturnInterface::class);
         $instance->allows('getRef')->returns(5);
 
         $notices = [];
@@ -691,7 +691,7 @@ final class ClassGeneratorTest extends TestCase
      */
     public function test_calls_a_method_with_a_new_in_initializer_default_without_error(): void
     {
-        $instance = TestDouble::for(NewInInitializerParamInterface::class);
+        $instance = Double::for(NewInInitializerParamInterface::class);
         $instance->allows('untyped')->returns('ok');
 
         $this->assertSame('ok', $instance->untyped(true));
@@ -699,7 +699,7 @@ final class ClassGeneratorTest extends TestCase
 
     public function test_generated_double_satisfies_type_hints_in_real_collaborators(): void
     {
-        $instance = TestDouble::for(BookRepositoryInterface::class);
+        $instance = Double::for(BookRepositoryInterface::class);
 
         $instance->allows('find')->returns(new Book('Some Title'));
 

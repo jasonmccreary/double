@@ -10,7 +10,7 @@ use JMac\Testing\Diagnostics\CallListFormatter;
  * The properties, constructor, and message for "Strict mode got an
  * unexpected call" — shared with
  * Integrations\PHPUnit\PHPUnitUnexpectedCallException via a trait, since two
- * classes with different fixed parents (TestDoubleException vs.
+ * classes with different fixed parents (DoubleException vs.
  * AssertionFailedError) can't share code any other way. Each class still
  * gets its own real, independent instance.
  */
@@ -43,7 +43,7 @@ trait UnexpectedCallFields
         array $otherObservedCalls = [],
     ): string {
         $message = sprintf(
-            'Test double `%s` received an unexpected call to `%s(%s)`. Strict mode requires every call to be configured.',
+            'Double `%s` received an unexpected call to `%s(%s)`. Strict mode requires every call to be configured.',
             $label,
             $method,
             $argumentsDescription,
@@ -60,16 +60,16 @@ trait UnexpectedCallFields
             ? "\n\n".CallListFormatter::renderCorrelationParagraph($method, $otherObservedCalls)
             : ' '.self::renderSuggestion($label, $method);
 
-        return TestDoubleException::appendFabricatedNote($message, $fabricated);
+        return DoubleException::appendFabricatedNote($message, $fabricated);
     }
 
     private static function renderSuggestion(string $label, string $method): string
     {
         return sprintf(
             'For example: `$%s->allows(\'%s\')->returns(...)`.',
-            // TestDoubleException::, not self:: — PHPUnitUnexpectedCallException
-            // doesn't extend TestDoubleException, so it can't inherit this helper.
-            TestDoubleException::suggestedVariableName($label),
+            // DoubleException::, not self:: — PHPUnitUnexpectedCallException
+            // doesn't extend DoubleException, so it can't inherit this helper.
+            DoubleException::suggestedVariableName($label),
             $method,
         );
     }

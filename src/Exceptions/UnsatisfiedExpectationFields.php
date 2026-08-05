@@ -41,13 +41,13 @@ trait UnsatisfiedExpectationFields
 
     private static function renderSingle(string $label, UnsatisfiedExpectation $expectation, bool $fabricated): string
     {
-        $message = sprintf('Test double `%s` %s.', $label, $expectation->description);
+        $message = sprintf('Double `%s` %s.', $label, $expectation->description);
 
         if ($expectation->otherObservedCalls !== []) {
             $message .= "\n\n".CallListFormatter::renderCorrelationParagraph($expectation->method, $expectation->otherObservedCalls);
         }
 
-        return TestDoubleException::appendFabricatedNote($message, $fabricated);
+        return DoubleException::appendFabricatedNote($message, $fabricated);
     }
 
     /**
@@ -58,7 +58,7 @@ trait UnsatisfiedExpectationFields
         $count = count($expectations);
 
         $message = sprintf(
-            "%s not satisfied on test double `%s`:\n\n%s",
+            "%s not satisfied on double `%s`:\n\n%s",
             Pluralizer::pluralize($count, 'expectation was', 'expectations were'),
             $label,
             implode("\n", array_map(
@@ -67,6 +67,6 @@ trait UnsatisfiedExpectationFields
             )),
         );
 
-        return TestDoubleException::appendFabricatedNote($message, $fabricated);
+        return DoubleException::appendFabricatedNote($message, $fabricated);
     }
 }

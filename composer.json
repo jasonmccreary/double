@@ -1,10 +1,10 @@
 {
-    "name": "jasonmccreary/test-double",
-    "description": "A modern PHP test double library that puts developer experience first.",
+    "name": "jasonmccreary/double",
+    "description": "A modern PHP double library that puts developer experience first.",
     "type": "library",
     "keywords": [
         "testing",
-        "test double",
+        "double",
         "mock",
         "stub",
         "spy"

@@ -39,9 +39,9 @@ $repository->allows('calculateTax')->resolves(fn (...$args) => $realGateway->cal
 
 - `returns(...)` hands back a value.
 - `throws(...)` throws an exception instead.
-- `resolves(...)` computes the return value with a closure, given the real call's arguments. This is also how you may delegate a single call to a real object without switching the whole double to [passthru](03-creating-test-doubles.md#passthru).
+- `resolves(...)` computes the return value with a closure, given the real call's arguments. This is also how you may delegate a single call to a real object without switching the whole double to [passthru](03-creating-doubles.md#passthru).
 
-If you leave all three off, a matched call falls back to the same safe default that [Loose mode](03-creating-test-doubles.md#loose-the-default) uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare `null` that turns into a `TypeError` further down.
+If you leave all three off, a matched call falls back to the same safe default that [Loose mode](03-creating-doubles.md#loose-the-default) uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare `null` that turns into a `TypeError` further down.
 
 ## Sequential Returns
 
@@ -99,6 +99,6 @@ Calling `write()` before `open()` throws immediately, naming both methods involv
 
 ```php
 $repository->expects('findAll'); // findAll() is `public static function`
-// Can't configure "findAll" on a test double of "BookRepository": it's a
-// static method, and test doubles only intercept instance calls.
+// Can't configure "findAll" on a double of "BookRepository": it's a
+// static method, and doubles only intercept instance calls.
 ```

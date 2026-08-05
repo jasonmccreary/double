@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Fixtures\Lifecycle;
 
+use JMac\Testing\Double;
 use JMac\Testing\Integrations\PHPUnit\VerifiesDoubles;
-use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -25,7 +25,7 @@ final class FailsAssertionBeforeExpectationFixture extends TestCase
 
     public function test_it_fails_a_plain_assertion_before_the_double_is_called(): void
     {
-        $repository = TestDouble::for(BookRepositoryInterface::class);
+        $repository = Double::for(BookRepositoryInterface::class);
 
         $repository->expects('delete')->with(1);
 

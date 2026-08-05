@@ -6,7 +6,7 @@ namespace JMac\Testing\Tests\Support;
 
 /**
  * A non-final class implementing LoggerInterface, with a real, zero-argument
- * constructor — used to prove that TestDouble::for($realInstance) derives a
+ * constructor — used to prove that Double::for($realInstance) derives a
  * double from the instance's own concrete class, and that the result still
  * satisfies whatever interface that class implements. That's just PHP's own
  * transitive interface inheritance through extends, not anything this

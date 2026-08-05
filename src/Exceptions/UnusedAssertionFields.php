@@ -34,11 +34,11 @@ trait UnusedAssertionFields
     public static function renderMessage(string $label, array $calls, bool $fabricated): string
     {
         $message = sprintf(
-            'Test double `%s` expected no calls at all, but received: %s.',
+            'Double `%s` expected no calls at all, but received: %s.',
             $label,
             CallListFormatter::describeCalls($calls),
         );
 
-        return TestDoubleException::appendFabricatedNote($message, $fabricated);
+        return DoubleException::appendFabricatedNote($message, $fabricated);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
-use JMac\Testing\TestDouble;
+use JMac\Testing\Double;
 
 /**
  * @internal
@@ -96,7 +96,7 @@ final class SafeDefaultResolver
             throw self::limitExceeded($label, $method, implode('&', $names));
         }
 
-        return TestDouble::fabricateIntersection($names, $depth + 1);
+        return Double::fabricateIntersection($names, $depth + 1);
     }
 
     private static function resolveNamed(\ReflectionNamedType $type, object $double, int $depth, ?string $declaringClass, string $label, string $method): mixed
@@ -145,7 +145,7 @@ final class SafeDefaultResolver
             throw self::limitExceeded($label, $method, $name);
         }
 
-        return TestDouble::fabricate($name, $depth + 1);
+        return Double::fabricate($name, $depth + 1);
     }
 
     private static function limitExceeded(string $label, string $method, string $returnType): \Throwable

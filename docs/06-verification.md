@@ -61,7 +61,7 @@ $logger->unused();
 `unused()` fails the moment any method was called on the double, naming every call it actually saw:
 
 ```
-Test double `Logger` expected no calls at all, but received: `info('something happened')`.
+Double `Logger` expected no calls at all, but received: `info('something happened')`.
 ```
 
 Unlike `received()`, there's no fluent chain to wait on — `unused()` checks immediately, the same way `verify()` does, rather than deferring until the statement (or the test) finishes.

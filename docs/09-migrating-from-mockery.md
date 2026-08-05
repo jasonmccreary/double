@@ -6,10 +6,10 @@ Most of what you already know from Mockery carries over directly — this page m
 
 | Mockery | This Library |
 |---|---|
-| `Mockery::mock(Foo::class)` | `TestDouble::for(Foo::class)` |
-| `Mockery::spy(Foo::class)` | `TestDouble::for(Foo::class)` — spy-style checking is `received()`, available on every double (see [below](#theres-no-separate-spy)) |
-| `Mockery::mock()->shouldIgnoreMissing()` | `TestDouble::for(Foo::class)` — this is simply the default, see [Modes](03-creating-test-doubles.md#modes) |
-| `Mockery::mock(Foo::class, [$args])->shouldDeferMissing()` | `TestDouble::for(Foo::class)->passthru($realInstance)` |
+| `Mockery::mock(Foo::class)` | `Double::for(Foo::class)` |
+| `Mockery::spy(Foo::class)` | `Double::for(Foo::class)` — spy-style checking is `received()`, available on every double (see [below](#theres-no-separate-spy)) |
+| `Mockery::mock()->shouldIgnoreMissing()` | `Double::for(Foo::class)` — this is simply the default, see [Modes](03-creating-doubles.md#modes) |
+| `Mockery::mock(Foo::class, [$args])->shouldDeferMissing()` | `Double::for(Foo::class)->passthru($realInstance)` |
 | `shouldReceive('foo')->once()->andReturn($x)` | `expects('foo')->returns($x)` — exactly-once is `expects()`'s default |
 | `shouldReceive('foo')->andReturn($x)` | `allows('foo')->returns($x)` |
 | `shouldReceive('foo')->andReturn($a, $b)` | `allows('foo')->returns($a, $b)` |
@@ -48,7 +48,7 @@ Most of what you already know from Mockery carries over directly — this page m
 
 ## Modes, Not Mock Kinds
 
-Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing — a test double — and the equivalent choice is a mode you add on top of it, covered fully in [Creating Test Doubles](03-creating-test-doubles.md):
+Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing — a double — and the equivalent choice is a mode you add on top of it, covered fully in [Creating Doubles](03-creating-doubles.md):
 
 - Mockery's plain `mock()`, once you call `shouldIgnoreMissing()`, behaves like **Loose** mode here — which is simply the default, nothing to opt into.
 - A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).

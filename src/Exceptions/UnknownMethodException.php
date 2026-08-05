@@ -11,7 +11,7 @@ namespace JMac\Testing\Exceptions;
  * enough that the caller likely mistyped it rather than meaning to
  * configure something that genuinely doesn't exist.
  */
-class UnknownMethodException extends TestDoubleException
+class UnknownMethodException extends DoubleException
 {
     public function __construct(
         public readonly string $target,
@@ -25,7 +25,7 @@ class UnknownMethodException extends TestDoubleException
     private function render(): string
     {
         return sprintf(
-            'Can\'t configure `%s` on a test double for `%s`. That method does not exist.%s%s',
+            'Can\'t configure `%s` on a double for `%s`. That method does not exist.%s%s',
             $this->method,
             $this->target,
             $this->suggestion !== null ? sprintf(' Did you mean `%s`?', $this->suggestion) : '',

@@ -1,1 +1,1 @@
-Test double `Logger` expected no calls at all, but received: `info('hello')`.
+Double `Logger` expected no calls at all, but received: `info('hello')`.

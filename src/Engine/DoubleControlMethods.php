@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
-use JMac\Testing\TestDouble;
+use JMac\Testing\Double;
 
 /**
  * @internal
@@ -24,17 +24,17 @@ trait DoubleControlMethods
 
     public function expects(string $method): MethodExpectation
     {
-        return TestDouble::registerExpectation($this, $method, required: true);
+        return Double::registerExpectation($this, $method, required: true);
     }
 
     public function allows(string $method): MethodExpectation
     {
-        return TestDouble::registerExpectation($this, $method, required: false);
+        return Double::registerExpectation($this, $method, required: false);
     }
 
     public function strict(): static
     {
-        TestDouble::stateFor($this)->setMode(Mode::Strict);
+        Double::stateFor($this)->setMode(Mode::Strict);
 
         return $this;
     }
@@ -46,7 +46,7 @@ trait DoubleControlMethods
      */
     public function passthru(?object $realInstance = null): static
     {
-        $state = TestDouble::stateFor($this);
+        $state = Double::stateFor($this);
         $realInstance ??= $state->knownInstance() ?? PassthruInstantiator::autoInstantiate($state->target());
 
         $state->configurePassthru($realInstance);
@@ -54,12 +54,12 @@ trait DoubleControlMethods
         return $this;
     }
 
-    // received() and verify() both delegate to a same-named TestDouble
+    // received() and verify() both delegate to a same-named Double
     // static — this trait has no access to the private static
     // double->state map that implementation needs.
     public function received(string $method): ReceivedAssertion
     {
-        return TestDouble::received($this, $method);
+        return Double::received($this, $method);
     }
 
     /**
@@ -68,11 +68,11 @@ trait DoubleControlMethods
      */
     public function unused(): void
     {
-        TestDouble::unused($this);
+        Double::unused($this);
     }
 
     public function verify(): void
     {
-        TestDouble::verify($this);
+        Double::verify($this);
     }
 }

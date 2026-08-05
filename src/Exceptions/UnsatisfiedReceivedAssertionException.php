@@ -14,7 +14,7 @@ namespace JMac\Testing\Exceptions;
  * isn't caught live mid-call, so by the time __destruct() checks it, every
  * call has already happened.
  */
-class UnsatisfiedReceivedAssertionException extends TestDoubleException
+class UnsatisfiedReceivedAssertionException extends DoubleException
 {
     use UnsatisfiedReceivedAssertionFields;
 }

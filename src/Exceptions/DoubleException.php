@@ -15,7 +15,7 @@ use JMac\Testing\Diagnostics\Diagnostic;
  * guaranteed public API: adding a field is a minor-version change; renaming,
  * removing, or retyping one is a major-version change.
  */
-abstract class TestDoubleException extends \RuntimeException implements Diagnostic
+abstract class DoubleException extends \RuntimeException implements Diagnostic
 {
     public function getDiagnostic(): Diagnostic
     {
@@ -32,7 +32,7 @@ abstract class TestDoubleException extends \RuntimeException implements Diagnost
             return '';
         }
 
-        return "\n\nNote: this test double was returned automatically. You will need to configure it "
+        return "\n\nNote: this double was returned automatically. You will need to configure it "
             .'explicitly if you want it to behave differently.';
     }
 

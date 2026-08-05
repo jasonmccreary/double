@@ -6,7 +6,7 @@ This directory has its own `composer.json`, separate from the library's, since i
 
 1. [Introduction](01-introduction.md)
 2. [Installation](02-installation.md)
-3. [Creating Test Doubles](03-creating-test-doubles.md) (includes Modes: Loose, Strict, Passthru)
+3. [Creating Doubles](03-creating-doubles.md) (includes Modes: Loose, Strict, Passthru)
 4. [Expectations](04-expectations.md)
 5. [Argument Matching](05-argument-matching.md)
 6. [Verification](06-verification.md)

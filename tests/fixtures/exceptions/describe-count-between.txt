@@ -1,1 +1,1 @@
-Test double `BookRepository` expected `delete(any arguments)` to be called between 2 and 4 times, but it was never called.
+Double `BookRepository` expected `delete(any arguments)` to be called between 2 and 4 times, but it was never called.

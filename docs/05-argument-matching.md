@@ -9,7 +9,7 @@ $repository->allows('find')->with(Argument::any())->returns($book);
 $repository->allows('save')->with(Argument::type(Book::class))->returns(true);
 ```
 
-`Argument` is a small, standalone facade rather than a method on `TestDouble` itself — a matcher constrains one argument to a call, it isn't a double, so it gets its own class.
+`Argument` is a small, standalone facade rather than a method on `Double` itself — a matcher constrains one argument to a call, it isn't a double, so it gets its own class.
 
 ## Any Argument
 

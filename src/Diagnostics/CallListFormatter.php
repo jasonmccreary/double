@@ -28,7 +28,7 @@ final class CallListFormatter
     }
 
     /**
-     * Same capped rendering as describe(), for TestDouble::unused() — whose
+     * Same capped rendering as describe(), for Double::unused() — whose
      * calls span whatever methods were actually invoked, not one fixed
      * $method, so each entry already carries its own method name.
      *
@@ -71,7 +71,7 @@ final class CallListFormatter
     public static function renderCorrelationParagraph(string $method, array $callDescriptions): string
     {
         // Trailing "\n" is deliberate — a new paragraph, not a continuation
-        // of the sentence before it. See TestDoubleException::appendFabricatedNote().
+        // of the sentence before it. See DoubleException::appendFabricatedNote().
         return sprintf(
             "The following calls to `%s` were made during this test: %s\n",
             $method,

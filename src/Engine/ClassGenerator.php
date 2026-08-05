@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\DoubleInterface;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
-use JMac\Testing\TestDoubleInterface;
 
 /**
  * @internal
@@ -50,7 +50,7 @@ final class ClassGenerator
 
     /**
      * @internal Used by SafeDefaultResolver (fabricating an
-     * intersection-typed return) and TestDouble::for() (a direct
+     * intersection-typed return) and Double::for() (a direct
      * multi-target double). Intersection members are always interfaces in
      * PHP, so this validates every target actually is one instead of
      * branching between extends/implements.
@@ -248,12 +248,12 @@ final class ClassGenerator
             $targets,
         ));
 
-        // Every generated double implements TestDoubleInterface for real, not just as
-        // a docblock fiction for TestDouble::for()'s @template/@return pairing. A
+        // Every generated double implements DoubleInterface for real, not just as
+        // a docblock fiction for Double::for()'s @template/@return pairing. A
         // single-class target uses `extends`, so the interface needs its own
         // `implements` clause; an interface target already uses `implements`, so it
         // just joins the list.
-        $controlInterface = '\\'.ltrim(TestDoubleInterface::class, '\\');
+        $controlInterface = '\\'.ltrim(DoubleInterface::class, '\\');
         $inheritance = $keyword === 'extends'
             ? sprintf('extends %s implements %s', $parents, $controlInterface)
             : sprintf('implements %s, %s', $parents, $controlInterface);

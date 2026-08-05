@@ -10,7 +10,7 @@ namespace JMac\Testing\Exceptions;
  * orthogonal check, not a matching change: it only ever runs against
  * whichever expectation ProxyBehavior::findMatch() already selected.
  */
-class OutOfOrderCallException extends TestDoubleException
+class OutOfOrderCallException extends DoubleException
 {
     use OutOfOrderCallFields;
 }

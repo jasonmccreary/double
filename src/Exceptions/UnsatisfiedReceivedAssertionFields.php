@@ -40,12 +40,12 @@ trait UnsatisfiedReceivedAssertionFields
         string $method = '',
         array $otherObservedCalls = [],
     ): string {
-        $message = sprintf('Test double `%s` %s.', $label, $description);
+        $message = sprintf('Double `%s` %s.', $label, $description);
 
         if ($otherObservedCalls !== []) {
             $message .= "\n\n".CallListFormatter::renderCorrelationParagraph($method, $otherObservedCalls);
         }
 
-        return TestDoubleException::appendFabricatedNote($message, $fabricated);
+        return DoubleException::appendFabricatedNote($message, $fabricated);
     }
 }

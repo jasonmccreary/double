@@ -3,7 +3,7 @@
 You may install this library as a development dependency with Composer:
 
 ```sh
-composer require --dev jasonmccreary/test-double
+composer require --dev jasonmccreary/double
 ```
 
 ## Requirements
@@ -24,14 +24,14 @@ None of this requires configuration — it's detected the moment your tests run.
 ```php
 <?php
 
-use JMac\Testing\TestDouble;
+use JMac\Testing\Double;
 
 require 'vendor/autoload.php';
 
-$double = TestDouble::for(Countable::class);
+$double = Double::for(Countable::class);
 $double->allows('count')->returns(3);
 
 var_dump($double->count()); // int(3)
 ```
 
-If that prints `int(3)`, you're ready to go. Head over to [Creating Test Doubles](03-creating-test-doubles.md) to see what a real one looks like.
+If that prints `int(3)`, you're ready to go. Head over to [Creating Doubles](03-creating-doubles.md) to see what a real one looks like.

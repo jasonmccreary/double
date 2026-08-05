@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
+use JMac\Testing\Double;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
-use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\InstantiableLogger;
@@ -18,7 +18,7 @@ final class PassthruModeTest extends TestCase
     public function test_passthru_with_an_instance_delegates_unmatched_calls(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for(InstantiableLogger::class)->passthru($real);
+        $double = Double::for(InstantiableLogger::class)->passthru($real);
 
         $this->assertTrue($double->log('hello'));
     }
@@ -26,7 +26,7 @@ final class PassthruModeTest extends TestCase
     public function test_passthru_still_intercepts_configured_calls(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for(InstantiableLogger::class)->passthru($real);
+        $double = Double::for(InstantiableLogger::class)->passthru($real);
         $double->allows('log')->returns(false);
 
         $this->assertFalse($double->log('hello'));
@@ -35,23 +35,23 @@ final class PassthruModeTest extends TestCase
     public function test_passthru_delegated_calls_are_still_recorded_for_spy_assertions(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for(InstantiableLogger::class)->passthru($real);
+        $double = Double::for(InstantiableLogger::class)->passthru($real);
 
         $double->log('hello');
 
-        $this->assertSame([['hello']], TestDouble::stateFor($double)->callsFor('log'));
+        $this->assertSame([['hello']], Double::stateFor($double)->callsFor('log'));
     }
 
     public function test_passthru_with_no_argument_auto_instantiates_a_real_instance(): void
     {
-        $double = TestDouble::for(InstantiableLogger::class)->passthru();
+        $double = Double::for(InstantiableLogger::class)->passthru();
 
         $this->assertTrue($double->log('hello'));
     }
 
     public function test_passthru_with_no_argument_on_an_interface_target_fails_clearly(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(PassthruAutoInstantiationException::class);
         $this->expectExceptionMessage('->passthru($existingInstance)');
@@ -61,7 +61,7 @@ final class PassthruModeTest extends TestCase
 
     public function test_passthru_with_no_argument_surfaces_a_throwing_constructor_clearly(): void
     {
-        $double = TestDouble::for(ConcreteLogger::class);
+        $double = Double::for(ConcreteLogger::class);
 
         $this->expectException(PassthruAutoInstantiationException::class);
         $this->expectExceptionMessage('->passthru($existingInstance)');
@@ -72,7 +72,7 @@ final class PassthruModeTest extends TestCase
     public function test_for_with_a_real_instance_derives_the_double_from_its_class(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for($real);
+        $double = Double::for($real);
 
         $this->assertInstanceOf(InstantiableLogger::class, $double);
     }
@@ -80,7 +80,7 @@ final class PassthruModeTest extends TestCase
     public function test_for_with_a_real_instance_does_not_change_the_default_mode(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for($real);
+        $double = Double::for($real);
 
         // Loose mode's safe default for a bool return is false — if for()
         // had silently switched to Passthru mode, this would delegate to
@@ -91,9 +91,9 @@ final class PassthruModeTest extends TestCase
     public function test_for_with_a_real_instance_is_used_by_a_later_passthru_with_no_argument(): void
     {
         $real = new InstantiableLogger;
-        $double = TestDouble::for($real)->passthru();
+        $double = Double::for($real)->passthru();
 
-        $this->assertSame($real, TestDouble::stateFor($double)->passthruTarget());
+        $this->assertSame($real, Double::stateFor($double)->passthruTarget());
         $this->assertTrue($double->log('hello'));
     }
 
@@ -101,15 +101,15 @@ final class PassthruModeTest extends TestCase
     {
         $remembered = new InstantiableLogger;
         $explicit = new InstantiableLogger;
-        $double = TestDouble::for($remembered)->passthru($explicit);
+        $double = Double::for($remembered)->passthru($explicit);
 
-        $this->assertSame($explicit, TestDouble::stateFor($double)->passthruTarget());
+        $this->assertSame($explicit, Double::stateFor($double)->passthruTarget());
     }
 
     public function test_for_with_a_real_instance_still_satisfies_an_interface_the_class_implements(): void
     {
         $real = new RealLogger;
-        $double = TestDouble::for($real)->passthru();
+        $double = Double::for($real)->passthru();
 
         // PHP's own transitive interface inheritance through extends — not
         // anything this library does specially — so the double can still be
@@ -122,6 +122,6 @@ final class PassthruModeTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        TestDouble::for(new InstantiableLogger, BookRepositoryInterface::class);
+        Double::for(new InstantiableLogger, BookRepositoryInterface::class);
     }
 }

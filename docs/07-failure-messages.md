@@ -17,7 +17,7 @@ $repository->verify();
 ```
 
 ```
-1 expectation was not satisfied on test double "foo":
+1 expectation was not satisfied on double "foo":
 
     find("baz") — expected exactly 1 time(s), called 0 time(s)
 
@@ -30,10 +30,10 @@ That second block comes straight from the call log — `find()` really was calle
 
 ## A Call Wasn't Configured
 
-In [Strict mode](03-creating-test-doubles.md#strict), a call that doesn't match a configured expectation fails the moment it happens:
+In [Strict mode](03-creating-doubles.md#strict), a call that doesn't match a configured expectation fails the moment it happens:
 
 ```
-Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
 requires every call to be configured. For example:
 `$foo->allows('bar')->returns(...)`.
 ```
@@ -43,7 +43,7 @@ That example is a starting point, not something to paste verbatim — `$foo` is 
 If `bar` was already called successfully elsewhere in the test, you'll see that instead of the guess — a fact pulled straight from the call log, not a suggestion:
 
 ```
-Test double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
 requires every call to be configured.
 
 The following calls to `bar` were made during this test: `bar(1)`
@@ -58,7 +58,7 @@ $repository->expects('sav'); // meant "save"
 ```
 
 ```
-Can't configure "sav" on a test double of "BookRepository": no such method
+Can't configure "sav" on a double of "BookRepository": no such method
 there. Did you mean "save"?
 ```
 
@@ -69,7 +69,7 @@ The suggestion only appears when something is genuinely close. If nothing is, th
 If a call matches an expectation but would push it past its configured maximum, that call fails immediately, by number:
 
 ```
-Test double "foo" got call #4 to "bar(1)", but the expectation only
+Double "foo" got call #4 to "bar(1)", but the expectation only
 allows 3.
 ```
 
@@ -78,7 +78,7 @@ allows 3.
 For expectations marked [`inOrder()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
 
 ```
-Test double "Connection" received "open()" out of order: "close()" already
+Double "Connection" received "open()" out of order: "close()" already
 happened, and inOrder() requires this to happen no later than that.
 ```
 
@@ -86,15 +86,15 @@ happened, and inOrder() requires this to happen no later than that.
 
 A handful of failures are about the test's setup rather than the double misbehaving mid-test, and these are caught the moment you make the mistake:
 
-- Doubling a class that doesn't exist, or that's `final` (see [What Can't Be Doubled](03-creating-test-doubles.md#what-cant-be-doubled)).
-- A method name that collides with the library's own control verbs (see [Reserved Method Names](03-creating-test-doubles.md#reserved-method-names)).
+- Doubling a class that doesn't exist, or that's `final` (see [What Can't Be Doubled](03-creating-doubles.md#what-cant-be-doubled)).
+- A method name that collides with the library's own control verbs (see [Reserved Method Names](03-creating-doubles.md#reserved-method-names)).
 - Setting a double's mode twice.
 - Configuring a static method with `expects()`/`allows()`/`received()` (see [Static Methods](04-expectations.md#static-methods)).
 - Calling `->passthru()` with no argument when there's nothing to auto-instantiate.
 
 ## Fabricated Doubles
 
-[Loose mode](03-creating-test-doubles.md#loose-the-default) sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:
+[Loose mode](03-creating-doubles.md#loose-the-default) sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:
 
 ```
 Note: this double was auto-fabricated by Loose mode, not created directly.
@@ -103,7 +103,7 @@ Note: this double was auto-fabricated by Loose mode, not created directly.
 And if a generated double is asked to fabricate something of its own, that's where a line is drawn:
 
 ```
-Test double "Book" only fabricates one call chain deep — configure
+Double "Book" only fabricates one call chain deep — configure
 "author()" explicitly: $book->allows('author')->returns(...);
 ```
 

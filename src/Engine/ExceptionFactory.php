@@ -25,9 +25,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * @internal
  *
- * Picks between a plain TestDoubleException and its PHPUnit-specific
+ * Picks between a plain DoubleException and its PHPUnit-specific
  * counterpart via a runtime class_exists(TestCase::class) check, so
- * ProxyBehavior and TestDouble never need to know PHPUnit exists.
+ * ProxyBehavior and Double never need to know PHPUnit exists.
  */
 final class ExceptionFactory
 {

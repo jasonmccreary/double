@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Fixtures\Lifecycle;
 
+use JMac\Testing\Double;
 use JMac\Testing\Integrations\PHPUnit\VerifiesDoubles;
-use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -22,7 +22,7 @@ final class UnmetExpectationOnlyFixture extends TestCase
 
     public function test_it_never_calls_the_expected_method(): void
     {
-        $repository = TestDouble::for(BookRepositoryInterface::class);
+        $repository = Double::for(BookRepositoryInterface::class);
 
         $repository->expects('delete')->with(1);
 

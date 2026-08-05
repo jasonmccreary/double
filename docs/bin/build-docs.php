@@ -62,9 +62,9 @@ $docsDir = __DIR__.'/..';
 $assetsDir = __DIR__.'/../templates/assets';
 $siteDir = __DIR__.'/../build';
 
-$siteName = 'Test Double';
-$siteDescription = 'Documentation for Test Double, a modern, human-friendly PHP test double library.';
-$repoUrl = 'https://github.com/jasonmccreary/test-double';
+$siteName = 'Double';
+$siteDescription = 'Documentation for Double, a modern, human-friendly PHP double library.';
+$repoUrl = 'https://github.com/jasonmccreary/double';
 
 $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 
@@ -171,7 +171,7 @@ function torchlight_highlight(array $blocks, string $token, string $theme, array
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: Bearer '.$token,
-                'X-Torchlight-Client: test-double docs build',
+                'X-Torchlight-Client: double docs build',
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_THROW_ON_ERROR),
         ]);

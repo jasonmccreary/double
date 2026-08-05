@@ -1,1 +1,1 @@
-Test double `BookRepository` expected `save(contains('draft'))` to be called exactly 1 time, but it was never called.
+Double `BookRepository` expected `save(contains('draft'))` to be called exactly 1 time, but it was never called.

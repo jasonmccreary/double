@@ -24,12 +24,12 @@ trait OutOfOrderCallFields
     public static function renderMessage(string $label, string $method, string $alreadyOccurredMethod, bool $fabricated): string
     {
         return sprintf(
-            'Test double `%s` received `%s()` out of order. Using `inOrder`, this was expected to be '
+            'Double `%s` received `%s()` out of order. Using `inOrder`, this was expected to be '
             .'called before `%s()` was called.%s',
             $label,
             $method,
             $alreadyOccurredMethod,
-            TestDoubleException::fabricatedNote($fabricated),
+            DoubleException::fabricatedNote($fabricated),
         );
     }
 }

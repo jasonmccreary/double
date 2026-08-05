@@ -11,7 +11,7 @@ namespace JMac\Testing\Exceptions;
  * typo or wrong value in the actual call shows up as a plain fact rather
  * than leaving the person guessing.
  */
-class UnsatisfiedExpectationException extends TestDoubleException
+class UnsatisfiedExpectationException extends DoubleException
 {
     use UnsatisfiedExpectationFields;
 }

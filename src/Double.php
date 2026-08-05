@@ -18,13 +18,13 @@ use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 
 /**
- * The public facade and the library's sole entry point. `TestDouble::for()`
+ * The public facade and the library's sole entry point. `Double::for()`
  * creates a double; `$double->verify()` is the manual verification call
  * every test runner can use. PHPUnit users can skip it via
  * `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies every double
  * created during a test.
  */
-final class TestDouble
+final class Double
 {
     private static ?\WeakMap $states = null;
 
@@ -59,7 +59,7 @@ final class TestDouble
      * The real PHP return type stays the bare `object` — PHP has no syntax
      * for "whatever type this class-string names," only PHPStan/Psalm's
      * docblock generics do. That's sound, not just convenient: every
-     * generated double actually `implements TestDoubleInterface` for real
+     * generated double actually `implements DoubleInterface` for real
      * (see that interface's own docblock), so the templated return below is
      * never a docblock fiction. Only precise for the single-target call — a
      * multi-target intersection call doesn't have a single T to infer from a
@@ -69,12 +69,12 @@ final class TestDouble
      * @template T of object
      *
      * @param  class-string<T>|T  $targets
-     * @return T&TestDoubleInterface
+     * @return T&DoubleInterface
      */
     public static function for(string|object ...$targets): object
     {
         if ($targets === []) {
-            throw new \InvalidArgumentException('`TestDouble::for()` requires at least one target.');
+            throw new \InvalidArgumentException('`Double::for()` requires at least one target.');
         }
 
         if (count($targets) > 1) {
@@ -85,7 +85,7 @@ final class TestDouble
                     // so mixing one into a multi-target call is rejected rather than
                     // guessing.
                     throw new \InvalidArgumentException(
-                        '`TestDouble::for()` can\'t accept a real instance as a target when passing multiple targets.',
+                        '`Double::for()` can\'t accept a real instance as a target when passing multiple targets.',
                     );
                 }
             }
@@ -206,9 +206,16 @@ final class TestDouble
      * @internal Used only by VerifiesDoubles's #[After] hook. Both lists are
      * drained up front, before iterating, so a failure partway through never
      * leaves stale entries to leak into whichever test's #[After] runs next.
+     * Disarms too — otherwise a received() call in a test that never arms
+     * auto-verification itself could still get swept into $pendingReceived
+     * just because some earlier test in the suite armed it and never
+     * disarmed, leaking a check into an unrelated test or, worse, into
+     * process shutdown.
      */
     public static function verifyAll(): void
     {
+        self::$autoVerifyArmed = false;
+
         $pending = self::$pending;
         self::$pending = [];
 
@@ -232,7 +239,7 @@ final class TestDouble
         $state = self::states()[$double] ?? null;
 
         if ($state === null) {
-            throw new \LogicException('Object is not a `TestDouble`-generated double.');
+            throw new \LogicException('Object is not a `Double`-generated double.');
         }
 
         return $state;

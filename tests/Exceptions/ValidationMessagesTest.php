@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Exceptions;
 
+use JMac\Testing\Double;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Matching\Argument;
 use JMac\Testing\Matching\PatternMatcher;
-use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 
 /**
  * Golden-file coverage for the plain \InvalidArgumentException/\LogicException
- * messages thrown directly by the public API (TestDouble::for(), Argument,
+ * messages thrown directly by the public API (Double::for(), Argument,
  * PatternMatcher, MethodExpectation's with()/returns()/throws()/times()) —
  * as opposed to ExceptionMessagesTest, which covers the dedicated Diagnostic
  * exception classes under src/Exceptions. Both are "every potential
@@ -25,7 +25,7 @@ final class ValidationMessagesTest extends GoldenFileTestCase
     public function test_renders_for_with_no_targets(): void
     {
         try {
-            TestDouble::for();
+            Double::for();
             $this->fail('Expected an InvalidArgumentException.');
         } catch (\InvalidArgumentException $exception) {
             $this->assertMatchesGolden('for-requires-at-least-one-target', $exception->getMessage());
@@ -35,7 +35,7 @@ final class ValidationMessagesTest extends GoldenFileTestCase
     public function test_renders_for_multi_target_rejecting_a_real_instance(): void
     {
         try {
-            TestDouble::for(BookRepositoryInterface::class, new Book('Some Title'));
+            Double::for(BookRepositoryInterface::class, new Book('Some Title'));
             $this->fail('Expected an InvalidArgumentException.');
         } catch (\InvalidArgumentException $exception) {
             $this->assertMatchesGolden('for-multi-target-rejects-real-instance', $exception->getMessage());
@@ -45,7 +45,7 @@ final class ValidationMessagesTest extends GoldenFileTestCase
     public function test_renders_state_for_on_a_non_double_object(): void
     {
         try {
-            TestDouble::stateFor(new Book('Some Title'));
+            Double::stateFor(new Book('Some Title'));
             $this->fail('Expected a LogicException.');
         } catch (\LogicException $exception) {
             $this->assertMatchesGolden('state-for-not-a-double', $exception->getMessage());

@@ -27,16 +27,16 @@ trait FabricationLimitExceededFields
     public static function renderMessage(string $label, string $method): string
     {
         return sprintf(
-            'Test double `%s` was returned automatically. This only happens one level deep from the '
-            .'original test double. To respond to `%s()`, you\'ll need to configure it explicitly. '
+            'Double `%s` was returned automatically. This only happens one level deep from the '
+            .'original double. To respond to `%s()`, you\'ll need to configure it explicitly. '
             // $anotherDouble is a placeholder, not derived from $returnType — a real
-            // instance, a further TestDouble::for() call, anything satisfying the type
+            // instance, a further Double::for() call, anything satisfying the type
             // works equally, so naming it after $returnType would overstate how
             // prescriptive this suggestion actually is.
             .'For example: `$%s->allows(\'%s\')->returns($anotherDouble)`.',
             $label,
             $method,
-            TestDoubleException::suggestedVariableName($label),
+            DoubleException::suggestedVariableName($label),
             $method,
         );
     }

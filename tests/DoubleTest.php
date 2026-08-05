@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests;
 
+use JMac\Testing\Double;
 use JMac\Testing\Engine\ReceivedAssertion;
 use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
@@ -16,7 +17,6 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnusedAssertionException;
 use JMac\Testing\Matching\Argument;
-use JMac\Testing\TestDouble;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
@@ -26,7 +26,7 @@ use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\TestCase;
 
-final class TestDoubleTest extends TestCase
+final class DoubleTest extends TestCase
 {
     /**
      * Deliberately a property, not a local variable, for the
@@ -43,14 +43,14 @@ final class TestDoubleTest extends TestCase
 
     public function test_for_returns_an_instance_of_the_target(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->assertInstanceOf(BookRepositoryInterface::class, $double);
     }
 
     public function test_for_with_multiple_targets_returns_a_double_satisfying_all_of_them(): void
     {
-        $double = TestDouble::for(Fillable::class, Sized::class);
+        $double = Double::for(Fillable::class, Sized::class);
 
         $this->assertInstanceOf(Fillable::class, $double);
         $this->assertInstanceOf(Sized::class, $double);
@@ -58,7 +58,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_for_with_multiple_targets_configures_methods_declared_on_either_one(): void
     {
-        $double = TestDouble::for(Fillable::class, Sized::class);
+        $double = Double::for(Fillable::class, Sized::class);
 
         $double->allows('fill')->returns(true);
         $double->allows('size')->returns(3);
@@ -69,12 +69,12 @@ final class TestDoubleTest extends TestCase
 
     public function test_for_with_multiple_targets_uses_a_combined_short_label_in_messages(): void
     {
-        $double = TestDouble::for(Fillable::class, Sized::class);
+        $double = Double::for(Fillable::class, Sized::class);
         $double->expects('fill')->returns(true);
 
         // Regression check: label derivation used to take the short name of
         // the whole "&"-joined string in one pass, which silently dropped
-        // every candidate but the last (see TestDouble::deriveLabel()) —
+        // every candidate but the last (see Double::deriveLabel()) —
         // this double's label would have rendered as just "Sized".
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessage('Fillable&Sized');
@@ -86,12 +86,12 @@ final class TestDoubleTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        TestDouble::for();
+        Double::for();
     }
 
     public function test_allows_configures_a_return_value_for_a_matching_call(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $book = new Book('Dune');
 
         $double->allows('find')->with(1)->returns($book);
@@ -101,7 +101,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_allows_may_be_called_any_number_of_times_including_zero(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('save')->returns(true);
 
         $double->verify();
@@ -114,7 +114,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_expects_defaults_to_exactly_once(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
         $double->delete(1);
@@ -124,7 +124,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_expects_fails_verify_when_never_called(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
@@ -135,7 +135,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_expects_throws_when_called_more_times_than_allowed(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
         $double->delete(1);
@@ -147,7 +147,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_last_registered_matching_expectation_wins(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $default = new Book('Default');
         $specific = new Book('Specific');
 
@@ -160,7 +160,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_a_generic_catch_all_no_longer_starves_an_earlier_specific_expectation_once_exhausted(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $specific = new Book('Specific');
 
         $double->expects('find')->with(1)->returns($specific);
@@ -183,7 +183,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_stacking_separate_expectations_for_the_same_method_and_args_no_longer_throws(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $first = new Book('First');
         $second = new Book('Second');
 
@@ -217,7 +217,7 @@ final class TestDoubleTest extends TestCase
      */
     public function test_call_limit_exceeded_names_other_matching_expectations_left_unselected(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('find')->with(1)->returns(new Book('First'));
         $double->expects('find')->with(1)->returns(new Book('Second'));
 
@@ -237,7 +237,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_calls_made_in_declared_order_succeed(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('find')->inOrder();
         $double->allows('save')->inOrder();
         $double->allows('delete')->inOrder();
@@ -251,7 +251,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_calls_out_of_declared_order_throw_immediately(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('find')->inOrder();
         $double->allows('save')->inOrder();
 
@@ -267,7 +267,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_ignores_calls_to_expectations_not_themselves_marked_in_order(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('find')->inOrder();
         $double->allows('delete')->inOrder();
         $double->allows('save')->returns(true); // not ordered
@@ -281,7 +281,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_allows_skipping_ahead_without_every_step_occurring(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('find')->inOrder();
         $double->allows('save')->inOrder();
         $double->allows('delete')->inOrder();
@@ -299,8 +299,8 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_is_scoped_per_double_not_across_doubles(): void
     {
-        $first = TestDouble::for(BookRepositoryInterface::class);
-        $second = TestDouble::for(BookRepositoryInterface::class);
+        $first = Double::for(BookRepositoryInterface::class);
+        $second = Double::for(BookRepositoryInterface::class);
 
         $first->allows('find')->inOrder();
         $first->allows('save')->inOrder();
@@ -319,7 +319,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_in_order_works_with_expects_as_well_as_allows(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('find')->returns(null)->inOrder();
         $double->expects('save')->returns(true)->inOrder();
 
@@ -331,7 +331,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_sequential_returns_hold_at_the_last_value_on_further_calls(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $first = new Book('First');
         $second = new Book('Second');
 
@@ -344,7 +344,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_throws_configures_an_exception_to_be_thrown(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $exception = new \OutOfBoundsException('not found');
 
         $double->allows('find')->with(999)->throws($exception);
@@ -356,7 +356,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_sequential_throws_hold_at_the_last_exception_on_further_calls(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $first = new \OutOfBoundsException('first call fails');
         $second = new \RuntimeException('second call fails');
 
@@ -386,7 +386,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_resolves_computes_the_value_from_the_actual_arguments(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->allows('find')->resolves(fn (int $id): Book => new Book("Book #{$id}"));
 
@@ -395,7 +395,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_capture_writes_the_actual_argument_into_the_referenced_variable(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $captured = null;
         $dune = new Book('Dune');
 
@@ -408,7 +408,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_capture_does_not_write_when_its_own_expectation_ends_up_not_matching(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $captured = 'sentinel';
 
         // Older — checked *after* the expectation below. The capture sits at
@@ -426,7 +426,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_type_matches_a_builtin_php_type_by_name_not_just_a_class(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $book = new Book('Dune');
 
         $double->allows('find')->with(Argument::type('int'))->returns($book);
@@ -436,7 +436,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_with_remaining_constrains_only_the_leading_arguments_end_to_end(): void
     {
-        $double = TestDouble::for(VariadicInterface::class);
+        $double = Double::for(VariadicInterface::class);
 
         $double->allows('combine')->with('-', Argument::remaining())->returns('stubbed');
 
@@ -446,7 +446,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_with_remaining_composes_the_same_way_as_expects(): void
     {
-        $double = TestDouble::for(VariadicInterface::class);
+        $double = Double::for(VariadicInterface::class);
 
         $double->combine('-', 'a', 'b', 'c');
 
@@ -455,7 +455,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_never_forbids_any_call_at_all(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('delete')->never();
 
         $this->expectException(PHPUnitExpectationCallLimitExceededException::class);
@@ -465,7 +465,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_at_least_once_is_satisfied_by_multiple_calls(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null)->atLeastOnce();
 
         $double->delete(1);
@@ -477,7 +477,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_times_requires_exactly_that_many_calls(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null)->times(2);
 
         $double->delete(1);
@@ -488,7 +488,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_times_with_a_range_requires_a_call_count_within_bounds(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null)->times(1, 3);
 
         $double->delete(1);
@@ -499,7 +499,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_times_with_a_named_maximum_fails_once_exceeded(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('delete')->returns(null)->times(maximum: 2);
 
         $double->delete(1);
@@ -512,7 +512,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_strict_mode_throws_immediately_on_an_unmatched_call(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class)->strict();
+        $double = Double::for(BookRepositoryInterface::class)->strict();
 
         $this->expectException(PHPUnitUnexpectedCallException::class);
 
@@ -527,7 +527,7 @@ final class TestDoubleTest extends TestCase
      */
     public function test_unexpected_call_correlates_other_calls_already_observed_for_the_same_method(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class)->strict();
+        $double = Double::for(BookRepositoryInterface::class)->strict();
         $double->allows('find')->with(123)->returns(new Book('Dune'));
 
         $double->find(123);
@@ -550,7 +550,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_mode_can_only_be_set_once(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class)->strict();
+        $double = Double::for(BookRepositoryInterface::class)->strict();
 
         $this->expectException(ModeConfigurationException::class);
 
@@ -559,7 +559,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_expects_rejects_an_undeclared_method_name(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
         $this->expectExceptionMessage('bogus');
@@ -569,7 +569,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_expects_suggests_the_closest_declared_method_name_for_a_likely_typo(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
         $this->expectExceptionMessage('Did you mean `save`?');
@@ -585,7 +585,7 @@ final class TestDoubleTest extends TestCase
      */
     public function test_expects_rejects_a_static_method(): void
     {
-        $double = TestDouble::for(HasStaticMethod::class);
+        $double = Double::for(HasStaticMethod::class);
 
         $this->expectException(StaticMethodException::class);
         $this->expectExceptionMessage('static method');
@@ -601,7 +601,7 @@ final class TestDoubleTest extends TestCase
      */
     public function test_expects_rejects_a_magic_method(): void
     {
-        $double = TestDouble::for(HasMagicMethod::class);
+        $double = Double::for(HasMagicMethod::class);
 
         $this->expectException(MagicMethodException::class);
         $this->expectExceptionMessage('magic method');
@@ -611,7 +611,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_passes_when_the_method_was_called_at_least_once(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->delete(1);
         $double->received('delete');
@@ -619,7 +619,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_fails_when_the_method_was_never_called(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
         $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called at least 1 time, but it was never called/s');
@@ -629,7 +629,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_with_passes_when_a_matching_call_was_observed(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $dune = new Book('Dune');
 
         $double->save($dune);
@@ -638,7 +638,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_with_fails_when_only_a_non_matching_call_was_observed(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->save(new Book('Dune Messiah'));
 
@@ -649,14 +649,14 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_never_passes_when_the_method_was_not_called(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->received('delete')->never();
     }
 
     public function test_received_never_fails_when_the_method_was_called(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->delete(1);
 
@@ -668,7 +668,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_times_requires_the_exact_count(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->delete(1);
         $double->delete(2);
@@ -681,7 +681,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_composes_with_and_never_to_assert_specific_arguments_were_not_received(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $protected = new Book('Protected');
 
         $double->save(new Book('Fine to delete'));
@@ -694,7 +694,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_rejects_an_undeclared_method_name(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
         $this->expectExceptionMessage('bogus');
@@ -704,7 +704,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_suggests_the_closest_declared_method_name_for_a_likely_typo(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $this->expectException(UnknownMethodException::class);
         $this->expectExceptionMessage('Did you mean `save`?');
@@ -714,7 +714,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_rejects_a_static_method(): void
     {
-        $double = TestDouble::for(HasStaticMethod::class);
+        $double = Double::for(HasStaticMethod::class);
 
         $this->expectException(StaticMethodException::class);
         $this->expectExceptionMessage('static method');
@@ -724,7 +724,7 @@ final class TestDoubleTest extends TestCase
 
     public function test_received_rejects_a_magic_method(): void
     {
-        $double = TestDouble::for(HasMagicMethod::class);
+        $double = Double::for(HasMagicMethod::class);
 
         $this->expectException(MagicMethodException::class);
         $this->expectExceptionMessage('magic method');
@@ -734,19 +734,19 @@ final class TestDoubleTest extends TestCase
 
     public function test_unused_passes_when_nothing_was_called_at_all(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->unused();
     }
 
     public function test_unused_fails_when_any_method_was_called(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->delete(1);
 
         $this->expectException(PHPUnitUnusedAssertionException::class);
-        $this->expectExceptionMessage('Test double `BookRepositoryInterface` expected no calls at all, but received: `delete(1)`.');
+        $this->expectExceptionMessage('Double `BookRepositoryInterface` expected no calls at all, but received: `delete(1)`.');
 
         $double->unused();
     }
@@ -758,7 +758,7 @@ final class TestDoubleTest extends TestCase
      */
     public function test_unused_fails_and_lists_every_call_across_different_methods(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->save(new Book('Dune'));
         $double->delete(1);
@@ -771,14 +771,14 @@ final class TestDoubleTest extends TestCase
 
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
 
         $double->verify();
     }
 
     public function test_verify_failure_correlates_other_calls_observed_for_the_same_method(): void
     {
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->allows('find')->returns(null);
         $double->expects('find')->with(123)->returns(new Book('Dune'));
 
@@ -798,24 +798,24 @@ final class TestDoubleTest extends TestCase
 
     public function test_verify_all_passes_when_every_double_created_since_arming_is_satisfied(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $first = TestDouble::for(BookRepositoryInterface::class);
-        $second = TestDouble::for(BookRepositoryInterface::class);
+        $first = Double::for(BookRepositoryInterface::class);
+        $second = Double::for(BookRepositoryInterface::class);
         $first->expects('delete')->returns(null);
         $second->allows('save')->returns(true);
 
         $first->delete(1);
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $satisfied = TestDouble::for(BookRepositoryInterface::class);
-        $unsatisfied = TestDouble::for(BookRepositoryInterface::class);
+        $satisfied = Double::for(BookRepositoryInterface::class);
+        $unsatisfied = Double::for(BookRepositoryInterface::class);
         $satisfied->expects('delete')->returns(null);
         $unsatisfied->expects('save')->returns(true);
 
@@ -824,38 +824,38 @@ final class TestDoubleTest extends TestCase
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/expected `save\(any arguments\)` to be called exactly 1 time, but it was never called/s');
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     public function test_verify_all_only_covers_doubles_created_after_arming(): void
     {
         // Created before arming — verifyAll() must never see this one, even
         // though it has a real unmet expectation.
-        $before = TestDouble::for(BookRepositoryInterface::class);
+        $before = Double::for(BookRepositoryInterface::class);
         $before->expects('delete')->returns(null);
 
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $after = TestDouble::for(BookRepositoryInterface::class);
+        $after = Double::for(BookRepositoryInterface::class);
         $after->expects('save')->returns(true);
         $after->save(new Book('Dune'));
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     public function test_verify_all_drains_pending_doubles_so_a_second_call_is_a_no_op(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
         $double->delete(1);
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
 
         // $double already left the pending list on the call above, so this
         // has nothing left to check regardless of $double's own state.
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     /**
@@ -870,40 +870,40 @@ final class TestDoubleTest extends TestCase
      */
     public function test_verify_all_checks_a_received_assertion_held_past_the_test_method(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $this->heldAssertion = $double->received('save');
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     public function test_verify_all_passes_a_satisfied_received_assertion_held_past_the_test_method(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
         $this->heldAssertion = $double->received('save');
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 
     public function test_verify_all_drains_pending_received_assertions_so_a_second_call_is_a_no_op(): void
     {
-        TestDouble::armAutoVerify();
+        Double::armAutoVerify();
 
-        $double = TestDouble::for(BookRepositoryInterface::class);
+        $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
         $this->heldAssertion = $double->received('save');
 
-        TestDouble::verifyAll();
+        Double::verifyAll();
 
         // $this->heldAssertion already left the pending list and was
         // checked on the call above, so this has nothing left to check
         // regardless of its own state.
-        TestDouble::verifyAll();
+        Double::verifyAll();
     }
 }
