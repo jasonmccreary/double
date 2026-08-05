@@ -8,7 +8,7 @@ composer require --dev jasonmccreary/double
 
 ## Requirements
 
-This library needs PHP 8.3 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner — the core library doesn't know or care what's running your tests.
+This library needs PHP 8.3 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner. The core library doesn't know or care what's running your tests.
 
 ## PHPUnit Integration
 
@@ -17,7 +17,7 @@ If PHPUnit happens to be installed in your project, this library notices and imp
 - Failures are reported as PHPUnit failures rather than generic errors, so they're attributed to the right test.
 - You may add a trait to your base test case to have every expectation verified automatically, without calling `->verify()` yourself.
 
-None of this requires configuration — it's detected the moment your tests run. The full details live in [PHPUnit Integration](08-phpunit-integration.md). If you're using another test runner, or none at all, everything still works the same way; you just call `$double->verify()` yourself, as shown in [Verification](06-verification.md).
+None of this requires configuration. It's detected the moment your tests run. The full details live in [PHPUnit Integration](08-phpunit-integration.md). If you're using another test runner, or none at all, everything still works the same way; you just call `$double->verify()` yourself, as shown in [Verification](06-verification.md).
 
 ## Confirming It Works
 

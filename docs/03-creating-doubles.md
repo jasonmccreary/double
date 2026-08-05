@@ -14,11 +14,11 @@ This returns a real object. It satisfies `instanceof BookRepository`, it passes 
 $service = new CatalogService($repository);
 ```
 
-Nothing about the double is configured yet — for that, see [Expectations](04-expectations.md). This page covers the double itself: how to create one, what it's called in failure messages, and how it behaves before you've told it anything.
+Nothing about the double is configured yet. See [Expectations](04-expectations.md) for that. This page covers the double itself: how to create one, what it's called in failure messages, and how it behaves before you've told it anything.
 
 ## Doubling More Than One Thing at Once
 
-Sometimes the code you're testing needs a single object that satisfies more than one contract — a logger that's also flushable, for example. You may pass more than one target to `for()` to get one double implementing all of them:
+Sometimes the code you're testing needs a single object that satisfies more than one contract. A logger that's also flushable, for example. You may pass more than one target to `for()` to get one double implementing all of them:
 
 ```php
 $logger = Double::for(LoggerInterface::class, FlushableInterface::class);
@@ -31,7 +31,7 @@ Every target after the first must be an interface, the same rule PHP applies to 
 
 ## Wrapping a Real Instance
 
-If you already have a real object in hand — built by a factory, resolved from a container, or otherwise — you may pass the instance itself to `for()` instead of a class name:
+If you already have a real object in hand (built by a factory, resolved from a container, or otherwise), you may pass the instance itself to `for()` instead of a class name:
 
 ```php
 $double = Double::for($realBook)->passthru();
@@ -41,7 +41,7 @@ $double = Double::for($realBook)->passthru();
 
 ## Labels
 
-Every double is given a label, derived from its class or interface name — `BookRepository::class` becomes `"BookRepository"`. This label appears in every failure message the double produces (see [Failure Messages](07-failure-messages.md)), so you always know which double is involved without hunting through generated class names.
+Every double is given a label, derived from its class or interface name. `BookRepository::class` becomes `"BookRepository"`. This label appears in every failure message the double produces (see [Failure Messages](07-failure-messages.md)), so you always know which double is involved without hunting through generated class names.
 
 ## Reserved Method Names
 
@@ -60,13 +60,11 @@ interface AuthorizerInterface
 }
 
 Double::for(AuthorizerInterface::class);
-// Can't create a double for "AuthorizerInterface": allows collides
-// with Double's own control verbs (expects/allows/strict/passthru/
-// received/unused/verify) — a method can't be both a real one and a
-// configuration verb.
+// Can't create a double for `AuthorizerInterface`. It contains `allows`
+// which collides with Double's internal methods.
 ```
 
-This does come up in practice — `allows()` is part of Laravel's own `Gate` contract, for instance — so it's worth knowing about early rather than discovering it as a confusing test failure later.
+This does come up in practice. `allows()` is part of Laravel's own `Gate` contract, for instance. It's worth knowing about early, rather than discovering it as a confusing test failure later.
 
 ## What Can't Be Doubled
 
@@ -79,7 +77,7 @@ Static methods are a related, separate case: you may create a double for a class
 
 ## Modes
 
-Every double has exactly one mode, chosen either when you create it or on the very next call, and it stays that way afterward. Mode answers one question: **what happens when a call doesn't match anything you've configured?** It never changes what `expects()`/`allows()` mean — those work the same way in every mode.
+Every double has exactly one mode, chosen either when you create it or on the very next call, and it stays that way afterward. Mode answers one question: **what happens when a call doesn't match anything you've configured?** It never changes what `expects()`/`allows()` mean. Those work the same way in every mode.
 
 ### Loose (the Default)
 
@@ -89,10 +87,10 @@ $repository = Double::for(BookRepository::class);
 $repository->allows('find')->with(123)->returns($book);
 
 $repository->find(123); // $book
-$repository->find(456); // a safe default — see below
+$repository->find(456); // a safe default, see below
 ```
 
-This is what you get from a plain `Double::for(...)`, with nothing extra to opt into. An unconfigured call never throws — it returns a sensible, type-safe value based on the method's declared return type:
+This is what you get from a plain `Double::for(...)`, with nothing extra to opt into. An unconfigured call never throws. It returns a sensible, type-safe value based on the method's declared return type:
 
 | Return Type | What You Get |
 |---|---|
@@ -107,14 +105,16 @@ This is what you get from a plain `Double::for(...)`, with nothing extra to opt 
 | a union type | the first branch that resolves cleanly, preferring `null` if it's an option |
 | a non-nullable class or interface | a fresh double of that type, generated for you |
 
-That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later — it hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
+That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later. It hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
 
 ```
-Double "Book" only fabricates one call chain deep — configure
-"author()" explicitly: $book->allows('author')->returns(...);
+Double `Book` was returned automatically. This only happens one
+level deep from the original double. To respond to `author()`,
+you'll need to configure it explicitly. For example:
+`$book->allows('author')->returns($anotherDouble)`.
 ```
 
-Loose mode doesn't stop you from configuring specific calls — you may freely mix "stub these calls" with "fall back to a safe default for everything else."
+Loose mode doesn't stop you from configuring specific calls. You may freely mix "stub these calls" with "fall back to a safe default for everything else."
 
 ### Strict
 
@@ -124,7 +124,7 @@ $repository = Double::for(BookRepository::class)->strict();
 $repository->allows('find')->with(123)->returns($book);
 
 $repository->find(123); // $book
-$repository->find(456); // throws — nothing was configured for this
+$repository->find(456); // throws, nothing was configured for this
 ```
 
 Any call that doesn't match a configured expectation fails immediately, by name. Reach for this when you'd rather a test fail the moment its setup is incomplete, instead of discovering it indirectly further down.
@@ -138,15 +138,16 @@ $logger->info('hello');   // delegates to $realLogger->info('hello')
 $logger->error('uh oh');  // still recorded, so received('error') works
 ```
 
-Unconfigured calls delegate to a real object you supply. Anything you have configured still intercepts as usual, and every call — whether it was intercepted or delegated — is still recorded, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
+Unconfigured calls delegate to a real object you supply. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or delegated, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
 
 Calling `->passthru()` with no argument tries to build the real instance for you through reflection, and explains plainly if that isn't possible:
 
 ```
-Can't auto-instantiate "Logger" to passthru to: constructing it threw:
-... Pass an existing instance instead: ->passthru($existingInstance).
+Can't auto-instantiate `Logger` to passthru. Constructing it threw:
+"...". You may need to pass an existing instance instead. For
+example: `->passthru($existingInstance)`.
 ```
 
 Passthru only applies to classes, since an interface has no implementation to delegate to.
 
-If you only want one specific call to delegate to a real object, rather than the whole double, `resolves()` is the better fit — see [Expectations](04-expectations.md).
+If you only want one specific call to delegate to a real object, rather than the whole double, `resolves()` is the better fit. See [Expectations](04-expectations.md).

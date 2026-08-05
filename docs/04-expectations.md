@@ -1,6 +1,6 @@
 # Expectations
 
-This is the part you'll write the most — telling a double what you expect to happen, and what should happen when it does.
+This is the part you'll write the most: telling a double what you expect to happen, and what should happen when it does.
 
 ```php
 $repository->expects('find')->with(123)->returns($book);
@@ -13,11 +13,11 @@ Read left to right, that's the whole sentence: expect a call to `find`, with `12
 Both register a configured call. The difference is what happens if it never happens:
 
 ```php
-$repository->expects('save');  // must be called exactly once — verify() fails otherwise
+$repository->expects('save');  // must be called exactly once; verify() fails otherwise
 $repository->allows('save');   // may be called any number of times, including zero
 ```
 
-You may reach for `expects()` when the call is the point of the test — the thing you're actually asserting happened — and `allows()` for setup that just needs to respond to a call, without the count being part of what you're testing.
+You may reach for `expects()` when the call is the point of the test (the thing you're actually asserting happened), and `allows()` for setup that just needs to respond to a call, without the count being part of what you're testing.
 
 ## Constraining Arguments with `with()`
 
@@ -25,7 +25,7 @@ You may reach for `expects()` when the call is the point of the test — the thi
 $repository->allows('find')->with(123)->returns($book);
 ```
 
-Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly — scalars and arrays with `===`, objects with `==` (an equivalent object, not necessarily the same instance; see [Argument Matching](05-argument-matching.md#same-exact-instance) if you need identity instead).
+Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly: scalars and arrays with `===`, objects with `==` (an equivalent object, not necessarily the same instance; see [Argument Matching](05-argument-matching.md#same-exact-instance) if you need identity instead).
 
 For anything more flexible than an exact value, see [Argument Matching](05-argument-matching.md).
 
@@ -83,7 +83,7 @@ This mirrors how you'd naturally write the setup: state a broad default, then la
 
 ## Keeping Calls in Order
 
-Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract — you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `inOrder()`:
+Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract: you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `inOrder()`:
 
 ```php
 $connection->expects('open')->inOrder();
@@ -95,10 +95,10 @@ Calling `write()` before `open()` throws immediately, naming both methods involv
 
 ## Static Methods
 
-`expects()`, `allows()`, and `received()` only work with instance methods — there's no instance for a double to intercept a static call through. Configuring one is rejected up front, with a clear reason, rather than silently doing nothing:
+`expects()`, `allows()`, and `received()` only work with instance methods. There's no instance for a double to intercept a static call through. Configuring one is rejected up front, with a clear reason, rather than silently doing nothing:
 
 ```php
 $repository->expects('findAll'); // findAll() is `public static function`
-// Can't configure "findAll" on a double of "BookRepository": it's a
-// static method, and doubles only intercept instance calls.
+// Can't configure `findAll` on a double for `BookRepository` since
+// it's a static method. Static methods can't be doubled.
 ```

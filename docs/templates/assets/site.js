@@ -236,6 +236,56 @@
   setActive();
 })();
 
+// ---------- Copy code button ----------
+
+(function () {
+  var buttons = document.querySelectorAll('.copy-button');
+  if (!buttons.length) {
+    return;
+  }
+
+  // Torchlight-highlighted blocks wrap each source line in its own
+  // <div class="line">, with no newline character between them and blank
+  // lines rendered as &nbsp; (so the block still has visible height). A
+  // plain code.textContent flattens those divs into one line and turns
+  // every blank line into a stray space, so line breaks have to be
+  // reconstructed from the .line divs instead. Plain (unhighlighted) blocks
+  // have no .line wrapper and already contain real newlines.
+  function getCodeText(code) {
+    var lines = code.querySelectorAll('.line');
+    if (!lines.length) {
+      return code.textContent;
+    }
+
+    return Array.prototype.map.call(lines, function (line) {
+      var text = line.textContent;
+      return text === ' ' ? '' : text;
+    }).join('\n');
+  }
+
+  Array.prototype.forEach.call(buttons, function (button) {
+    var resetId;
+
+    button.addEventListener('click', function () {
+      var code = button.closest('.code-block').querySelector('code');
+      if (!code) {
+        return;
+      }
+
+      navigator.clipboard.writeText(getCodeText(code)).then(function () {
+        button.classList.add('is-copied');
+        button.setAttribute('aria-label', 'Copied');
+
+        clearTimeout(resetId);
+        resetId = setTimeout(function () {
+          button.classList.remove('is-copied');
+          button.setAttribute('aria-label', 'Copy code');
+        }, 1500);
+      });
+    });
+  });
+})();
+
 // ---------- Theme toggle ----------
 // The blocking inline script in <head> (see templates/page.html) applies
 // any stored override before first paint, to avoid a flash of the wrong

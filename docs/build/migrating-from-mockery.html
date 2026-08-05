@@ -77,7 +77,7 @@
     <div class="content-inner">
       <article class="prose">
         <h1 class="page-title">Migrating from Mockery</h1>
-<p>Most of what you already know from Mockery carries over directly — this page maps the concepts you're used to onto the equivalent here.</p>
+<p>Most of what you already know from Mockery carries over directly. This page maps the concepts you're used to onto the equivalent here.</p>
 <h2 id="quick-reference">Quick Reference</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -93,11 +93,11 @@
 </tr>
 <tr>
 <td><code>Mockery::spy(Foo::class)</code></td>
-<td><code>Double::for(Foo::class)</code> — spy-style checking is <code>received()</code>, available on every double (see <a href="#theres-no-separate-spy">below</a>)</td>
+<td><code>Double::for(Foo::class)</code>. Spy-style checking is <code>received()</code>, available on every double (see <a href="#theres-no-separate-spy">below</a>)</td>
 </tr>
 <tr>
 <td><code>Mockery::mock()-&gt;shouldIgnoreMissing()</code></td>
-<td><code>Double::for(Foo::class)</code> — this is simply the default, see <a href="creating-doubles.html#modes">Modes</a></td>
+<td><code>Double::for(Foo::class)</code>. This is simply the default; see <a href="creating-doubles.html#modes">Modes</a></td>
 </tr>
 <tr>
 <td><code>Mockery::mock(Foo::class, [$args])-&gt;shouldDeferMissing()</code></td>
@@ -105,7 +105,7 @@
 </tr>
 <tr>
 <td><code>shouldReceive('foo')-&gt;once()-&gt;andReturn($x)</code></td>
-<td><code>expects('foo')-&gt;returns($x)</code> — exactly-once is <code>expects()</code>'s default</td>
+<td><code>expects('foo')-&gt;returns($x)</code>. Exactly-once is <code>expects()</code>'s default</td>
 </tr>
 <tr>
 <td><code>shouldReceive('foo')-&gt;andReturn($x)</code></td>
@@ -133,7 +133,7 @@
 </tr>
 <tr>
 <td><code>shouldNotHaveBeenCalled()</code></td>
-<td><code>unused()</code> — see <a href="#theres-no-separate-spy">the trap below</a></td>
+<td><code>unused()</code>. See <a href="#theres-no-separate-spy">the trap below</a></td>
 </tr>
 <tr>
 <td><code>once()</code> / <code>twice()</code></td>
@@ -157,15 +157,15 @@
 </tr>
 <tr>
 <td><code>globally()</code></td>
-<td>not available — ordering applies per double, see <a href="#ordering">below</a></td>
+<td>not available. Ordering applies per double; see <a href="#ordering">below</a></td>
 </tr>
 <tr>
 <td><code>byDefault()</code></td>
-<td>not available — see <a href="#a-few-things-that-didnt-carry-over">below</a></td>
+<td>not available. See <a href="#a-few-things-that-didnt-carry-over">below</a></td>
 </tr>
 <tr>
 <td><code>Mockery::close()</code></td>
-<td><code>$double-&gt;verify()</code>, or <code>use VerifiesDoubles;</code> — see <a href="phpunit-integration.html">PHPUnit Integration</a></td>
+<td><code>$double-&gt;verify()</code>, or <code>use VerifiesDoubles;</code>. See <a href="phpunit-integration.html">PHPUnit Integration</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -212,11 +212,11 @@
 </tr>
 <tr>
 <td><code>Mockery::contains(...)</code> / <code>hasKey(...)</code> / <code>hasValue(...)</code></td>
-<td><code>Argument::contains(...)</code> — see <a href="argument-matching.html#searching-a-collection">Searching a Collection</a></td>
+<td><code>Argument::contains(...)</code>. See <a href="argument-matching.html#searching-a-collection">Searching a Collection</a></td>
 </tr>
 <tr>
 <td><code>Mockery::mustBe($value)</code> / <code>isEqual($value)</code></td>
-<td>a plain value passed to <code>with()</code> — already the default</td>
+<td>a plain value passed to <code>with()</code>, already the default</td>
 </tr>
 <tr>
 <td><code>Mockery::isSame($value)</code></td>
@@ -224,7 +224,7 @@
 </tr>
 <tr>
 <td><code>Mockery::ducktype(...)</code></td>
-<td>not available — see <a href="#a-few-things-that-didnt-carry-over">below</a></td>
+<td>not available. See <a href="#a-few-things-that-didnt-carry-over">below</a></td>
 </tr>
 <tr>
 <td><code>andAnyOtherArgs()</code></td>
@@ -232,29 +232,29 @@
 </tr>
 <tr>
 <td><code>withNoArgs()</code></td>
-<td><code>Argument::none()</code>, or <code>with()</code> with nothing passed — see <a href="argument-matching.html#no-arguments-at-all">No Arguments at All</a></td>
+<td><code>Argument::none()</code>, or <code>with()</code> with nothing passed. See <a href="argument-matching.html#no-arguments-at-all">No Arguments at All</a></td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="modes-not-mock-kinds">Modes, Not Mock Kinds</h2>
-<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing — a double — and the equivalent choice is a mode you add on top of it, covered fully in <a href="creating-doubles.html">Creating Doubles</a>:</p>
+<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in <a href="creating-doubles.html">Creating Doubles</a>:</p>
 <ul>
-<li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>, behaves like <strong>Loose</strong> mode here — which is simply the default, nothing to opt into.</li>
+<li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>, behaves like <strong>Loose</strong> mode here, which is simply the default, nothing to opt into.</li>
 <li>A strict <code>mock()</code> with no leniency maps to <strong>Strict</strong> mode (<code>-&gt;strict()</code>).</li>
 <li><code>shouldDeferMissing()</code> maps to <strong>Passthru</strong> mode (<code>-&gt;passthru($realInstance)</code>).</li>
 </ul>
 <h3 id="theres-no-separate-spy">There's No Separate &quot;Spy&quot;</h3>
-<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> — checking whether something was actually called — is available on every double, regardless of how it was created or which mode it's in. You don't choose a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check after the fact, on the same double you'd otherwise configure with <code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
-<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this spy received no calls,&quot; but Mockery only checks whether the mock was invoked as a callable — it says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap <code>unused()</code> exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.</p>
+<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check after the fact, on the same double you'd otherwise configure with <code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
+<p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this spy received no calls,&quot; but Mockery only checks whether the mock was invoked as a callable. It says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap <code>unused()</code> exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.</p>
 <h2 id="ordering">Ordering</h2>
 <p>Mockery orders calls per-mock by default, with <code>globally()</code> available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.</p>
 <h2 id="a-few-things-that-didnt-carry-over">A Few Things That Didn't Carry Over</h2>
 <p>A couple of Mockery features aren't available here, by design:</p>
 <ul>
-<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or other alternate spellings for the same concept, those don't exist here — each concept has exactly one verb. See <a href="index.html#one-verb-per-concept">One Verb per Concept</a>.</li>
-<li><strong><code>ducktype()</code></strong> — matching &quot;anything with these methods&quot; — isn't included. <code>Argument::satisfies()</code> covers the same need without a dedicated verb.</li>
+<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See <a href="index.html#one-clean-api">One Clean API</a>.</li>
+<li><strong><code>ducktype()</code>.</strong> Matching &quot;anything with these methods&quot; isn't included. <code>Argument::satisfies()</code> covers the same need without a dedicated verb.</li>
 <li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See <a href="expectations.html#static-methods">Static Methods</a>.</li>
-<li><strong><code>byDefault()</code></strong> — marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, <code>allows()</code> with no <code>times()</code>/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's <code>with()</code> constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior — a <code>byDefault()</code> expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at <code>verify()</code>.</li>
+<li><strong><code>byDefault()</code>.</strong> Marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, <code>allows()</code> with no <code>times()</code>/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's <code>with()</code> constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior: a <code>byDefault()</code> expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at <code>verify()</code>.</li>
 </ul>
 
       </article>

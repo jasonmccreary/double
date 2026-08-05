@@ -6,7 +6,7 @@ Here's what you'll actually see when things go wrong.
 
 ## An Expectation Wasn't Met
 
-The most common cause isn't a call that never happened — it's a call that happened with a slightly different value than expected. A typo, a stale variable, a case-sensitivity slip. So `verify()` doesn't just report that an expectation went unmet — if that method was called with something else, it shows you exactly what:
+The most common cause isn't a call that never happened. It's a call that happened with a slightly different value than expected: a typo, a stale variable, a case-sensitivity slip. `verify()` doesn't just report that an expectation went unmet. If that method was called with something else, it shows you exactly what:
 
 ```php
 $repository->expects('find')->with('baz');
@@ -17,16 +17,12 @@ $repository->verify();
 ```
 
 ```
-1 expectation was not satisfied on double "foo":
+Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
 
-    find("baz") — expected exactly 1 time(s), called 0 time(s)
-
-    "find" was called with different arguments elsewhere in this test:
-
-        find("Baz")
+The following calls to `find` were made during this test: `find('Baz')`
 ```
 
-That second block comes straight from the call log — `find()` really was called, just not with anything that matched. Seeing the actual value next to the one you configured is usually enough to spot what went wrong.
+That second line comes straight from the call log: `find()` really was called, just not with anything that matched. Seeing the actual value next to the one you configured is usually enough to spot what went wrong.
 
 ## A Call Wasn't Configured
 
@@ -38,9 +34,9 @@ requires every call to be configured. For example:
 `$foo->allows('bar')->returns(...)`.
 ```
 
-That example is a starting point, not something to paste verbatim — `$foo` is only a best guess at your variable name (derived from the double's label), and whether you actually want `allows()` or `expects()` here is your call to make, not the library's.
+That example is a starting point, not something to paste verbatim. `$foo` is only a best guess at your variable name (derived from the double's label), and whether you actually want `allows()` or `expects()` here is your call to make, not the library's.
 
-If `bar` was already called successfully elsewhere in the test, you'll see that instead of the guess — a fact pulled straight from the call log, not a suggestion:
+If `bar` was already called successfully elsewhere in the test, you'll see that instead of the guess: a fact pulled straight from the call log, not a suggestion:
 
 ```
 Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
@@ -58,19 +54,19 @@ $repository->expects('sav'); // meant "save"
 ```
 
 ```
-Can't configure "sav" on a double of "BookRepository": no such method
-there. Did you mean "save"?
+Can't configure `sav` on a double for `BookRepository`. That method
+does not exist. Did you mean `save`?
 ```
 
 The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
 
 ## A Call Happened Too Many Times
 
-If a call matches an expectation but would push it past its configured maximum, that call fails immediately, by number:
+If a call matches an expectation but would push it past its configured maximum, that call fails immediately:
 
 ```
-Double "foo" got call #4 to "bar(1)", but the expectation only
-allows 3.
+Double `foo` received 4 calls to `bar(1)`, but your expectation
+only allowed 3 calls.
 ```
 
 ## A Call Happened Out of Order
@@ -78,8 +74,8 @@ allows 3.
 For expectations marked [`inOrder()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
 
 ```
-Double "Connection" received "open()" out of order: "close()" already
-happened, and inOrder() requires this to happen no later than that.
+Double `Connection` received `open()` out of order. Using `inOrder`,
+this was expected to be called before `close()` was called.
 ```
 
 ## Setup Mistakes
@@ -97,14 +93,17 @@ A handful of failures are about the test's setup rather than the double misbehav
 [Loose mode](03-creating-doubles.md#loose-the-default) sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:
 
 ```
-Note: this double was auto-fabricated by Loose mode, not created directly.
+Note: this double was returned automatically. You will need to
+configure it explicitly if you want it to behave differently.
 ```
 
 And if a generated double is asked to fabricate something of its own, that's where a line is drawn:
 
 ```
-Double "Book" only fabricates one call chain deep — configure
-"author()" explicitly: $book->allows('author')->returns(...);
+Double `Book` was returned automatically. This only happens one
+level deep from the original double. To respond to `author()`,
+you'll need to configure it explicitly. For example:
+`$book->allows('author')->returns($anotherDouble)`.
 ```
 
 One generated double for free, and then a clear stop with a fix you may paste directly, rather than a silently growing chain of generated objects.

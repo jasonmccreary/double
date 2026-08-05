@@ -135,7 +135,13 @@ final class DocsCodeRenderer implements NodeRendererInterface
         }
 
         return new HtmlElement('div', ['class' => 'code-block'], [
-            new HtmlElement('span', ['class' => 'code-lang'], Xml::escape($label)),
+            new HtmlElement('div', ['class' => 'code-block-header'], [
+                new HtmlElement('span', ['class' => 'code-lang'], Xml::escape($label)),
+                new HtmlElement('button', ['type' => 'button', 'class' => 'copy-button', 'aria-label' => 'Copy code'], [
+                    '<svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg>',
+                    '<svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+                ]),
+            ]),
             new HtmlElement('pre', [], $preContents),
         ]);
     }

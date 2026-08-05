@@ -724,14 +724,58 @@ body.search-open {
   overflow: hidden;
 }
 
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  background: rgb(255 255 255 / 4%);
+  border-bottom: 1px solid rgb(255 255 255 / 6%);
+}
+
 .code-block .code-lang {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-4);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--ink-faint);
   letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.copy-button:hover {
+  background: rgb(255 255 255 / 12%);
+  color: #e1e4e8;
+}
+
+.copy-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.copy-button .check-icon {
+  display: none;
+}
+
+.copy-button.is-copied .copy-icon {
+  display: none;
+}
+
+.copy-button.is-copied .check-icon {
+  display: block;
 }
 
 .prose pre {
@@ -742,7 +786,7 @@ body.search-open {
 
 .prose pre code {
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.7;
   color: var(--ink);
   background: none;
