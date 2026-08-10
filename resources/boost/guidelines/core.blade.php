@@ -8,6 +8,7 @@ Double is a PHP test double library with one fluent API for stubs, mocks, and sp
 - A plain double is loose: unmatched calls return safe values based on the method's return type.
 - Use `->strict()` when unmatched calls should fail immediately.
 - Use `->passthru($realInstance)` when unmatched calls should delegate to a real object. Configured and delegated calls are both recorded.
+- Omit the argument to `->passthru()` to auto-instantiate the target, or to reuse the real instance already passed to `Double::for()`.
 - Choose strict or passthru mode immediately after `Double::for()`.
 
 @verbatim
@@ -17,6 +18,7 @@ use JMac\Testing\Double;
 $repository = Double::for(BookRepository::class);
 $strictRepository = Double::for(BookRepository::class)->strict();
 $logger = Double::for(Logger::class)->passthru($realLogger);
+$service = Double::for($realService)->passthru();
 </code-snippet>
 @endverbatim
 
@@ -45,12 +47,21 @@ $repository->expects('flush')->times(2);
 - Common matchers include `Argument::any()`, `Argument::type()`, `Argument::same()`, `Argument::satisfies()`, `Argument::capture()`, `Argument::remaining()`, `Argument::matches()`, and `Argument::contains()`.
 - Prefer `Argument::same($object)` when object identity matters.
 
+@verbatim
+<code-snippet name="Matching arguments" lang="php">
+use JMac\Testing\Matching\Argument;
+
+$repository->expects('find')->with(Argument::type('int'));
+$repository->allows('save')->with(Argument::satisfies(fn (Book $book) => $book->isValid()));
+</code-snippet>
+@endverbatim
+
 ## Verification
 
-- Use `received('method')` for post-hoc assertions. It means at least once by default and supports `with()`, `times()`, and `never()`.
+- Use `received('method')` for post-hoc assertions. It means at least once by default and supports `with()`, `times()`, and `never()`. It self-verifies once the assertion falls out of scope, so no extra call is needed to trigger it.
 - Use `unused()` to assert that no method was called on the double.
-- PHPUnit projects should use `JMac\Testing\Integrations\PHPUnit\VerifiesDoubles` on their base test case. It verifies all expectations and `received()` assertions after each test.
-- Without the PHPUnit trait, call `$double->verify()` before the test ends.
+- `expects()`/`allows()` expectations need an explicit check: PHPUnit and Pest projects should use `JMac\Testing\Integrations\PHPUnit\VerifiesDoubles` on their base test case, which verifies all expectations after each test.
+- Without the trait, call `$double->verify()` before the test ends to check `expects()`/`allows()` expectations.
 
 @verbatim
 <code-snippet name="Automatic PHPUnit verification" lang="php">
