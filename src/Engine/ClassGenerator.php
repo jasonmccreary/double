@@ -263,9 +263,20 @@ final class ClassGenerator
             $this->overridableMethods($reflections),
         ));
 
+        // A class extending a readonly one must be readonly itself (every
+        // property on a readonly class stays readonly all the way down the
+        // hierarchy, so PHP refuses a non-readonly subclass outright). Only
+        // relevant for `extends` — interfaces can't be readonly, so an
+        // `implements` target (single interface or intersection) never
+        // triggers this. Harmless either way: the generated class never
+        // declares a property of its own, so marking it readonly imposes no
+        // real constraint here.
+        $readOnly = $keyword === 'extends' && $reflections[0]->isReadOnly() ? 'readonly ' : '';
+
         return sprintf(
-            "namespace %s;\n\nfinal class %s %s\n{\n    use \\%s;\n\n%s\n}\n",
+            "namespace %s;\n\n%sfinal class %s %s\n{\n    use \\%s;\n\n%s\n}\n",
             $namespace,
+            $readOnly,
             $shortName,
             $inheritance,
             DoubleControlMethods::class,

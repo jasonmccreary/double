@@ -22,6 +22,7 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
+use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\TestCase;
@@ -46,6 +47,22 @@ final class DoubleTest extends TestCase
         $double = Double::for(BookRepositoryInterface::class);
 
         $this->assertInstanceOf(BookRepositoryInterface::class, $double);
+    }
+
+    /**
+     * A readonly class's properties must stay readonly all the way down its
+     * subclass chain — ClassGenerator marks the generated double readonly
+     * too whenever the target is, so this works rather than crashing (see
+     * ClassGeneratorTest::test_generates_a_readonly_subclass_of_a_readonly_class()
+     * for the failure this previously produced).
+     */
+    public function test_for_returns_an_instance_of_a_readonly_target(): void
+    {
+        $double = Double::for(ReadOnlyLogger::class);
+        $double->allows('log')->returns(true);
+
+        $this->assertInstanceOf(ReadOnlyLogger::class, $double);
+        $this->assertTrue($double->log('hello'));
     }
 
     public function test_for_with_multiple_targets_returns_a_double_satisfying_all_of_them(): void

@@ -33,6 +33,7 @@ use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\NewInInitializerParamInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
 use JMac\Testing\Tests\Support\PassthruCollisionInterface;
+use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
 use JMac\Testing\Tests\Support\RefReturnInterface;
 use JMac\Testing\Tests\Support\SelfTypedParamBase;
@@ -173,6 +174,23 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage("it's final");
 
         (new ClassGenerator)->generate(FinalLogger::class);
+    }
+
+    /**
+     * Regression check: a readonly class's properties must stay readonly in
+     * every subclass, or PHP refuses the subclass outright with an
+     * uncatchable fatal error out of the eval()'d source ("Non-readonly
+     * class ... cannot extend readonly class ..."). The generated double
+     * never declares a property of its own, so marking it `readonly` too
+     * imposes no real constraint — ClassGenerator does this automatically
+     * whenever the target itself is readonly.
+     */
+    public function test_generates_a_readonly_subclass_of_a_readonly_class(): void
+    {
+        $generated = (new ClassGenerator)->generate(ReadOnlyLogger::class);
+
+        $this->assertTrue(is_subclass_of($generated, ReadOnlyLogger::class));
+        $this->assertTrue((new \ReflectionClass($generated))->isReadOnly());
     }
 
     /**
