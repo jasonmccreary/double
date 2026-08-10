@@ -1,6 +1,8 @@
 # Migrating from Mockery
 
-Most of what you already know from Mockery carries over directly. This page maps the concepts you're used to onto the equivalent here.
+Most of what you already know from Mockery carries over directly. This page provides a full mapping of the methods and concepts from Mockery to their Double equivalent.
+
+You may [automate the conversion from Mockery to Double](https://laravelshift.com/mockery-test-double-converter) for free with Shift.
 
 ## Quick Reference
 
