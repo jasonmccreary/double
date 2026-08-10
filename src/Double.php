@@ -10,6 +10,7 @@ use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
+use JMac\Testing\Engine\FinalBypass;
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\PhpUnitIntegration;
 use JMac\Testing\Engine\ReceivedAssertion;
@@ -54,6 +55,32 @@ final class Double
     private static bool $autoVerifyArmed = false;
 
     private function __construct() {}
+
+    /**
+     * Opt-in escape hatch for `InvalidDoubleTargetException::isFinal()`:
+     * rewrites `final class` out of a target's source before PHP ever
+     * compiles it, so `Double::for()` can subclass it like any other class.
+     *
+     * Must be called before the target is referenced anywhere in the
+     * process — the usual place is the very first line of your PHPUnit
+     * bootstrap file, ahead of `require __DIR__.'/vendor/autoload.php'`
+     * even. Once PHP has autoloaded and compiled a class as final, that's
+     * permanent for the process; this can only affect classes it hasn't
+     * loaded yet, not ones already loaded via an earlier `use`, `instanceof`,
+     * or reflection call. Safe to call more than once or from more than one
+     * place — a second call is a no-op.
+     *
+     * Global and process-wide by design, not scoped to a single target:
+     * there's no way to know in advance which classes a later `Double::for()`
+     * call will name. It only ever touches `final` immediately before
+     * `class`, never a final method or constant, so nothing outside of
+     * "this class can now be subclassed" changes for code that never gets
+     * doubled.
+     */
+    public static function bypassFinals(): void
+    {
+        FinalBypass::enable();
+    }
 
     /**
      * The real PHP return type stays the bare `object` — PHP has no syntax

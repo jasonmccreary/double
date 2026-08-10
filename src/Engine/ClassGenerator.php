@@ -39,6 +39,13 @@ final class ClassGenerator
 
         $reflection = new \ReflectionClass($target);
 
+        // Reflects whatever PHP actually compiled, not the source on disk —
+        // `final` is permanent for the rest of the process once a class is
+        // loaded, unless Double::bypassFinals() rewrote it out of the source
+        // before this was the thing that first triggered loading it (see
+        // FinalBypass). Nothing short of that changes what this check sees,
+        // which is why the exception below names that escape hatch directly
+        // instead of leaving a dead end.
         if ($reflection->isFinal()) {
             throw InvalidDoubleTargetException::isFinal($target);
         }

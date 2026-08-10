@@ -20,11 +20,13 @@ use JMac\Testing\Matching\Argument;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 final class DoubleTest extends TestCase
@@ -47,6 +49,34 @@ final class DoubleTest extends TestCase
         $double = Double::for(BookRepositoryInterface::class);
 
         $this->assertInstanceOf(BookRepositoryInterface::class, $double);
+    }
+
+    /**
+     * The end-to-end proof that Double::bypassFinals() actually works: a
+     * target that would otherwise be rejected by
+     * InvalidDoubleTargetException::isFinal() (see
+     * ClassGeneratorTest::test_rejects_a_final_class()) is doubled,
+     * configured, and verified normally once bypassing is enabled first.
+     *
+     * #[RunInSeparateProcess] isn't incidental — it's required. Enabling the
+     * bypass replaces PHP's file:// stream wrapper for the rest of the
+     * process, and FinalLogger must not have been loaded yet for the
+     * rewrite to have anything to intercept (see FinalBypass's own docblock
+     * on the ordering requirement). Both conditions only hold in a process
+     * dedicated to this one test.
+     */
+    #[RunInSeparateProcess]
+    public function test_bypass_finals_allows_doubling_a_final_class(): void
+    {
+        Double::bypassFinals();
+
+        $double = Double::for(FinalLogger::class);
+        $double->expects('log')->with('hello')->returns(true);
+
+        $this->assertInstanceOf(FinalLogger::class, $double);
+        $this->assertTrue($double->log('hello'));
+
+        $double->verify();
     }
 
     /**

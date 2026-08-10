@@ -1,0 +1,252 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JMac\Testing\Engine;
+
+/**
+ * @internal
+ *
+ * Delegates every `streamWrapper`-interface method to PHP's real file://
+ * handler. Exists only because FinalBypassMutatingWrapper::enable() has to
+ * unregister that native handler to install itself in its place — once
+ * that's done, *something* has to keep servicing every other read/write/stat
+ * call in the process, including the ones this library never cares about.
+ *
+ * Ported near-verbatim from dg/bypass-finals's NativeWrapper.php
+ * (https://github.com/dg/bypass-finals), copyright David Grudl, used under
+ * the BSD-3-Clause license — the stream-wrapper protocol details here
+ * (proc_open detection, the stream_wrapper_restore()/unregister()/register()
+ * dance in native(), EOF-after-empty-read semantics) are correctness-critical
+ * and already solved; only FinalBypassMutatingWrapper's constructor default
+ * below was renamed to match this port's class names.
+ */
+final class FinalBypassNativeWrapper
+{
+    private const PROTOCOL = 'file';
+
+    /** @var class-string Reference to the outer wrapper class for re-registration */
+    public string $outerWrapper = FinalBypassMutatingWrapper::class;
+
+    /** @var resource|null Stream context, which may be set by stream functions */
+    public $context;
+
+    /** @var resource|null File handle, which may be set by stream functions */
+    public $handle;
+
+    /** @var list<resource> Intentionally kept open forever: closing a proc_open descriptor here would break the child process */
+    private static array $handles = [];
+
+    private bool $isProcOpen = false;
+
+    /** EOF is deferred until an empty read confirms it, matching native file:// handler semantics */
+    private bool $eofAfterEmptyRead = false;
+
+    public function dir_closedir(): void
+    {
+        closedir($this->getHandle());
+    }
+
+    public function dir_opendir(string $path, int $options): bool
+    {
+        $this->handle = $this->context
+            ? $this->native('opendir', $path, $this->context)
+            : $this->native('opendir', $path);
+
+        return (bool) $this->handle;
+    }
+
+    public function dir_readdir(): string|false
+    {
+        return readdir($this->getHandle());
+    }
+
+    public function dir_rewinddir(): bool
+    {
+        rewinddir($this->getHandle());
+
+        return true;
+    }
+
+    public function mkdir(string $path, int $mode, int $options): bool
+    {
+        $recursive = (bool) ($options & STREAM_MKDIR_RECURSIVE);
+
+        return $this->context
+            ? $this->native('mkdir', $path, $mode, $recursive, $this->context)
+            : $this->native('mkdir', $path, $mode, $recursive);
+    }
+
+    public function rename(string $pathFrom, string $pathTo): bool
+    {
+        return $this->context
+            ? $this->native('rename', $pathFrom, $pathTo, $this->context)
+            : $this->native('rename', $pathFrom, $pathTo);
+    }
+
+    public function rmdir(string $path, int $options): bool
+    {
+        return $this->context
+            ? $this->native('rmdir', $path, $this->context)
+            : $this->native('rmdir', $path);
+    }
+
+    public function stream_cast(int $castAs): mixed
+    {
+        return $this->handle;
+    }
+
+    public function stream_close(): void
+    {
+        if ($this->isProcOpen) {
+            self::$handles[] = $this->getHandle();
+        } else {
+            fclose($this->getHandle());
+        }
+    }
+
+    public function stream_eof(): bool
+    {
+        return $this->eofAfterEmptyRead;
+    }
+
+    public function stream_flush(): bool
+    {
+        return fflush($this->getHandle());
+    }
+
+    public function stream_lock(int $operation): bool
+    {
+        return ! $operation || flock($this->getHandle(), $operation);
+    }
+
+    public function stream_metadata(string $path, int $option, mixed $value): bool
+    {
+        return match ($option) {
+            STREAM_META_TOUCH => $this->native('touch', $path, $value[0] ?? time(), $value[1] ?? time()),
+            STREAM_META_OWNER_NAME, STREAM_META_OWNER => $this->native('chown', $path, $value),
+            STREAM_META_GROUP_NAME, STREAM_META_GROUP => $this->native('chgrp', $path, $value),
+            STREAM_META_ACCESS => $this->native('chmod', $path, $value),
+            default => false,
+        };
+    }
+
+    public function stream_open(string $path, string $mode, int $options = 0, ?string &$openedPath = null): bool
+    {
+        // relies on the fixed call depth self <- FinalBypassMutatingWrapper::stream_open <- proc_open;
+        // an extra intermediate frame would silently disable the detection
+        $this->isProcOpen = (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)[2]['function'] ?? null) === 'proc_open';
+        $usePath = (bool) ($options & STREAM_USE_PATH);
+        $this->handle = $this->context
+            ? $this->native('fopen', $path, $mode, $usePath, $this->context)
+            : $this->native('fopen', $path, $mode, $usePath);
+
+        return (bool) $this->handle;
+    }
+
+    public function stream_read(int $count): string|false
+    {
+        $data = fread($this->getHandle(), $count);
+        if ($data === '' || $data === false) {
+            $this->eofAfterEmptyRead = true;
+        }
+
+        return $data;
+    }
+
+    public function stream_seek(int $offset, int $whence = SEEK_SET): bool
+    {
+        $handle = $this->getHandle();
+        if (! stream_get_meta_data($handle)['seekable']) {
+            return false;
+        }
+
+        $result = fseek($handle, $offset, $whence) === 0;
+        if ($result) {
+            $this->eofAfterEmptyRead = false;
+        }
+
+        return $result;
+    }
+
+    public function stream_set_option(int $option, int $arg1, ?int $arg2): int|bool
+    {
+        return match ($option) {
+            STREAM_OPTION_BLOCKING => stream_set_blocking($this->getHandle(), (bool) $arg1),
+            STREAM_OPTION_READ_BUFFER => stream_set_read_buffer($this->getHandle(), $arg2 ?? 0),
+            STREAM_OPTION_WRITE_BUFFER => stream_set_write_buffer($this->getHandle(), $arg2 ?? 0),
+            STREAM_OPTION_READ_TIMEOUT => stream_set_timeout($this->getHandle(), $arg1, $arg2 ?? 0),
+            default => false,
+        };
+    }
+
+    /** @return array<int|string, int> */
+    public function stream_stat(): array
+    {
+        return fstat($this->getHandle());
+    }
+
+    public function stream_tell(): int
+    {
+        return ftell($this->getHandle());
+    }
+
+    public function stream_truncate(int $newSize): bool
+    {
+        return ftruncate($this->getHandle(), $newSize);
+    }
+
+    public function stream_write(string $data): int|false
+    {
+        return fwrite($this->getHandle(), $data);
+    }
+
+    public function unlink(string $path): bool
+    {
+        return $this->native('unlink', $path);
+    }
+
+    /** @return array<int|string, int>|false */
+    public function url_stat(string $path, int $flags): array|false
+    {
+        if ($flags & STREAM_URL_STAT_QUIET) {
+            set_error_handler(fn (): bool => true);
+        }
+
+        try {
+            $func = $flags & STREAM_URL_STAT_LINK ? 'lstat' : 'stat';
+
+            return $this->native($func, $path);
+        } catch (\RuntimeException) {
+            // SplFileInfo::isFile() throws
+            return false;
+        } finally {
+            if ($flags & STREAM_URL_STAT_QUIET) {
+                restore_error_handler();
+            }
+        }
+    }
+
+    /** @return resource */
+    private function getHandle()
+    {
+        return $this->handle ?? throw new \LogicException('The stream handle is not open.');
+    }
+
+    /**
+     * Temporarily restores the native protocol handler to perform operations.
+     *
+     * @param  callable-string  $func
+     */
+    private function native(string $func, mixed ...$args): mixed
+    {
+        stream_wrapper_restore(self::PROTOCOL);
+
+        try {
+            return $func(...$args);
+        } finally {
+            stream_wrapper_unregister(self::PROTOCOL);
+            stream_wrapper_register(self::PROTOCOL, $this->outerWrapper);
+        }
+    }
+}

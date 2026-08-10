@@ -23,9 +23,18 @@ class InvalidDoubleTargetException extends DoubleException
         return new self($target, 'no such class or interface exists');
     }
 
+    /**
+     * Not necessarily permanent — Double::bypassFinals(), called before this
+     * target is ever loaded anywhere in the process, rewrites `final class`
+     * out of its source so ClassGenerator's own reflection check never sees
+     * it in the first place (see that check's comment in
+     * ClassGenerator::generate()). The message names that escape hatch
+     * directly, since "final and can't be extended" alone would otherwise
+     * read as a dead end rather than something the caller can act on.
+     */
     public static function isFinal(string $target): self
     {
-        return new self($target, "it's final and can't be extended");
+        return new self($target, "it's final and can't be extended. You may use `Double::bypassFinals()`. Review the documentation for more detail: https://testdoublephp.com/creating-doubles#doubling-a-final-class");
     }
 
     public static function mustBeInterface(string $target): self

@@ -70,10 +70,26 @@ This does come up in practice. `allows()` is part of Laravel's own `Gate` contra
 
 A couple of things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
 
-- **A `final` class.** There's nothing for the double to extend.
+- **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
 
 Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [Expectations](04-expectations.md#static-methods).
+
+### Doubling a Final Class
+
+`Double::bypassFinals()` lifts the `final`-class restriction for the rest of the process:
+
+```php
+use JMac\Testing\Double;
+
+Double::bypassFinals();
+
+$logger = Double::for(FinalLogger::class); // no longer rejected
+```
+
+It works by rewriting `final class` out of a target's source the first time PHP reads it, before compiling it — so it only helps for a class PHP hasn't loaded yet. Call it as early as possible, ideally the very first line of your PHPUnit bootstrap file, ahead of even `require __DIR__.'/vendor/autoload.php'`. A class already `use`d, instantiated, or reflected on elsewhere in the process by the time you call `bypassFinals()` is already compiled as final, and stays rejected.
+
+It's global for the process (there's no way to know in advance which classes a later `Double::for()` call will name) and it's narrow in what it touches: only `final` immediately before `class`. A final *method* on an otherwise non-final class is left alone — the double simply inherits that method's real implementation unoverridden, same as it always has.
 
 ## Modes
 
