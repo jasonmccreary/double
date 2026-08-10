@@ -66,7 +66,6 @@ $siteName = 'Double';
 $siteDescription = 'Documentation for Double, a modern, human-friendly PHP double library.';
 $repoUrl = 'https://github.com/jasonmccreary/double';
 $siteUrl = 'https://testdoublephp.com';
-$ogImageUrl = $siteUrl.'/assets/images/test-double-php-og.png';
 
 $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 
@@ -237,6 +236,18 @@ function slugify_basename(string $basename): string
 }
 
 /**
+ * Turns a chapter's output filename into the clean URL path Cloudflare
+ * Pages actually serves it at (it drops the `.html` extension, and serves
+ * `index.html` at the site root). Internal links are built from this, not
+ * from the filename directly, so hovering a link shows the same URL the
+ * browser ends up at — no `.html`-to-clean-URL redirect hop in between.
+ */
+function clean_url(string $htmlFile): string
+{
+    return $htmlFile === 'index.html' ? '/' : '/'.substr($htmlFile, 0, -strlen('.html'));
+}
+
+/**
  * Loads a template from docs/templates/{name}.html, caching it in memory
  * since every chapter re-renders the same handful of templates.
  */
@@ -294,7 +305,7 @@ foreach ($files as $index => $file) {
 
 $linkMap = [];
 foreach ($chapters as $chapter) {
-    $linkMap[$chapter['basename'].'.md'] = $chapter['htmlFile'];
+    $linkMap[$chapter['basename'].'.md'] = clean_url($chapter['htmlFile']);
 }
 
 // --- markdown environment ---
@@ -418,12 +429,26 @@ function remove_directory(string $dir): void
     rmdir($dir);
 }
 
-remove_directory($siteDir.'/assets');
+// Wipe the whole output directory, not just assets/, so a chapter that's
+// renamed or removed doesn't leave its old .html file behind as a stale,
+// still-deployed orphan (which is exactly how creating-test-doubles.html
+// survived the rename to creating-doubles.html and stayed live for months).
+remove_directory($siteDir);
 mkdir($siteDir.'/assets', 0755, true);
 
 foreach (glob($assetsDir.'/*') as $asset) {
     copy_asset($asset, $siteDir.'/assets/'.basename($asset));
 }
+
+// The OG image's deployed filename carries a short hash of its own bytes
+// instead of a fixed name, so publishing a new image (source file keeps its
+// stable, keyword-bearing name) changes the URL and busts caches on its
+// own — no separate cache-control scheme needed for a file this rarely
+// updated.
+$ogImageSource = $siteDir.'/assets/images/test-double-php.png';
+$ogImageFile = 'test-double-php-'.substr(hash('crc32b', file_get_contents($ogImageSource)), 0, 8).'.png';
+rename($ogImageSource, $siteDir.'/assets/images/'.$ogImageFile);
+$ogImageUrl = $siteUrl.'/assets/images/'.$ogImageFile;
 
 // --- assemble and write each page ---
 
@@ -434,7 +459,7 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
     $sidebarItems = '';
     foreach ($chapters as $c) {
         $sidebarItems .= render_template('sidebar-item', [
-            'HREF' => $c['htmlFile'],
+            'HREF' => clean_url($c['htmlFile']),
             'CURRENT' => $c['htmlFile'] === $chapter['htmlFile'] ? ' aria-current="page"' : '',
             'TITLE' => htmlspecialchars($c['title'], ENT_QUOTES),
         ])."\n";
@@ -445,7 +470,7 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
 
     $prevLink = $prevIndex >= 0
         ? render_template('pager-link', [
-            'HREF' => $chapters[$prevIndex]['htmlFile'],
+            'HREF' => clean_url($chapters[$prevIndex]['htmlFile']),
             'DIRECTION_CLASS' => 'prev',
             'DIRECTION_LABEL' => '&larr; Previous',
             'TITLE' => htmlspecialchars($chapters[$prevIndex]['title'], ENT_QUOTES),
@@ -454,7 +479,7 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
 
     $nextLink = $nextIndex < $total
         ? render_template('pager-link', [
-            'HREF' => $chapters[$nextIndex]['htmlFile'],
+            'HREF' => clean_url($chapters[$nextIndex]['htmlFile']),
             'DIRECTION_CLASS' => 'next',
             'DIRECTION_LABEL' => 'Next &rarr;',
             'TITLE' => htmlspecialchars($chapters[$nextIndex]['title'], ENT_QUOTES),
@@ -485,7 +510,7 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         ])."\n"
         : '';
 
-    $pageUrl = $siteUrl.'/'.($chapter['htmlFile'] === 'index.html' ? '' : $chapter['htmlFile']);
+    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
 
     return render_template('page', [
         'TITLE' => htmlspecialchars($chapter['title'], ENT_QUOTES),

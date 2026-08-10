@@ -16,19 +16,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Failure Messages · Double</title>
 <meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<link rel="canonical" href="https://testdoublephp.com/failure-messages.html">
+<link rel="canonical" href="https://testdoublephp.com/failure-messages">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Double">
 <meta property="og:title" content="Failure Messages · Double">
 <meta property="og:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta property="og:url" content="https://testdoublephp.com/failure-messages.html">
-<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta property="og:url" content="https://testdoublephp.com/failure-messages">
+<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Failure Messages · Double">
 <meta name="twitter:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
 </head>
@@ -36,7 +36,7 @@
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="index.html" class="wordmark" aria-label="Homepage">
+    <a href="/" class="wordmark" aria-label="Homepage">
       <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
         <text x="0" y="36" font-weight="500" font-size="32">Double</text>
         <g transform="translate(119,17.6) scale(0.25)">
@@ -72,16 +72,16 @@
     <nav aria-label="Documentation">
       <p class="sidebar-heading">Documentation</p>
       <ol class="chapter-list" role="list">
-        <li><a href="index.html">Introduction</a></li>
-        <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-doubles.html">Creating Doubles</a></li>
-        <li><a href="expectations.html">Expectations</a></li>
-        <li><a href="argument-matching.html">Argument Matching</a></li>
-        <li><a href="verification.html">Verification</a></li>
-        <li><a href="failure-messages.html" aria-current="page">Failure Messages</a></li>
-        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
-        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
-        <li><a href="contributing.html">Contributing</a></li>
+        <li><a href="/">Introduction</a></li>
+        <li><a href="/installation">Installation</a></li>
+        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/expectations">Expectations</a></li>
+        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/verification">Verification</a></li>
+        <li><a href="/failure-messages" aria-current="page">Failure Messages</a></li>
+        <li><a href="/phpunit-integration">PHPUnit Integration</a></li>
+        <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
+        <li><a href="/contributing">Contributing</a></li>
       </ol>
     </nav>
   </aside>
@@ -101,7 +101,7 @@ The following calls to `find` were made during this test: `find('Baz')`
 </code></pre></div>
 <p>That second line comes straight from the call log: <code>find()</code> really was called, just not with anything that matched. Seeing the actual value next to the one you configured is usually enough to spot what went wrong.</p>
 <h2 id="a-call-wasnt-configured">A Call Wasn't Configured</h2>
-<p>In <a href="creating-doubles.html#strict">Strict mode</a>, a call that doesn't match a configured expectation fails the moment it happens:</p>
+<p>In <a href="/creating-doubles#strict">Strict mode</a>, a call that doesn't match a configured expectation fails the moment it happens:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
 requires every call to be configured. For example:
 `$foo-&gt;allows('bar')-&gt;returns(...)`.
@@ -126,21 +126,21 @@ does not exist. Did you mean `save`?
 only allowed 3 calls.
 </code></pre></div>
 <h2 id="a-call-happened-out-of-order">A Call Happened Out of Order</h2>
-<p>For expectations marked <a href="expectations.html#keeping-calls-in-order"><code>ordered()</code></a>, a call that arrives too early fails immediately, naming both methods involved:</p>
+<p>For expectations marked <a href="/expectations#keeping-calls-in-order"><code>ordered()</code></a>, a call that arrives too early fails immediately, naming both methods involved:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `Connection` received `open()` out of order. Using `ordered`,
 this was expected to be called before `close()` was called.
 </code></pre></div>
 <h2 id="setup-mistakes">Setup Mistakes</h2>
 <p>A handful of failures are about the test's setup rather than the double misbehaving mid-test, and these are caught the moment you make the mistake:</p>
 <ul>
-<li>Doubling a class that doesn't exist, or that's <code>final</code> (see <a href="creating-doubles.html#what-cant-be-doubled">What Can't Be Doubled</a>).</li>
-<li>A method name that collides with the library's own control verbs (see <a href="creating-doubles.html#reserved-method-names">Reserved Method Names</a>).</li>
+<li>Doubling a class that doesn't exist, or that's <code>final</code> (see <a href="/creating-doubles#what-cant-be-doubled">What Can't Be Doubled</a>).</li>
+<li>A method name that collides with the library's own control verbs (see <a href="/creating-doubles#reserved-method-names">Reserved Method Names</a>).</li>
 <li>Setting a double's mode twice.</li>
-<li>Configuring a static method with <code>expects()</code>/<code>allows()</code>/<code>received()</code> (see <a href="expectations.html#static-methods">Static Methods</a>).</li>
+<li>Configuring a static method with <code>expects()</code>/<code>allows()</code>/<code>received()</code> (see <a href="/expectations#static-methods">Static Methods</a>).</li>
 <li>Calling <code>-&gt;passthru()</code> with no argument when there's nothing to auto-instantiate.</li>
 </ul>
 <h2 id="fabricated-doubles">Fabricated Doubles</h2>
-<p><a href="creating-doubles.html#loose-the-default">Loose mode</a> sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:</p>
+<p><a href="/creating-doubles#loose-the-default">Loose mode</a> sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Note: this double was returned automatically. You will need to
 configure it explicitly if you want it to behave differently.
 </code></pre></div>
@@ -153,7 +153,7 @@ you'll need to configure it explicitly. For example:
 <p>One generated double for free, and then a clear stop with a fix you may paste directly, rather than a silently growing chain of generated objects.</p>
 
       </article>
-      <nav class="pager" aria-label="Chapter navigation"><a href="verification.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Verification</span></a><a href="phpunit-integration.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">PHPUnit Integration</span></a></nav>
+      <nav class="pager" aria-label="Chapter navigation"><a href="/verification" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Verification</span></a><a href="/phpunit-integration" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">PHPUnit Integration</span></a></nav>
     </div>
   </main>
   <aside class="toc">

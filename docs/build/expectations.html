@@ -16,19 +16,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Expectations · Double</title>
 <meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<link rel="canonical" href="https://testdoublephp.com/expectations.html">
+<link rel="canonical" href="https://testdoublephp.com/expectations">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Double">
 <meta property="og:title" content="Expectations · Double">
 <meta property="og:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta property="og:url" content="https://testdoublephp.com/expectations.html">
-<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta property="og:url" content="https://testdoublephp.com/expectations">
+<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Expectations · Double">
 <meta name="twitter:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
 </head>
@@ -36,7 +36,7 @@
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="index.html" class="wordmark" aria-label="Homepage">
+    <a href="/" class="wordmark" aria-label="Homepage">
       <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
         <text x="0" y="36" font-weight="500" font-size="32">Double</text>
         <g transform="translate(119,17.6) scale(0.25)">
@@ -72,16 +72,16 @@
     <nav aria-label="Documentation">
       <p class="sidebar-heading">Documentation</p>
       <ol class="chapter-list" role="list">
-        <li><a href="index.html">Introduction</a></li>
-        <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-doubles.html">Creating Doubles</a></li>
-        <li><a href="expectations.html" aria-current="page">Expectations</a></li>
-        <li><a href="argument-matching.html">Argument Matching</a></li>
-        <li><a href="verification.html">Verification</a></li>
-        <li><a href="failure-messages.html">Failure Messages</a></li>
-        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
-        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
-        <li><a href="contributing.html">Contributing</a></li>
+        <li><a href="/">Introduction</a></li>
+        <li><a href="/installation">Installation</a></li>
+        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/expectations" aria-current="page">Expectations</a></li>
+        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/verification">Verification</a></li>
+        <li><a href="/failure-messages">Failure Messages</a></li>
+        <li><a href="/phpunit-integration">PHPUnit Integration</a></li>
+        <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
+        <li><a href="/contributing">Contributing</a></li>
       </ol>
     </nav>
   </aside>
@@ -99,16 +99,16 @@
 <p>You may reach for <code>expects()</code> when the call is the point of the test (the thing you're actually asserting happened), and <code>allows()</code> for setup that just needs to respond to a call, without the count being part of what you're testing.</p>
 <h2 id="constraining-arguments-with-with">Constraining Arguments with <code>with()</code></h2>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
-<p>Leave <code>with()</code> off and the expectation matches a call to that method with any arguments. A plain value passed to <code>with()</code> is compared directly: scalars and arrays with <code>===</code>, objects with <code>==</code> (an equivalent object, not necessarily the same instance; see <a href="argument-matching.html#same-exact-instance">Argument Matching</a> if you need identity instead).</p>
-<p>For anything more flexible than an exact value, see <a href="argument-matching.html">Argument Matching</a>.</p>
+<p>Leave <code>with()</code> off and the expectation matches a call to that method with any arguments. A plain value passed to <code>with()</code> is compared directly: scalars and arrays with <code>===</code>, objects with <code>==</code> (an equivalent object, not necessarily the same instance; see <a href="/argument-matching#same-exact-instance">Argument Matching</a> if you need identity instead).</p>
+<p>For anything more flexible than an exact value, see <a href="/argument-matching">Argument Matching</a>.</p>
 <h2 id="deciding-what-happens">Deciding What Happens</h2>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">999</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">throws</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">NotFoundException</span><span style="color: #D6DEEB;">());</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">calculateTax</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">resolves</span><span style="color: #D6DEEB;">(</span><span style="color: #C792EA;">fn</span><span style="color: #D6DEEB;"> </span><span style="color: #D9F5DD;">(</span><span style="color: #7FDBCA;">...</span><span style="color: #BEC5D4;">$args</span><span style="color: #D9F5DD;">)</span><span style="color: #D6DEEB;"> =&gt; </span><span style="color: #BEC5D4;">$realGateway</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">calculateTax</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">...</span><span style="color: #BEC5D4;">$args</span><span style="color: #D6DEEB;">));</span></div></code></pre></div>
 <ul>
 <li><code>returns(...)</code> hands back a value.</li>
 <li><code>throws(...)</code> throws an exception instead.</li>
-<li><code>resolves(...)</code> computes the return value with a closure, given the real call's arguments. This is also how you may delegate a single call to a real object without switching the whole double to <a href="creating-doubles.html#passthru">passthru</a>.</li>
+<li><code>resolves(...)</code> computes the return value with a closure, given the real call's arguments. This is also how you may delegate a single call to a real object without switching the whole double to <a href="/creating-doubles#passthru">passthru</a>.</li>
 </ul>
-<p>If you leave all three off, a matched call falls back to the same safe default that <a href="creating-doubles.html#loose-the-default">Loose mode</a> uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare <code>null</code> that turns into a <code>TypeError</code> further down.</p>
+<p>If you leave all three off, a matched call falls back to the same safe default that <a href="/creating-doubles#loose-the-default">Loose mode</a> uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare <code>null</code> that turns into a <code>TypeError</code> further down.</p>
 <h2 id="sequential-returns">Sequential Returns</h2>
 <p>You may pass more than one value to <code>returns()</code> (or <code>throws()</code>), and each call receives the next value in the list, holding at the last one once the list runs out:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">1</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$first</span><span style="color: #D6DEEB;">, </span><span style="color: #BEC5D4;">$second</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">1</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> $first</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">1</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> $second</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">1</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> $second again</span></div></code></pre></div>
@@ -129,7 +129,7 @@
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">findAll</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> findAll() is `public static function`</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> Can&#39;t configure `findAll` on a double for `BookRepository` since</span></div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> it&#39;s a static method. Static methods can&#39;t be doubled.</span></div></code></pre></div>
 
       </article>
-      <nav class="pager" aria-label="Chapter navigation"><a href="creating-doubles.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Creating Doubles</span></a><a href="argument-matching.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Argument Matching</span></a></nav>
+      <nav class="pager" aria-label="Chapter navigation"><a href="/creating-doubles" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Creating Doubles</span></a><a href="/argument-matching" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Argument Matching</span></a></nav>
     </div>
   </main>
   <aside class="toc">

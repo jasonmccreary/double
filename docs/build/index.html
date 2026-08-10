@@ -22,13 +22,13 @@
 <meta property="og:title" content="Introduction · Double">
 <meta property="og:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
 <meta property="og:url" content="https://testdoublephp.com/">
-<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Introduction · Double">
 <meta name="twitter:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
 </head>
@@ -36,7 +36,7 @@
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="index.html" class="wordmark" aria-label="Homepage">
+    <a href="/" class="wordmark" aria-label="Homepage">
       <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
         <text x="0" y="36" font-weight="500" font-size="32">Double</text>
         <g transform="translate(119,17.6) scale(0.25)">
@@ -72,16 +72,16 @@
     <nav aria-label="Documentation">
       <p class="sidebar-heading">Documentation</p>
       <ol class="chapter-list" role="list">
-        <li><a href="index.html" aria-current="page">Introduction</a></li>
-        <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-doubles.html">Creating Doubles</a></li>
-        <li><a href="expectations.html">Expectations</a></li>
-        <li><a href="argument-matching.html">Argument Matching</a></li>
-        <li><a href="verification.html">Verification</a></li>
-        <li><a href="failure-messages.html">Failure Messages</a></li>
-        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
-        <li><a href="migrating-from-mockery.html">Migrating from Mockery</a></li>
-        <li><a href="contributing.html">Contributing</a></li>
+        <li><a href="/" aria-current="page">Introduction</a></li>
+        <li><a href="/installation">Installation</a></li>
+        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/expectations">Expectations</a></li>
+        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/verification">Verification</a></li>
+        <li><a href="/failure-messages">Failure Messages</a></li>
+        <li><a href="/phpunit-integration">PHPUnit Integration</a></li>
+        <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
+        <li><a href="/contributing">Contributing</a></li>
       </ol>
     </nav>
   </aside>
@@ -103,7 +103,7 @@
 <p>Double has been designed to be read by a human. This code reads like a sentence: it creates a <em>double for</em> <code>BookRepository</code>. That double <em>expects</em> <code>find</code> to be called <em>with</em> <code>123</code>, and <em>returns</em> <code>$book</code>. The double also <em>received</em> a call to <code>recordView</code> <em>with</em> <code>$book</code>.</p>
 <h2 id="zero-learning-curve">Zero learning curve</h2>
 <p>Testing already has a barrier to entry. Double does not want to add to that. So there's nothing to decide or learn before getting started. <code>Double::for()</code> creates a <strong>loose</strong> double by default — which returns a sensible, type-safe value.</p>
-<p>As you set expectations for your double, it automatically adjusts its behavior. You may, of course, set <a href="creating-doubles.html#strict">strict</a> or <a href="creating-doubles.html#passthru">passthru</a> mode if needed. But Double does not require deciding between a mock, a spy, or a partial ahead of time.</p>
+<p>As you set expectations for your double, it automatically adjusts its behavior. You may, of course, set <a href="/creating-doubles#strict">strict</a> or <a href="/creating-doubles#passthru">passthru</a> mode if needed. But Double does not require deciding between a mock, a spy, or a partial ahead of time.</p>
 <h2 id="failures-for-humans">Failures for humans</h2>
 <p>Double ensures its failures are immediately actionable. First, by actually failing the test. Under PHPUnit, an unmet expectation doesn't just throw — it fails the test the same way a built-in assertion would.</p>
 <p>Second, by ensuring the failure messages are as helpful as possible. Each one names the double, the expected call, and why it failed. Most even suggest what to do next. Here's an example:</p>
@@ -116,16 +116,16 @@ The following calls to `find` were made during this test: `find('Baz')`
 <p>In fact, we've made an effort to streamline the grammar. As you'll see, nearly every method is a single word. No fillers. No aliases. While aliases provide flexibility, they also require learning the nuance of each. Consider <code>shouldReceive()</code> versus <code>expects()</code>. Double keeps one verb per concept: <code>allows()</code> and <code>expects()</code>.</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);   </span><span style="color: #637777;">//</span><span style="color: #637777;"> called exactly once</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #82AAFF;">true</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> called any number of times</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">999</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">throws</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">NotFoundException</span><span style="color: #D6DEEB;">());</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">save</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> check it after the fact</span></div></code></pre></div>
 <h2 id="ready-for-contribution">Ready for contribution</h2>
-<p>The codebase is split into a handful of small modules, each with one responsibility. If you want to add an <a href="argument-matching.html">argument matcher</a>, start in <code>src/Matching/</code>. If you want to tweak an exception message, start in the relevant <code>*Fields</code> trait in <code>src/Exceptions/</code>. You don't need to untangle the entire codebase to make your contribution.</p>
+<p>The codebase is split into a handful of small modules, each with one responsibility. If you want to add an <a href="/argument-matching">argument matcher</a>, start in <code>src/Matching/</code>. If you want to tweak an exception message, start in the relevant <code>*Fields</code> trait in <code>src/Exceptions/</code>. You don't need to untangle the entire codebase to make your contribution.</p>
 <h2 id="where-to-next">Where to Next</h2>
 <ul>
-<li><a href="installation.html">Installation</a> — get it into your project.</li>
-<li><a href="creating-doubles.html">Creating Doubles</a> — make your first double and choose how it behaves.</li>
-<li><a href="expectations.html">Expectations</a> — the verbs you'll reach for in nearly every test.</li>
+<li><a href="/installation">Installation</a> — get it into your project.</li>
+<li><a href="/creating-doubles">Creating Doubles</a> — make your first double and choose how it behaves.</li>
+<li><a href="/expectations">Expectations</a> — the verbs you'll reach for in nearly every test.</li>
 </ul>
 
       </article>
-      <nav class="pager" aria-label="Chapter navigation"><span></span><a href="installation.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Installation</span></a></nav>
+      <nav class="pager" aria-label="Chapter navigation"><span></span><a href="/installation" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Installation</span></a></nav>
     </div>
   </main>
   <aside class="toc">

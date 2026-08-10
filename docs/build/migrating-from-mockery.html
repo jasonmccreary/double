@@ -16,19 +16,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Migrating from Mockery · Double</title>
 <meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<link rel="canonical" href="https://testdoublephp.com/migrating-from-mockery.html">
+<link rel="canonical" href="https://testdoublephp.com/migrating-from-mockery">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Double">
 <meta property="og:title" content="Migrating from Mockery · Double">
 <meta property="og:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta property="og:url" content="https://testdoublephp.com/migrating-from-mockery.html">
-<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta property="og:url" content="https://testdoublephp.com/migrating-from-mockery">
+<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Migrating from Mockery · Double">
 <meta name="twitter:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
-<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-og.png">
+<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
 </head>
@@ -36,7 +36,7 @@
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
 <header class="topbar">
   <div class="topbar-inner">
-    <a href="index.html" class="wordmark" aria-label="Homepage">
+    <a href="/" class="wordmark" aria-label="Homepage">
       <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
         <text x="0" y="36" font-weight="500" font-size="32">Double</text>
         <g transform="translate(119,17.6) scale(0.25)">
@@ -72,16 +72,16 @@
     <nav aria-label="Documentation">
       <p class="sidebar-heading">Documentation</p>
       <ol class="chapter-list" role="list">
-        <li><a href="index.html">Introduction</a></li>
-        <li><a href="installation.html">Installation</a></li>
-        <li><a href="creating-doubles.html">Creating Doubles</a></li>
-        <li><a href="expectations.html">Expectations</a></li>
-        <li><a href="argument-matching.html">Argument Matching</a></li>
-        <li><a href="verification.html">Verification</a></li>
-        <li><a href="failure-messages.html">Failure Messages</a></li>
-        <li><a href="phpunit-integration.html">PHPUnit Integration</a></li>
-        <li><a href="migrating-from-mockery.html" aria-current="page">Migrating from Mockery</a></li>
-        <li><a href="contributing.html">Contributing</a></li>
+        <li><a href="/">Introduction</a></li>
+        <li><a href="/installation">Installation</a></li>
+        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/expectations">Expectations</a></li>
+        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/verification">Verification</a></li>
+        <li><a href="/failure-messages">Failure Messages</a></li>
+        <li><a href="/phpunit-integration">PHPUnit Integration</a></li>
+        <li><a href="/migrating-from-mockery" aria-current="page">Migrating from Mockery</a></li>
+        <li><a href="/contributing">Contributing</a></li>
       </ol>
     </nav>
   </aside>
@@ -111,7 +111,7 @@
 </tr>
 <tr>
 <td><code>Mockery::mock()-&gt;shouldIgnoreMissing()</code></td>
-<td><code>Double::for(Foo::class)</code>. This is simply the default; see <a href="creating-doubles.html#modes">Modes</a></td>
+<td><code>Double::for(Foo::class)</code>. This is simply the default; see <a href="/creating-doubles#modes">Modes</a></td>
 </tr>
 <tr>
 <td><code>Mockery::mock(Foo::class, [$args])-&gt;shouldDeferMissing()</code></td>
@@ -179,7 +179,7 @@
 </tr>
 <tr>
 <td><code>Mockery::close()</code></td>
-<td><code>$double-&gt;verify()</code>, or <code>use VerifiesDoubles;</code>. See <a href="phpunit-integration.html">PHPUnit Integration</a></td>
+<td><code>$double-&gt;verify()</code>, or <code>use VerifiesDoubles;</code>. See <a href="/phpunit-integration">PHPUnit Integration</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -226,7 +226,7 @@
 </tr>
 <tr>
 <td><code>Mockery::contains(...)</code> / <code>hasKey(...)</code> / <code>hasValue(...)</code></td>
-<td><code>Argument::contains(...)</code>. See <a href="argument-matching.html#searching-a-collection">Searching a Collection</a></td>
+<td><code>Argument::contains(...)</code>. See <a href="/argument-matching#searching-a-collection">Searching a Collection</a></td>
 </tr>
 <tr>
 <td><code>Mockery::mustBe($value)</code> / <code>isEqual($value)</code></td>
@@ -246,33 +246,33 @@
 </tr>
 <tr>
 <td><code>withNoArgs()</code></td>
-<td><code>Argument::none()</code>, or <code>with()</code> with nothing passed. See <a href="argument-matching.html#no-arguments-at-all">No Arguments at All</a></td>
+<td><code>Argument::none()</code>, or <code>with()</code> with nothing passed. See <a href="/argument-matching#no-arguments-at-all">No Arguments at All</a></td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="modes-not-mock-kinds">Modes, Not Mock Kinds</h2>
-<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in <a href="creating-doubles.html">Creating Doubles</a>:</p>
+<p>Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in <a href="/creating-doubles">Creating Doubles</a>:</p>
 <ul>
 <li>Mockery's plain <code>mock()</code>, once you call <code>shouldIgnoreMissing()</code>, behaves like <strong>Loose</strong> mode here, which is simply the default, nothing to opt into.</li>
 <li>A strict <code>mock()</code> with no leniency maps to <strong>Strict</strong> mode (<code>-&gt;strict()</code>).</li>
 <li><code>shouldDeferMissing()</code> maps to <strong>Passthru</strong> mode (<code>-&gt;passthru($realInstance)</code>).</li>
 </ul>
 <h3 id="theres-no-separate-spy">There's No Separate &quot;Spy&quot;</h3>
-<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check after the fact, on the same double you'd otherwise configure with <code>expects()</code>/<code>allows()</code>. See <a href="verification.html">Verification</a>.</p>
+<p>In Mockery, <code>spy()</code> is its own constructor. Here, <code>received()</code> (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a &quot;spy&quot; up front; you reach for <code>received()</code> whenever you want to check after the fact, on the same double you'd otherwise configure with <code>expects()</code>/<code>allows()</code>. See <a href="/verification">Verification</a>.</p>
 <p>Watch out for <code>shouldNotHaveBeenCalled()</code> specifically: it reads like &quot;this spy received no calls,&quot; but Mockery only checks whether the mock was invoked as a callable. It says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap <code>unused()</code> exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.</p>
 <h2 id="ordering">Ordering</h2>
 <p>Mockery orders calls per-mock by default, with <code>globally()</code> available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.</p>
 <h2 id="a-few-things-that-didnt-carry-over">A Few Things That Didn't Carry Over</h2>
 <p>A couple of Mockery features aren't available here, by design:</p>
 <ul>
-<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See <a href="index.html#one-clean-api">One Clean API</a>.</li>
+<li><strong>Aliases.</strong> If you're used to <code>shouldReceive()</code>, <code>andReturn()</code>, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See <a href="/#one-clean-api">One Clean API</a>.</li>
 <li><strong><code>ducktype()</code>.</strong> Matching &quot;anything with these methods&quot; isn't included. <code>Argument::satisfies()</code> covers the same need without a dedicated verb.</li>
-<li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See <a href="expectations.html#static-methods">Static Methods</a>.</li>
+<li><strong>Static method mocking</strong> (Mockery's <code>alias:</code> mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See <a href="/expectations#static-methods">Static Methods</a>.</li>
 <li><strong><code>byDefault()</code>.</strong> Marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, <code>allows()</code> with no <code>times()</code>/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's <code>with()</code> constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior: a <code>byDefault()</code> expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at <code>verify()</code>.</li>
 </ul>
 
       </article>
-      <nav class="pager" aria-label="Chapter navigation"><a href="phpunit-integration.html" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">PHPUnit Integration</span></a><a href="contributing.html" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Contributing</span></a></nav>
+      <nav class="pager" aria-label="Chapter navigation"><a href="/phpunit-integration" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">PHPUnit Integration</span></a><a href="/contributing" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Contributing</span></a></nav>
     </div>
   </main>
   <aside class="toc">
