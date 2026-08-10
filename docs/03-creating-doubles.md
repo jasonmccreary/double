@@ -91,6 +91,21 @@ It works by rewriting `final class` out of a target's source the first time PHP 
 
 It's global for the process (there's no way to know in advance which classes a later `Double::for()` call will name) and it's narrow in what it touches: only `final` immediately before `class`. A final *method* on an otherwise non-final class is left alone — the double simply inherits that method's real implementation unoverridden, same as it always has.
 
+### Readonly Classes
+
+Unlike `final`, a `readonly` class needs no opt-in — it doubles the same as any other class:
+
+```php
+readonly class Money
+{
+    public function __construct(public int $cents) {}
+}
+
+Double::for(Money::class); // works, no bypassFinals() needed
+```
+
+PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is. That costs the double nothing, since it never declares properties of its own — it only overrides methods.
+
 ## Modes
 
 Every double has exactly one mode, chosen either when you create it or on the very next call, and it stays that way afterward. Mode answers one question: **what happens when a call doesn't match anything you've configured?** It never changes what `expects()`/`allows()` mean. Those work the same way in every mode.
