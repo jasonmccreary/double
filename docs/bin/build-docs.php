@@ -65,6 +65,8 @@ $siteDir = __DIR__.'/../build';
 $siteName = 'Double';
 $siteDescription = 'Documentation for Double, a modern, human-friendly PHP double library.';
 $repoUrl = 'https://github.com/jasonmccreary/double';
+$siteUrl = 'https://testdoublephp.com';
+$ogImageUrl = $siteUrl.'/assets/images/test-double-php-og.png';
 
 $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
 
@@ -425,7 +427,7 @@ foreach (glob($assetsDir.'/*') as $asset) {
 
 // --- assemble and write each page ---
 
-function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName): string
+function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $siteUrl, string $ogImageUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName): string
 {
     $total = count($chapters);
 
@@ -483,11 +485,15 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         ])."\n"
         : '';
 
+    $pageUrl = $siteUrl.'/'.($chapter['htmlFile'] === 'index.html' ? '' : $chapter['htmlFile']);
+
     return render_template('page', [
         'TITLE' => htmlspecialchars($chapter['title'], ENT_QUOTES),
         'SITE_NAME' => $siteName,
         'DESCRIPTION' => htmlspecialchars($siteDescription, ENT_QUOTES),
         'REPO_URL' => $repoUrl,
+        'PAGE_URL' => htmlspecialchars($pageUrl, ENT_QUOTES),
+        'OG_IMAGE_URL' => htmlspecialchars($ogImageUrl, ENT_QUOTES),
         'SIDEBAR_ITEMS' => $sidebarItems,
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
@@ -499,7 +505,7 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
 
 foreach ($chapters as $chapter) {
     $bodyHtml = apply_torchlight($chapter['bodyHtml'], $collector->blocks, $torchlightResults);
-    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
+    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
 
     file_put_contents($siteDir.'/'.$chapter['htmlFile'], $page);
     echo "wrote {$chapter['htmlFile']}\n";
