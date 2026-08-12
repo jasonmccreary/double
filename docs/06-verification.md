@@ -14,7 +14,7 @@ $service->create($book);
 $repository->verify();
 ```
 
-`verify()` looks at every `expects()` you configured on the double and fails if any of them weren't met. If you're using PHPUnit, you don't need to call this yourself at all. See [PHPUnit Integration](08-phpunit-integration.md) for a trait that runs it automatically at the end of every test. Otherwise, call it once, wherever your test naturally ends.
+`verify()` looks at every `expects()` you configured on the double and fails if any of them weren't met. If you're using PHPUnit or Pest, you don't need to call this yourself at all. See [Test Suite Integration](08-test-suite-integration.md) for a trait that runs it automatically at the end of every test. Otherwise, call it once, wherever your test naturally ends.
 
 When something's unmet, the message doesn't just say it didn't happen. It shows you what did happen instead, if anything, which is usually enough to spot a typo or a stale value at a glance. See [Failure Messages](07-failure-messages.md) for an example.
 
@@ -45,7 +45,7 @@ A `received()` call doesn't check anything the moment you write it, since it doe
 $repository->received('save')->with($book)->never(); // checked right here
 ```
 
-If you assign a `received()` chain to something that outlives the statement (a property on the test case, say, rather than a local variable), there's no guarantee it's checked right away. Using the [PHPUnit `VerifiesDoubles` trait](08-phpunit-integration.md) removes this concern entirely: every `received()` assertion made during a test is checked once that test ends, regardless of what you did with it.
+If you assign a `received()` chain to something that outlives the statement (a property on the test case, say, rather than a local variable), there's no guarantee it's checked right away. Using the [`VerifiesDoubles` trait](08-test-suite-integration.md) removes this concern entirely: every `received()` assertion made during a test is checked once that test ends, regardless of what you did with it.
 
 ## Checking Nothing Happened: `unused()`
 

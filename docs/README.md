@@ -11,6 +11,6 @@ This directory has its own `composer.json`, separate from the library's, since i
 5. [Argument Matching](05-argument-matching.md)
 6. [Verification](06-verification.md)
 7. [Failure Messages](07-failure-messages.md)
-8. [PHPUnit Integration](08-phpunit-integration.md)
+8. [Test Suite Integration](08-test-suite-integration.md)
 9. [Migrating from Mockery](09-migrating-from-mockery.md)
 10. [Contributing](10-contributing.md)

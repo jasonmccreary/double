@@ -27,7 +27,7 @@ You may [automate the conversion from Mockery to Double](https://laravelshift.co
 | `ordered()` | `ordered()` |
 | `globally()` | not available. Ordering applies per double; see [below](#ordering) |
 | `byDefault()` | not available. See [below](#a-few-things-that-didnt-carry-over) |
-| `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [PHPUnit Integration](08-phpunit-integration.md) |
+| `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [Test Suite Integration](08-test-suite-integration.md) |
 
 ## Argument Matchers
 
