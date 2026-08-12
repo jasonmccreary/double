@@ -60,7 +60,8 @@ $repository->allows('save')->with(Argument::satisfies(fn (Book $book) => $book->
 
 - Use `received('method')` for post-hoc assertions. It means at least once by default and supports `with()`, `times()`, and `never()`. It self-verifies once the assertion falls out of scope, so no extra call is needed to trigger it.
 - Use `unused()` to assert that no method was called on the double.
-- `expects()`/`allows()` expectations need an explicit check: PHPUnit and Pest projects can use `JMac\Testing\Integrations\PHPUnit\VerifiesDoubles`, which verifies all expectations after each test.
+- Every PHPUnit test file that uses `Double` must import `JMac\Testing\Integrations\PHPUnit\VerifiesDoubles` and add `use VerifiesDoubles;` to its test class. The trait verifies all expectations after each test.
+- Pest projects must register `VerifiesDoubles` in `tests/Pest.php` for every directory containing tests that use `Double`.
 - Without the trait, call `$double->verify()` before the test ends to check `expects()`/`allows()` expectations.
 
 @verbatim
