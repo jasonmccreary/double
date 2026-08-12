@@ -18,7 +18,7 @@ class MagicMethodException extends DoubleException
         public readonly string $method,
         public readonly bool $fabricated = false,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::lead($this->render()));
     }
 
     private function render(): string

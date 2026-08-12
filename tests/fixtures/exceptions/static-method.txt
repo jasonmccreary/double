@@ -1,1 +1,2 @@
+
 Can't configure `make` on a double for `HasStaticMethod` since it's a static method. Static methods can't be doubled.

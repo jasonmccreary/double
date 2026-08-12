@@ -1,1 +1,2 @@
-Can't configure `sav` on a double for `BookRepositoryInterface`. That method does not exist. Did you mean `save`?
+
+Can't configure `sav` on a double for `BookRepositoryInterface` because it doesn't declare this method. Did you mean `save`?

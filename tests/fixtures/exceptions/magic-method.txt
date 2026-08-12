@@ -1,1 +1,2 @@
+
 Can't configure `__toString` on a double for `HasMagicMethod` since it's a magic method. Magic methods can't be doubled.

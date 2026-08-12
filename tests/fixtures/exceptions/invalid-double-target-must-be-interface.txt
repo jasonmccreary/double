@@ -1,1 +1,2 @@
+
 Can't create a double for `Book` since it's a class. When multiple targets are passed to `Double::for()`, they must all be interfaces.

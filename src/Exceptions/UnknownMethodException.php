@@ -19,13 +19,13 @@ class UnknownMethodException extends DoubleException
         public readonly bool $fabricated = false,
         public readonly ?string $suggestion = null,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::lead($this->render()));
     }
 
     private function render(): string
     {
         return sprintf(
-            'Can\'t configure `%s` on a double for `%s`. That method does not exist.%s%s',
+            'Can\'t configure `%s` on a double for `%s` because it doesn\'t declare this method.%s%s',
             $this->method,
             $this->target,
             $this->suggestion !== null ? sprintf(' Did you mean `%s`?', $this->suggestion) : '',

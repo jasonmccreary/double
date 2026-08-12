@@ -51,6 +51,18 @@ abstract class DoubleException extends \RuntimeException implements Diagnostic
     }
 
     /**
+     * PHPUnit's CLI renders a failure as `FQCN: getMessage()` with no
+     * separator, and these FQCNs are long — the actual message reads as
+     * buried under the class name. A leading blank line pushes it onto its
+     * own line instead. Static, not just protected, for the same reason as
+     * fabricatedNote() above.
+     */
+    final public static function lead(string $message): string
+    {
+        return "\n".$message;
+    }
+
+    /**
      * A best-effort variable name for a code snippet in a message, derived
      * from a double's label (e.g. "SecondLink" -> "secondLink"). Non-identifier
      * characters are stripped since a label isn't always a valid identifier

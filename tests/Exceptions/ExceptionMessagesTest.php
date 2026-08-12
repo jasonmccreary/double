@@ -106,6 +106,61 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unsatisfied-expectations-multiple', $exception->getMessage());
     }
 
+    /**
+     * When one of several unsatisfied expectations did observe calls to its
+     * method, that's evidence this entry is a real mismatch rather than a
+     * symptom of some other expectation's failure — shown inline rather
+     * than as renderSingle()'s full paragraph, to keep the list scannable.
+     */
+    public function test_renders_multiple_unsatisfied_expectations_with_correlation(): void
+    {
+        $first = new UnsatisfiedExpectation(
+            method: 'save',
+            description: 'expected `save(any arguments)` to be called exactly 1 time, but it was never called',
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: [],
+        );
+        $second = new UnsatisfiedExpectation(
+            method: 'delete',
+            description: "expected `delete(1)` to be called exactly 1 time, but it was never called",
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: ['2'],
+        );
+        $exception = new UnsatisfiedExpectationException('BookRepository', [$first, $second]);
+
+        $this->assertMatchesGolden('unsatisfied-expectations-multiple-with-correlation', $exception->getMessage());
+    }
+
+    /**
+     * Same cap as the single-expectation correlation — see CallListFormatter.
+     */
+    public function test_renders_multiple_unsatisfied_expectations_with_capped_correlation(): void
+    {
+        $first = new UnsatisfiedExpectation(
+            method: 'save',
+            description: 'expected `save(any arguments)` to be called exactly 1 time, but it was never called',
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: [],
+        );
+        $second = new UnsatisfiedExpectation(
+            method: 'delete',
+            description: "expected `delete(6)` to be called exactly 1 time, but it was never called",
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: ['1', '2', '3', '4'],
+        );
+        $exception = new UnsatisfiedExpectationException('BookRepository', [$first, $second]);
+
+        $this->assertMatchesGolden('unsatisfied-expectations-multiple-with-capped-correlation', $exception->getMessage());
+    }
+
     public function test_renders_call_limit_exceeded(): void
     {
         $exception = new ExpectationCallLimitExceededException('BookRepository', 'delete', '1', 1, 2);

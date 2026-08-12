@@ -62,11 +62,30 @@ trait UnsatisfiedExpectationFields
             Pluralizer::pluralize($count, 'expectation was', 'expectations were'),
             $label,
             implode("\n", array_map(
-                static fn (UnsatisfiedExpectation $expectation): string => '    '.$expectation->description,
+                static fn (UnsatisfiedExpectation $expectation): string => '    '.$expectation->description.self::renderInlineCorrelation($expectation),
                 $expectations,
             )),
         );
 
         return DoubleException::appendFabricatedNote($message, $fabricated);
+    }
+
+    /**
+     * Unlike renderSingle()'s full correlation paragraph, this stays inline
+     * and only fires when otherObservedCalls is non-empty: that's proof the
+     * method was actually reached during the test, so this entry is a real
+     * mismatch rather than a downstream symptom of some other unsatisfied
+     * expectation (e.g. the code under test aborted before reaching it).
+     */
+    private static function renderInlineCorrelation(UnsatisfiedExpectation $expectation): string
+    {
+        if ($expectation->otherObservedCalls === []) {
+            return '';
+        }
+
+        return sprintf(
+            ' (other calls: %s)',
+            CallListFormatter::describe($expectation->method, $expectation->otherObservedCalls),
+        );
     }
 }

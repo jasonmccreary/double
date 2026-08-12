@@ -1,1 +1,2 @@
+
 Can't create a double for `ExpectsCollisionInterface`. It contains `expects` which collides with Double's internal methods.

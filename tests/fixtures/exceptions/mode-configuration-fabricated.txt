@@ -1,3 +1,4 @@
+
 Double `SecondLink` is already "strict". You can't set its mode again.
 
 Note: this double was returned automatically. You will need to configure it explicitly if you want it to behave differently.

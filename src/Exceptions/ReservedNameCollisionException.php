@@ -19,7 +19,7 @@ class ReservedNameCollisionException extends DoubleException
         public readonly string $target,
         public readonly array $collisions,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::lead($this->render()));
     }
 
     /**

@@ -1,1 +1,2 @@
+
 Can't create a double for `NoSuchClass` since no such class or interface exists.

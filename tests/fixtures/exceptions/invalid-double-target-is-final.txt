@@ -1,1 +1,2 @@
+
 Can't create a double for `FinalLogger` since it's final and can't be extended. You may use `Double::bypassFinals()`. Review the documentation for more detail: https://testdoublephp.com/creating-doubles#doubling-a-final-class.

@@ -14,7 +14,7 @@ class PassthruAutoInstantiationException extends DoubleException
         public readonly string $target,
         public readonly string $reason,
     ) {
-        parent::__construct($this->render());
+        parent::__construct(self::lead($this->render()));
     }
 
     public static function isInterface(string $target): self

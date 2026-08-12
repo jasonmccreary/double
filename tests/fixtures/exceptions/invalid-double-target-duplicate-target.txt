@@ -1,1 +1,2 @@
+
 Can't create a double for `LoggerInterface` since it was passed more than once.

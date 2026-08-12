@@ -1,1 +1,2 @@
-Can't configure `bogus` on a double for `BookRepositoryInterface`. That method does not exist.
+
+Can't configure `bogus` on a double for `BookRepositoryInterface` because it doesn't declare this method.
