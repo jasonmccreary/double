@@ -124,7 +124,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
         $second = new UnsatisfiedExpectation(
             method: 'delete',
-            description: "expected `delete(1)` to be called exactly 1 time, but it was never called",
+            description: 'expected `delete(1)` to be called exactly 1 time, but it was never called',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
@@ -150,7 +150,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
         $second = new UnsatisfiedExpectation(
             method: 'delete',
-            description: "expected `delete(6)` to be called exactly 1 time, but it was never called",
+            description: 'expected `delete(6)` to be called exactly 1 time, but it was never called',
             expectedMin: 1,
             expectedMax: 1,
             timesCalled: 0,
