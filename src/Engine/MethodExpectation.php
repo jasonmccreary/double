@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JMac\Testing\Engine;
 
 use JMac\Testing\Diagnostics\Pluralizer;
+use JMac\Testing\Diagnostics\StringDiffer;
+use JMac\Testing\Diagnostics\ValueFormatter;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
@@ -235,6 +237,102 @@ final class MethodExpectation
         }
 
         return true;
+    }
+
+    /**
+     * Compares $arguments position by position against this expectation's
+     * constraints, for the one case where that pairing is a plain fact
+     * rather than a guess: exactly one real call was ever observed for this
+     * method (see Double::verifyState()). Null when there's nothing to
+     * compare — with() was never called, or $arguments actually matches.
+     *
+     * Positional and unlabeled deliberately: this stays ignorant of real
+     * parameter names (a reflection concern, resolved from the target class
+     * — see DoubleState::parameterNames()) so the caller can attach labels
+     * without this needing any awareness of it.
+     *
+     * @return array{kind: 'arity', text: string}
+     *                                            | array{kind: 'comparisons', comparisons: list<array{index: int, differs: bool, text: string}>}
+     *                                            | null
+     */
+    public function compareArguments(array $arguments): ?array
+    {
+        if ($this->argumentConstraints === null) {
+            return null;
+        }
+
+        $constraints = $this->argumentConstraints;
+
+        if ($constraints !== [] && $constraints[0] instanceof NoneMatcher) {
+            return $arguments === []
+                ? null
+                : ['kind' => 'arity', 'text' => sprintf('expected no arguments, got %s', Pluralizer::pluralize(count($arguments), 'argument', 'arguments'))];
+        }
+
+        $matchesRemaining = $constraints !== [] && end($constraints) instanceof RemainingMatcher;
+
+        if ($matchesRemaining) {
+            array_pop($constraints);
+        }
+
+        $expectedCount = count($constraints);
+        $actualCount = count($arguments);
+
+        if ($matchesRemaining ? $actualCount < $expectedCount : $expectedCount !== $actualCount) {
+            return ['kind' => 'arity', 'text' => sprintf(
+                'expected %s, got %s',
+                Pluralizer::pluralize($expectedCount, 'argument', 'arguments'),
+                Pluralizer::pluralize($actualCount, 'argument', 'arguments'),
+            )];
+        }
+
+        $comparisons = [];
+        $anyDiffers = false;
+
+        foreach ($constraints as $index => $matcher) {
+            $actual = $arguments[$index];
+
+            if ($matcher->matches($actual)) {
+                $comparisons[] = ['index' => $index, 'differs' => false, 'text' => ValueFormatter::describe($actual)];
+
+                continue;
+            }
+
+            $anyDiffers = true;
+            $comparisons[] = ['index' => $index, 'differs' => true, 'text' => self::describeArgumentDiff($matcher, $actual)];
+        }
+
+        // Argument::remaining()'s trailing arguments are unconstrained by
+        // definition — always context, never a diff — but still shown, so
+        // the reader sees the whole actual call, not just its constrained
+        // prefix.
+        if ($matchesRemaining) {
+            foreach (array_slice($arguments, $expectedCount) as $offset => $actual) {
+                $comparisons[] = ['index' => $expectedCount + $offset, 'differs' => false, 'text' => ValueFormatter::describe($actual)];
+            }
+        }
+
+        return $anyDiffers ? ['kind' => 'comparisons', 'comparisons' => $comparisons] : null;
+    }
+
+    /**
+     * The "- expected\n+ actual" pair for one differing argument. Only
+     * EqualsMatcher — a bare literal passed to with() — wraps a raw value
+     * worth diffing directly when both sides are long strings; every other
+     * shape (type checks, patterns, predicates, short values) falls back to
+     * the matcher's own describe() paired against the actual value.
+     */
+    private static function describeArgumentDiff(Matcher $matcher, mixed $actual): string
+    {
+        if ($matcher instanceof EqualsMatcher) {
+            $expected = $matcher->expected();
+
+            if (is_string($expected) && is_string($actual) && strlen($expected) + strlen($actual) >= StringDiffer::MIN_LENGTH_TO_DIFF) {
+                return StringDiffer::diff($expected, $actual);
+            }
+        }
+
+        return sprintf("- %s\n+ %s", $matcher->describe(), ValueFormatter::describe($actual));
     }
 
     /**

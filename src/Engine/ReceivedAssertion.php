@@ -92,12 +92,27 @@ final class ReceivedAssertion
             return;
         }
 
+        // Only "too few calls matched" is an argument mismatch worth
+        // diffing. never()'s violation (exceedsMaximum() true while
+        // isSatisfied() is also true) means a call's arguments already
+        // matched fine — the problem is that it happened at all, not what
+        // its arguments were, so there's nothing to diff. And with
+        // anything but exactly one recorded call, there's no fact-based way
+        // to say which one to pair against this assertion.
+        $comparison = ! $this->expectation->isSatisfied() && count($calls) === 1
+            ? $this->expectation->compareArguments($calls[0])
+            : null;
+
         throw ExceptionFactory::unsatisfiedReceivedAssertion(
             $this->state->label(),
             $this->expectation->describe(),
             $this->state->isFabricated(),
             $this->method,
             array_map(ArgumentFormatter::describe(...), $calls),
+            argumentMismatch: ($comparison['kind'] ?? null) === 'arity' ? $comparison['text'] : null,
+            argumentComparisons: ($comparison['kind'] ?? null) === 'comparisons'
+                ? ArgumentLabeler::label($this->state->parameterNames($this->method), $comparison['comparisons'])
+                : null,
         );
     }
 }

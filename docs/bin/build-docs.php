@@ -278,7 +278,7 @@ function truncate_description(string $text, int $limit = 155): string
         $truncated = mb_substr($truncated, 0, $lastSpace);
     }
 
-    return rtrim($truncated, " ,.;:").'…';
+    return rtrim($truncated, ' ,.;:').'…';
 }
 
 /**

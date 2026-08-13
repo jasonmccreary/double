@@ -567,17 +567,48 @@ final class DoubleTest extends TestCase
     }
 
     /**
-     * Symmetric extension to test_verify_failure_correlates_other_calls_observed_for_the_same_method()
-     * above. Proves ProxyBehavior actually excludes the
-     * failing call itself (the one just recorded) from the correlation list,
-     * not just that the field gets populated with something.
+     * Strict mode's immediate rejection gets the same argument-by-argument
+     * diff treatment as verify()'s never-satisfied-expectation path, and the
+     * same trigger: exactly one other call already observed for this
+     * method. The prior call's own arguments become the "expected" side —
+     * not whatever's configured — so this works the same regardless of how
+     * many (or how few) expects()/allows() are registered for `find`.
      */
-    public function test_unexpected_call_correlates_other_calls_already_observed_for_the_same_method(): void
+    public function test_unexpected_call_diffs_against_the_one_other_observed_call(): void
     {
         $double = Double::for(BookRepositoryInterface::class)->strict();
         $double->allows('find')->with(123)->returns(new Book('Dune'));
 
         $double->find(123);
+
+        try {
+            $double->find(456);
+            $this->fail('Expected PHPUnitUnexpectedCallException to be thrown.');
+        } catch (PHPUnitUnexpectedCallException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('received an unexpected call to `find(456)`', $message);
+            $this->assertStringContainsString("The following similar call was made to `find`:\n  id:\n    - 123\n    + 456", $message);
+        }
+    }
+
+    /**
+     * Symmetric extension to test_verify_failure_correlates_other_calls_observed_for_the_same_method()
+     * above. Two other calls already observed leaves no fact-based way to
+     * say which one this one "should" have resembled, so this falls back
+     * to plain correlation instead of a diff — and still needs to prove
+     * ProxyBehavior excludes the failing call itself (the one just
+     * recorded) from that correlation list, not just that the field gets
+     * populated with something.
+     */
+    public function test_unexpected_call_correlates_other_calls_already_observed_for_the_same_method(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+        $double->allows('find')->with(123)->returns(new Book('Dune'));
+        $double->allows('find')->with(789)->returns(new Book('Dune Messiah'));
+
+        $double->find(123);
+        $double->find(789);
 
         try {
             $double->find(456);
@@ -694,6 +725,53 @@ final class DoubleTest extends TestCase
         $double->received('save')->with(new Book('Dune'));
     }
 
+    /**
+     * received()'s spy-style assertion gets the same argument-by-argument
+     * diff treatment as expects()/allows()'s verify()-time path and strict
+     * mode's immediate rejection — same trigger too: exactly one other call
+     * already recorded for this method.
+     */
+    public function test_received_with_diffs_against_the_one_recorded_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(new Book('Dune'));
+
+        $double->find(456);
+
+        try {
+            $double->received('find')->with(123)->check();
+            $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
+            $this->assertStringContainsString("The following similar call was made to `find`:\n  id:\n    - 123\n    + 456", $exception->getMessage());
+        }
+    }
+
+    /**
+     * Two or more recorded calls leaves no fact-based way to say which one
+     * this assertion was "supposed" to match, so this falls back to plain
+     * correlation instead of a diff.
+     */
+    public function test_received_with_correlates_multiple_recorded_calls_without_diffing(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(new Book('Dune'));
+
+        $double->find(456);
+        $double->find(789);
+
+        try {
+            $double->received('find')->with(123)->check();
+            $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('The following calls to `find` were made during this test:', $message);
+            $this->assertStringContainsString('find(456)', $message);
+            $this->assertStringContainsString('find(789)', $message);
+            $this->assertStringNotContainsString('similar call', $message);
+        }
+    }
+
     public function test_received_never_passes_when_the_method_was_not_called(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
@@ -711,6 +789,30 @@ final class DoubleTest extends TestCase
         $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to never be called, but it was called 1 time/');
 
         $double->received('delete')->never();
+    }
+
+    /**
+     * never()'s violation means a call's arguments already matched fine —
+     * the problem is that it happened at all, not what its arguments were
+     * — so there's nothing to diff even though exactly one call was
+     * recorded, unlike the too-few-matches case above.
+     */
+    public function test_received_never_violation_does_not_diff_even_with_one_recorded_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(new Book('Dune'));
+
+        $double->find(123);
+
+        try {
+            $double->received('find')->with(123)->never()->check();
+            $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('The following calls to `find` were made during this test: `find(123)`', $message);
+            $this->assertStringNotContainsString('similar call', $message);
+        }
     }
 
     public function test_received_times_requires_the_exact_count(): void
@@ -838,8 +940,79 @@ final class DoubleTest extends TestCase
             $message = $exception->getMessage();
 
             $this->assertStringContainsString('expected `find(123)` to be called exactly 1 time, but it was never called', $message);
+            $this->assertStringContainsString('The following similar call was made to `find`:', $message);
+            $this->assertStringContainsString("  id:\n    - 123\n    + 456", $message);
+        }
+    }
+
+    /**
+     * The one-observed-call case can go further than correlation: since
+     * there's exactly one real call to pair the expectation against, the
+     * message can name the real parameter and say how it differed.
+     */
+    public function test_verify_failure_names_the_mismatched_argument_by_its_real_parameter_name(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        $double->find(456);
+
+        try {
+            $double->verify();
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertStringContainsString("  id:\n    - 123\n    + 456", $exception->getMessage());
+        }
+    }
+
+    /**
+     * Two or more registered expectations for the same method leaves no
+     * fact-based way to say which one a given observed call was "supposed"
+     * to match — the message correlates but doesn't guess at a diff.
+     */
+    public function test_verify_failure_omits_the_argument_detail_when_more_than_one_call_was_observed(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(null);
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        $double->find(456);
+        $double->find(789);
+
+        try {
+            $double->verify();
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $message = $exception->getMessage();
+
             $this->assertStringContainsString('The following calls to `find` were made during this test:', $message);
-            $this->assertStringContainsString('find(456)', $message);
+            $this->assertStringNotContainsString('similar call', $message);
+            $this->assertStringNotContainsString('  id:', $message);
+        }
+    }
+
+    /**
+     * Unlike the flat, single-line summary this replaced, the labeled block
+     * format doesn't get noisy as more arguments differ — every differing
+     * argument gets named by its real parameter name, each with its own
+     * diff, alongside whichever arguments still matched.
+     */
+    public function test_verify_failure_names_every_differing_argument_when_several_differ(): void
+    {
+        $double = Double::for(VariadicInterface::class);
+        $double->expects('combine')->with('baz', 'x')->returns('stubbed');
+
+        $double->combine('Baz', 'y');
+
+        try {
+            $double->verify();
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('The following similar call was made to `combine`:', $message);
+            $this->assertStringContainsString("  glue:\n    - 'baz'\n    + 'Baz'", $message);
+            $this->assertStringContainsString("  parts:\n    - 'x'\n    + 'y'", $message);
         }
     }
 

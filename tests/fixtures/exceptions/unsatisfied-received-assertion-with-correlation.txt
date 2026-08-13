@@ -1,3 +1,6 @@
 Double `AnalyticsHelper` expected `event('this text does not match what was actually logged')` to be called at least 1 time, but it was called 0 times.
 
-The following calls to `event` were made during this test: `event('found usages of renamed pagination methods')`
+The following similar call was made to `event`:
+  message:
+    - 'this text does not match what was actually logged'
+    + 'found usages of renamed pagination methods'

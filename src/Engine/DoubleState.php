@@ -95,6 +95,34 @@ final class DoubleState
     }
 
     /**
+     * The real declared parameter names for $method, for labeling argument
+     * mismatches by name instead of position (see Double::verifyState()).
+     * A variadic parameter's name appears once here even though it can
+     * cover several actual arguments — expanding that is the caller's job,
+     * since only the caller knows the actual argument count.
+     *
+     * Empty only if $method somehow isn't reflectable, which shouldn't
+     * happen for a real registered expectation — registerExpectation()
+     * already requires declaringCandidate() to resolve before allowing
+     * expects()/allows() at all.
+     *
+     * @return list<string>
+     */
+    public function parameterNames(string $method): array
+    {
+        $declaringCandidate = $this->declaringCandidate($method);
+
+        if ($declaringCandidate === null) {
+            return [];
+        }
+
+        return array_map(
+            static fn (\ReflectionParameter $parameter): string => $parameter->getName(),
+            (new \ReflectionMethod($declaringCandidate, $method))->getParameters(),
+        );
+    }
+
+    /**
      * Every method name method_exists() would find on any target candidate,
      * for UnknownMethodException's "did you mean" suggestion.
      *

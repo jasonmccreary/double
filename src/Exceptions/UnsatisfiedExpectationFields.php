@@ -43,8 +43,24 @@ trait UnsatisfiedExpectationFields
     {
         $message = sprintf('Double `%s` %s.', $label, $expectation->description);
 
-        if ($expectation->otherObservedCalls !== []) {
+        if ($expectation->argumentComparisons !== null) {
+            // The one observed call had the right shape (same argument
+            // count) — labeled, argument-by-argument detail replaces the
+            // plain correlation paragraph entirely rather than sitting
+            // alongside it.
+            $message .= "\n\n".CallListFormatter::renderComparisonBlock(
+                sprintf('The following similar call was made to `%s`:', $expectation->method),
+                $expectation->argumentComparisons,
+            );
+        } elseif ($expectation->otherObservedCalls !== []) {
             $message .= "\n\n".CallListFormatter::renderCorrelationParagraph($expectation->method, $expectation->otherObservedCalls);
+
+            // Only ever set alongside the correlation paragraph above (see
+            // Double::verifyState()) — an arity mismatch, the one case that
+            // can't be broken down argument by argument.
+            if ($expectation->argumentMismatch !== null) {
+                $message .= "\n".ucfirst($expectation->argumentMismatch);
+            }
         }
 
         return DoubleException::appendFabricatedNote($message, $fabricated);

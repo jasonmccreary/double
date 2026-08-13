@@ -7,6 +7,7 @@ namespace JMac\Testing;
 use JMac\Testing\Diagnostics\ArgumentFormatter;
 use JMac\Testing\Diagnostics\DidYouMean;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
+use JMac\Testing\Engine\ArgumentLabeler;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
@@ -199,17 +200,30 @@ final class Double
         throw ExceptionFactory::unsatisfiedExpectation(
             $state->label(),
             array_map(
-                static fn (MethodExpectation $expectation): UnsatisfiedExpectation => new UnsatisfiedExpectation(
-                    method: $expectation->method(),
-                    description: $expectation->describe(),
-                    expectedMin: $expectation->minimumCalls(),
-                    expectedMax: $expectation->maximumCalls(),
-                    timesCalled: $expectation->timesMatched(),
-                    otherObservedCalls: array_map(
-                        ArgumentFormatter::describe(...),
-                        $state->callsFor($expectation->method()),
-                    ),
-                ),
+                static function (MethodExpectation $expectation) use ($state): UnsatisfiedExpectation {
+                    $rawCalls = $state->callsFor($expectation->method());
+
+                    // Only when exactly one call was ever made to this method does
+                    // pairing "the expectation" against "the call" stop being a
+                    // guess — with two or more, there's no fact-based way to tell
+                    // which one this expectation was meant to match.
+                    $comparison = count($rawCalls) === 1
+                        ? $expectation->compareArguments($rawCalls[0])
+                        : null;
+
+                    return new UnsatisfiedExpectation(
+                        method: $expectation->method(),
+                        description: $expectation->describe(),
+                        expectedMin: $expectation->minimumCalls(),
+                        expectedMax: $expectation->maximumCalls(),
+                        timesCalled: $expectation->timesMatched(),
+                        otherObservedCalls: array_map(ArgumentFormatter::describe(...), $rawCalls),
+                        argumentMismatch: ($comparison['kind'] ?? null) === 'arity' ? $comparison['text'] : null,
+                        argumentComparisons: ($comparison['kind'] ?? null) === 'comparisons'
+                            ? ArgumentLabeler::label($state->parameterNames($expectation->method()), $comparison['comparisons'])
+                            : null,
+                    );
+                },
                 $unmet,
             ),
             $state->isFabricated(),

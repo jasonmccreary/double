@@ -1,3 +1,6 @@
 Double `BookRepository` received an unexpected call to `find(456)`. Strict mode requires every call to be configured.
 
-The following calls to `find` were made during this test: `find(123)`
+The following similar call was made to `find`:
+  id:
+    - 123
+    + 456

@@ -1,0 +1,11 @@
+Double `foo` expected `move('baz', 5, 'y', 'z')` to be called exactly 1 time, but it was never called.
+
+The following similar call was made to `move`:
+  name:
+    - 'baz'
+    + 'Baz'
+  id:
+    - 5
+    + 6
+  status: 'y'
+  owner: 'z'

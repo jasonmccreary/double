@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
@@ -33,6 +34,7 @@ final class ExceptionFactory
 {
     /**
      * @param  list<string>  $otherObservedCalls
+     * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function unexpectedCall(
         string $label,
@@ -40,12 +42,13 @@ final class ExceptionFactory
         string $argumentsDescription,
         bool $fabricated,
         array $otherObservedCalls = [],
+        ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
-            return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls);
+            return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
         }
 
-        return new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls);
+        return new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
     }
 
     public static function expectationCallLimitExceeded(
@@ -120,6 +123,7 @@ final class ExceptionFactory
 
     /**
      * @param  list<string>  $otherObservedCalls
+     * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function unsatisfiedReceivedAssertion(
         string $label,
@@ -127,12 +131,14 @@ final class ExceptionFactory
         bool $fabricated,
         string $method = '',
         array $otherObservedCalls = [],
+        ?string $argumentMismatch = null,
+        ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
-            return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls);
+            return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
         }
 
-        return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls);
+        return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
     }
 
     /**

@@ -404,4 +404,174 @@ final class MethodExpectationTest extends TestCase
         $this->assertInstanceOf(MethodExpectation::class, $expectation);
         $this->assertTrue($expectation->isOrdered());
     }
+
+    public function test_compare_arguments_is_null_when_with_was_never_called(): void
+    {
+        $expectation = new MethodExpectation('find', required: true);
+
+        $this->assertNull($expectation->compareArguments(['whatever']));
+    }
+
+    public function test_compare_arguments_is_null_when_the_arguments_actually_match(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with('baz');
+
+        $this->assertNull($expectation->compareArguments(['baz']));
+    }
+
+    public function test_compare_arguments_reports_a_single_differing_argument(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with('baz');
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => "- 'baz'\n+ 'Baz'"],
+                ],
+            ],
+            $expectation->compareArguments(['Baz']),
+        );
+    }
+
+    /**
+     * Every differing argument gets its own comparison entry now — unlike
+     * the single-argument-only diff this replaced, two or more differing
+     * values is no longer collapsed away, since the labeled block format
+     * this feeds doesn't get noisy the way a flat semicolon line did.
+     */
+    public function test_compare_arguments_reports_every_differing_argument(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with('baz', 5);
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => "- 'baz'\n+ 'Baz'"],
+                    ['index' => 1, 'differs' => true, 'text' => "- 5\n+ 6"],
+                ],
+            ],
+            $expectation->compareArguments(['Baz', 6]),
+        );
+    }
+
+    /**
+     * A matching argument still gets a comparison entry — just a non-diff
+     * one carrying its own value — so the caller can show the whole actual
+     * call, not just whichever positions happened to differ.
+     */
+    public function test_compare_arguments_includes_matching_arguments_as_non_diff_context(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with('baz', 5);
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => false, 'text' => "'baz'"],
+                    ['index' => 1, 'differs' => true, 'text' => "- 5\n+ 6"],
+                ],
+            ],
+            $expectation->compareArguments(['baz', 6]),
+        );
+    }
+
+    public function test_compare_arguments_reports_an_argument_count_mismatch_as_a_count_not_a_position(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with('baz', 5);
+
+        $this->assertSame(
+            ['kind' => 'arity', 'text' => 'expected 2 arguments, got 1 argument'],
+            $expectation->compareArguments(['baz']),
+        );
+    }
+
+    public function test_compare_arguments_reports_a_none_matcher_violation_by_count(): void
+    {
+        $expectation = (new MethodExpectation('reset', required: true))->with(Argument::none());
+
+        $this->assertSame(
+            ['kind' => 'arity', 'text' => 'expected no arguments, got 1 argument'],
+            $expectation->compareArguments(['unexpected']),
+        );
+    }
+
+    public function test_compare_arguments_pairs_a_type_matchers_own_description_against_the_actual_value(): void
+    {
+        $expectation = (new MethodExpectation('save', required: true))->with(Argument::type(Book::class));
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => '- type('.Book::class.")\n+ 'not a book'"],
+                ],
+            ],
+            $expectation->compareArguments(['not a book']),
+        );
+    }
+
+    /**
+     * The headline case: a single differing string argument long enough
+     * that dumping both values in full would bury the one-character typo —
+     * StringDiffer::MIN_LENGTH_TO_DIFF is the threshold.
+     */
+    public function test_compare_arguments_diffs_a_long_string_argument(): void
+    {
+        $expected = str_repeat('a', 30).'baz'.str_repeat('a', 30);
+        $actual = str_repeat('a', 30).'BAZ'.str_repeat('a', 30);
+
+        $expectation = (new MethodExpectation('render', required: true))->with($expected);
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => "- '…aaaaaaaaaaaabazaaaaaaaaaaaa…'\n+ '…aaaaaaaaaaaaBAZaaaaaaaaaaaa…'"],
+                ],
+            ],
+            $expectation->compareArguments([$actual]),
+        );
+    }
+
+    public function test_compare_arguments_does_not_diff_a_non_equals_matcher_even_when_long(): void
+    {
+        $long = str_repeat('a', 60);
+        $expectation = (new MethodExpectation('find', required: true))
+            ->with(Argument::satisfies(fn (string $value): bool => $value === $long));
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => "- satisfies(...)\n+ ".var_export('not it at all, and also quite long indeed', true)],
+                ],
+            ],
+            $expectation->compareArguments(['not it at all, and also quite long indeed']),
+        );
+    }
+
+    /**
+     * Argument::remaining()'s trailing arguments are unconstrained by
+     * definition, so they're always context (never a diff) — but they
+     * still appear, so the caller sees the whole actual call rather than
+     * just its constrained prefix.
+     */
+    public function test_compare_arguments_includes_remaining_matcher_arguments_as_context(): void
+    {
+        $expectation = (new MethodExpectation('combine', required: true))->with('-', Argument::remaining());
+
+        $this->assertSame(
+            [
+                'kind' => 'comparisons',
+                'comparisons' => [
+                    ['index' => 0, 'differs' => true, 'text' => "- '-'\n+ '+'"],
+                    ['index' => 1, 'differs' => false, 'text' => "'a'"],
+                    ['index' => 2, 'differs' => false, 'text' => "'b'"],
+                ],
+            ],
+            $expectation->compareArguments(['+', 'a', 'b']),
+        );
+    }
 }
