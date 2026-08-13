@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Double;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
+use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FirstLink;
@@ -143,6 +145,83 @@ final class LooseModeTest extends TestCase
         $double->allows('count');
 
         $this->assertSame(0, $double->count());
+    }
+
+    /**
+     * expects() holds its own method to a stricter standard than the
+     * double's overall mode: once find() has an expects() registered, a
+     * call that doesn't match it is always a mismatch to report, never a
+     * call Loose mode is allowed to shrug off with a safe default.
+     */
+    public function test_an_expects_configured_method_throws_immediately_on_a_mismatched_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        try {
+            $double->find(456);
+            $this->fail('Expected PHPUnitExpectationCallMismatchException to be thrown.');
+        } catch (PHPUnitExpectationCallMismatchException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString("received a call to `find(456)` that doesn't match", $message);
+            $this->assertStringContainsString("Here's how it compares to the configured expectation for `find`:\n  id:\n    - 123\n    + 456", $message);
+        }
+    }
+
+    /**
+     * Two or more expectations registered for find() leaves no fact-based
+     * way to say which one this call "should" have matched, so the message
+     * lists every configured pattern instead of diffing against a guess.
+     */
+    public function test_an_expects_configured_method_lists_every_candidate_when_several_are_registered(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('find')->with(1)->returns(new Book('Dune'));
+        $double->allows('find')->with(2)->returns(new Book('Dune Messiah'));
+
+        try {
+            $double->find(3);
+            $this->fail('Expected PHPUnitExpectationCallMismatchException to be thrown.');
+        } catch (PHPUnitExpectationCallMismatchException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString('This double has 2 expectations configured for `find`, but none match this call:', $message);
+            $this->assertStringContainsString('`find(1)`', $message);
+            $this->assertStringContainsString('`find(2)`', $message);
+        }
+    }
+
+    /**
+     * allows() alone never raises this method's bar — it's the optional
+     * verb specifically because a mismatched call to it might just be an
+     * incidental call the test doesn't care about, the same as a method
+     * with nothing configured for it at all.
+     */
+    public function test_an_allows_only_configured_method_still_falls_back_to_a_safe_default_on_a_mismatched_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->with(123)->returns(new Book('Dune'));
+
+        $this->assertNull($double->find(456));
+    }
+
+    /**
+     * expects()'s stricter standard doesn't relax once its own call-count
+     * requirement is already met — the expectation stays registered for
+     * find() for the rest of the test, so a later mismatched call still
+     * reports a mismatch instead of quietly falling back to a default.
+     */
+    public function test_an_expects_configured_method_stays_strict_after_its_own_requirement_is_satisfied(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        $double->find(123);
+
+        $this->expectException(PHPUnitExpectationCallMismatchException::class);
+
+        $double->find(456);
     }
 
     public function test_a_self_referential_interface_return_defaults_to_the_double_itself(): void

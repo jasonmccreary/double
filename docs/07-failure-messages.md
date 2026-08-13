@@ -112,6 +112,41 @@ does not exist. Did you mean `save`?
 
 The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
 
+## A Call Didn't Match an `expects()`
+
+`expects()` raises the bar for its own method, regardless of the double's mode. In [Loose mode](03-creating-doubles.md#loose-the-default) — the default — a call to a method you never mentioned falls back to a safe default. But once you've written `expects()` for a method, a call to it that doesn't match any of its configured expectations fails immediately, the same way it would in Strict mode:
+
+```php
+$repository = Double::for(BookRepository::class);
+$repository->expects('find')->with(123)->returns($book);
+
+$repository->find(456); // fails immediately, even though the double is Loose
+```
+
+```
+Double `foo` received a call to `find(456)` that doesn't match any
+of its configured expectations. `expects()` requires every call to
+match one exactly.
+
+Here's how it compares to the configured expectation for `find`:
+  id:
+    - 123
+    + 456
+```
+
+This is deliberate: without it, a misconfigured `expects()` tends to surface as a confusing failure somewhere downstream instead — a `null` where you expected a real value, an assertion failing on the symptom instead of the cause. Only `expects()` raises this bar. A mismatched call to an `allows()`-only method still falls back to a safe default, the same as a method with nothing configured for it at all — `allows()` is the verb for "handle this case if it happens," not a promise about every call.
+
+With two or more expectations registered for the method, there's no single one to diff against, so the message lists every configured pattern instead of guessing:
+
+```
+Double `foo` received a call to `find(456)` that doesn't match any
+of its configured expectations. `expects()` requires every call to
+match one exactly.
+
+This double has 2 expectations configured for `find`, but none
+match this call: `find(123)`, `find(789)`
+```
+
 ## A Call Happened Too Many Times
 
 If a call matches an expectation but would push it past its configured maximum, that call fails immediately:

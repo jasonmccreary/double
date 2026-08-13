@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\StringDiffer;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\ExpectationCallMismatchException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\MagicMethodException;
@@ -433,6 +434,43 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         );
 
         $this->assertMatchesGolden('unexpected-call-with-correlation-capped', $exception->getMessage());
+    }
+
+    /**
+     * expects()'s per-method strictness, not Strict mode's blanket policy —
+     * exactly one expectation registered for `find` is the one case where
+     * diffing this failing call against it, argument by argument, is a fact
+     * rather than a guess between several candidates. Same shape as
+     * UnexpectedCallException's own correlation diff, but against the real
+     * configured expectation instead of a coincidental prior call.
+     */
+    public function test_renders_expectation_call_mismatch(): void
+    {
+        $exception = new ExpectationCallMismatchException(
+            'BookRepository',
+            'find',
+            '456',
+            argumentComparisons: [new ArgumentComparison(label: 'id', differs: true, text: "- 123\n+ 456")],
+        );
+
+        $this->assertMatchesGolden('expectation-call-mismatch', $exception->getMessage());
+    }
+
+    /**
+     * Two or more expectations registered for `find` leaves no fact-based
+     * way to say which one this call "should" have matched, so this lists
+     * every configured pattern instead of guessing which to diff against.
+     */
+    public function test_renders_expectation_call_mismatch_with_multiple_candidates(): void
+    {
+        $exception = new ExpectationCallMismatchException(
+            'BookRepository',
+            'find',
+            '3',
+            configuredCalls: ['1', '2'],
+        );
+
+        $this->assertMatchesGolden('expectation-call-mismatch-with-multiple-candidates', $exception->getMessage());
     }
 
     public function test_renders_unsatisfied_expectation_on_a_fabricated_double(): void
