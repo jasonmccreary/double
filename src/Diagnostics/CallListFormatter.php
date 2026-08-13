@@ -78,4 +78,43 @@ final class CallListFormatter
             self::describe($method, $callDescriptions),
         );
     }
+
+    /**
+     * renderCorrelationParagraph()'s counterpart for the one case where the
+     * observed call isn't just "a call that happened to this method" — it's
+     * a fact-checked near miss: same method, same argument count, at least
+     * one value off (see MethodExpectation::compareArguments()'s
+     * 'comparisons' kind). One line per argument — its real parameter name,
+     * then either its own value (unchanged) or a diff (changed) — instead
+     * of a single line naming the whole call.
+     *
+     * $intro is the caller's own lead-in sentence — verify()'s never-satisfied
+     * expectation (UnsatisfiedExpectationFields) and strict mode's immediate
+     * rejection (UnexpectedCallFields) are describing two different
+     * relationships (a past call that was similar vs. this call differing
+     * from what's configured), so neither words it the same way.
+     *
+     * @param  list<ArgumentComparison>  $comparisons
+     */
+    public static function renderComparisonBlock(string $intro, array $comparisons): string
+    {
+        $lines = array_map(
+            static fn (ArgumentComparison $comparison): string => $comparison->differs
+                ? sprintf("  %s:\n%s", $comparison->label, self::indent($comparison->text, '    '))
+                : sprintf('  %s: %s', $comparison->label, $comparison->text),
+            $comparisons,
+        );
+
+        // Trailing "\n" is deliberate — a new paragraph, not a continuation
+        // of the sentence before it. See DoubleException::appendFabricatedNote().
+        return sprintf("%s\n%s\n", $intro, implode("\n", $lines));
+    }
+
+    private static function indent(string $text, string $prefix): string
+    {
+        return implode("\n", array_map(
+            static fn (string $line): string => $prefix.$line,
+            explode("\n", $text),
+        ));
+    }
 }

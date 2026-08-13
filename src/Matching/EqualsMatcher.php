@@ -17,6 +17,16 @@ final class EqualsMatcher implements Matcher
         private readonly mixed $expected,
     ) {}
 
+    /**
+     * @internal Used only by MethodExpectation::describeMismatch() to reach
+     * the raw value for a StringDiffer comparison — describe()/explainMismatch()
+     * only ever expose it pre-formatted.
+     */
+    public function expected(): mixed
+    {
+        return $this->expected;
+    }
+
     public function matches(mixed $actual): bool
     {
         return is_object($this->expected)

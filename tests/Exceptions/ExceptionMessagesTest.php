@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Exceptions;
 
+use JMac\Testing\Diagnostics\ArgumentComparison;
+use JMac\Testing\Diagnostics\StringDiffer;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
@@ -42,10 +44,91 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
             expectedMax: 1,
             timesCalled: 0,
             otherObservedCalls: ["'Baz'"],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'value', differs: true, text: "- 'baz'\n+ 'Baz'"),
+            ],
         );
         $exception = new UnsatisfiedExpectationException('foo', [$expectation]);
 
         $this->assertMatchesGolden('unsatisfied-expectation-with-correlation', $exception->getMessage());
+    }
+
+    /**
+     * A single differing argument that's long enough to be worth eliding —
+     * StringDiffer::diff() replaces the plain "- expected\n+ actual" pair
+     * with a windowed snippet around the differing region.
+     */
+    public function test_renders_unsatisfied_expectation_with_a_long_string_argument_diff(): void
+    {
+        $expected = str_repeat('a', 30).'baz'.str_repeat('a', 30);
+        $actual = str_repeat('a', 30).'BAZ'.str_repeat('a', 30);
+
+        $expectation = new UnsatisfiedExpectation(
+            method: 'render',
+            description: sprintf('expected `render(%s)` to be called exactly 1 time, but it was never called', var_export($expected, true)),
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: [var_export($actual, true)],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'query', differs: true, text: StringDiffer::diff($expected, $actual)),
+            ],
+        );
+        $exception = new UnsatisfiedExpectationException('foo', [$expectation]);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-with-long-string-diff', $exception->getMessage());
+    }
+
+    /**
+     * The headline case: a multi-line string (e.g. a JSON payload) diffs
+     * line by line rather than as one blob with a raw newline embedded in
+     * a single-quoted value.
+     */
+    public function test_renders_unsatisfied_expectation_with_a_multi_line_string_argument_diff(): void
+    {
+        $expected = "{\n    \"id\": 1,\n    \"name\": \"baz\",\n    \"active\": true\n}";
+        $actual = "{\n    \"id\": 1,\n    \"name\": \"Baz\",\n    \"active\": true\n}";
+
+        $expectation = new UnsatisfiedExpectation(
+            method: 'save',
+            description: sprintf('expected `save(%s)` to be called exactly 1 time, but it was never called', var_export($expected, true)),
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: [var_export($actual, true)],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'body', differs: true, text: StringDiffer::diff($expected, $actual)),
+            ],
+        );
+        $exception = new UnsatisfiedExpectationException('foo', [$expectation]);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-with-multi-line-string-diff', $exception->getMessage());
+    }
+
+    /**
+     * Several differing arguments, alongside ones that still matched — the
+     * labeled block format doesn't collapse this away the way the flat,
+     * single-line summary it replaced had to.
+     */
+    public function test_renders_unsatisfied_expectation_with_multiple_argument_comparisons(): void
+    {
+        $expectation = new UnsatisfiedExpectation(
+            method: 'move',
+            description: "expected `move('baz', 5, 'y', 'z')` to be called exactly 1 time, but it was never called",
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: ["'Baz', 6, 'y', 'z'"],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'name', differs: true, text: "- 'baz'\n+ 'Baz'"),
+                new ArgumentComparison(label: 'id', differs: true, text: "- 5\n+ 6"),
+                new ArgumentComparison(label: 'status', differs: false, text: "'y'"),
+                new ArgumentComparison(label: 'owner', differs: false, text: "'z'"),
+            ],
+        );
+        $exception = new UnsatisfiedExpectationException('foo', [$expectation]);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-with-multiple-argument-comparisons', $exception->getMessage());
     }
 
     /**
@@ -315,13 +398,21 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
     }
 
     /**
-     * The symmetric extension: the same "was already observed
-     * elsewhere" fact the verify() path already shows, mirrored onto an
-     * unexpected call that matched no configured expectation.
+     * The symmetric extension: the same argument-by-argument diff the
+     * verify() path shows for its one-observed-call case, mirrored onto an
+     * unexpected call that matched no configured expectation — diffed
+     * against the one other call already observed for this method, not
+     * against whatever's configured.
      */
     public function test_renders_unexpected_call_with_correlation(): void
     {
-        $exception = new UnexpectedCallException('BookRepository', 'find', '456', otherObservedCalls: ['123']);
+        $exception = new UnexpectedCallException(
+            'BookRepository',
+            'find',
+            '456',
+            otherObservedCalls: ['123'],
+            argumentComparisons: [new ArgumentComparison(label: 'id', differs: true, text: "- 123\n+ 456")],
+        );
 
         $this->assertMatchesGolden('unexpected-call-with-correlation', $exception->getMessage());
     }
@@ -364,6 +455,32 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new ExpectationCallLimitExceededException('SecondLink', 'delete', '1', 1, 2, fabricated: true);
 
         $this->assertMatchesGolden('call-limit-exceeded-fabricated', $exception->getMessage());
+    }
+
+    /**
+     * The argument-comparison block has to compose correctly with the
+     * fabricated-double note appended after it —
+     * DoubleException::appendFabricatedNote() rtrims trailing newlines
+     * before appending, and the block always ends in one (see
+     * CallListFormatter::renderComparisonBlock()) — so this is the one
+     * case that could plausibly mangle the boundary between them.
+     */
+    public function test_renders_unsatisfied_expectation_with_argument_comparisons_on_a_fabricated_double(): void
+    {
+        $expectation = new UnsatisfiedExpectation(
+            method: 'save',
+            description: "expected `save('baz')` to be called exactly 1 time, but it was never called",
+            expectedMin: 1,
+            expectedMax: 1,
+            timesCalled: 0,
+            otherObservedCalls: ["'Baz'"],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'value', differs: true, text: "- 'baz'\n+ 'Baz'"),
+            ],
+        );
+        $exception = new UnsatisfiedExpectationException('SecondLink', [$expectation], fabricated: true);
+
+        $this->assertMatchesGolden('unsatisfied-expectation-with-argument-comparisons-fabricated', $exception->getMessage());
     }
 
     public function test_renders_fabrication_limit_exceeded(): void
@@ -454,15 +571,23 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
      * The motivating scenario, mirrored from
      * test_renders_unsatisfied_expectation_with_call_correlation: a
      * received('event')->with(...) assertion fails on argument mismatch, even
-     * though the method really was called — just with something else.
+     * though the method really was called — just with something else. Diffed
+     * against that one recorded call, the same way the verify()-time and
+     * strict-mode paths are.
      */
     public function test_renders_unsatisfied_received_assertion_with_call_correlation(): void
     {
+        $expected = 'this text does not match what was actually logged';
+        $actual = 'found usages of renamed pagination methods';
+
         $exception = new UnsatisfiedReceivedAssertionException(
             'AnalyticsHelper',
-            "expected `event('this text does not match what was actually logged')` to be called at least 1 time, but it was called 0 times",
+            sprintf('expected `event(%s)` to be called at least 1 time, but it was called 0 times', var_export($expected, true)),
             method: 'event',
-            otherObservedCalls: ["'found usages of renamed pagination methods'"],
+            otherObservedCalls: [var_export($actual, true)],
+            argumentComparisons: [
+                new ArgumentComparison(label: 'message', differs: true, text: StringDiffer::diff($expected, $actual)),
+            ],
         );
 
         $this->assertMatchesGolden('unsatisfied-received-assertion-with-correlation', $exception->getMessage());

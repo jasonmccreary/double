@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Diagnostics;
 
+use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\CallListFormatter;
 use PHPUnit\Framework\TestCase;
 
@@ -73,6 +74,62 @@ final class CallListFormatterTest extends TestCase
         $this->assertSame(
             '`find(1)`, `save(2)`, and 2 more',
             CallListFormatter::describeCalls(['find(1)', 'save(2)', 'delete(3)', 'close(4)']),
+        );
+    }
+
+    public function test_render_comparison_block_shows_a_non_diff_entry_on_one_line(): void
+    {
+        $this->assertSame(
+            "Intro:\n  id: 42\n",
+            CallListFormatter::renderComparisonBlock('Intro:', [
+                new ArgumentComparison(label: 'id', differs: false, text: '42'),
+            ]),
+        );
+    }
+
+    /**
+     * A diff entry's -/+ pair is indented one level further than its own
+     * label — inset from it, not flush with it — so the label reads as a
+     * header for the diff nested under it rather than a sibling line.
+     */
+    public function test_render_comparison_block_insets_a_diff_entrys_lines_under_its_label(): void
+    {
+        $this->assertSame(
+            "Intro:\n  id:\n    - 42\n    + 43\n",
+            CallListFormatter::renderComparisonBlock('Intro:', [
+                new ArgumentComparison(label: 'id', differs: true, text: "- 42\n+ 43"),
+            ]),
+        );
+    }
+
+    /**
+     * Matching arguments stay plain, one-line entries for context; only the
+     * differing one gets the label-on-its-own-line diff treatment — so a
+     * multi-argument call reads as one block, not a wall of diffs.
+     */
+    public function test_render_comparison_block_mixes_context_and_diff_entries(): void
+    {
+        $this->assertSame(
+            "Intro:\n  name:\n    - 'baz'\n    + 'Baz'\n  status: 'y'\n",
+            CallListFormatter::renderComparisonBlock('Intro:', [
+                new ArgumentComparison(label: 'name', differs: true, text: "- 'baz'\n+ 'Baz'"),
+                new ArgumentComparison(label: 'status', differs: false, text: "'y'"),
+            ]),
+        );
+    }
+
+    /**
+     * A multi-line diff (StringDiffer's line-by-line output for a JSON body,
+     * say) gets every one of its own lines inset under the label, not
+     * just the first.
+     */
+    public function test_render_comparison_block_indents_every_line_of_a_multi_line_diff(): void
+    {
+        $this->assertSame(
+            "Intro:\n  body:\n      ...\n    -   line two\n    +   LINE TWO\n      ...\n",
+            CallListFormatter::renderComparisonBlock('Intro:', [
+                new ArgumentComparison(label: 'body', differs: true, text: "  ...\n-   line two\n+   LINE TWO\n  ..."),
+            ]),
         );
     }
 }

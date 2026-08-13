@@ -1,0 +1,14 @@
+Double `foo` expected `save('{
+    "id": 1,
+    "name": "baz",
+    "active": true
+}')` to be called exactly 1 time, but it was never called.
+
+The following similar call was made to `save`:
+  body:
+      ...
+          "id": 1,
+    -     "name": "baz",
+    +     "name": "Baz",
+          "active": true
+      ...

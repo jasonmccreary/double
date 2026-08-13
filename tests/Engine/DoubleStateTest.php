@@ -9,6 +9,8 @@ use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Engine\Mode;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\Fillable;
+use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\TestCase;
 
 final class DoubleStateTest extends TestCase
@@ -108,6 +110,41 @@ final class DoubleStateTest extends TestCase
         $state = new DoubleState('Fillable&Sized', 'Fillable&Sized');
 
         $this->assertSame(['Fillable', 'Sized'], $state->targetCandidates());
+    }
+
+    public function test_parameter_names_reflects_the_real_declared_names_in_order(): void
+    {
+        $state = new DoubleState(BookRepositoryInterface::class, 'BookRepositoryInterface');
+
+        $this->assertSame(['id'], $state->parameterNames('find'));
+    }
+
+    /**
+     * A variadic parameter's own name (not one entry per actual argument —
+     * that expansion belongs to whichever caller knows the actual argument
+     * count, see Double::verifyState()).
+     */
+    public function test_parameter_names_includes_a_variadic_parameters_own_name_once(): void
+    {
+        $state = new DoubleState(VariadicInterface::class, 'VariadicInterface');
+
+        $this->assertSame(['glue', 'parts'], $state->parameterNames('combine'));
+    }
+
+    /**
+     * parameterNames() is built on declaringCandidate(), which already
+     * walks every intersection member to find the one that declares the
+     * method — this proves that resolution reaches all the way through to
+     * reflecting the real parameter names, not just locating the class.
+     * Fillable (no params) is listed first and doesn't declare `find`, so
+     * this also proves resolution doesn't stop at the first candidate.
+     */
+    public function test_parameter_names_resolves_across_an_intersection_target(): void
+    {
+        $target = Fillable::class.'&'.BookRepositoryInterface::class;
+        $state = new DoubleState($target, $target);
+
+        $this->assertSame(['id'], $state->parameterNames('find'));
     }
 
     public function test_configure_passthru_sets_the_mode_and_stores_the_real_instance(): void

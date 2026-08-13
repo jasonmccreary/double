@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Exceptions;
 
+use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\CallListFormatter;
 
 /**
@@ -21,6 +22,14 @@ trait UnexpectedCallFields
      *                                            method (matched or not, same plain-fact rule
      *                                            UnsatisfiedExpectation::$otherObservedCalls
      *                                            uses), excluding this failing call itself
+     * @param  ?list<ArgumentComparison>  $argumentComparisons  one labeled entry per constrained
+     *                                                          argument, set only when $otherObservedCalls is exactly
+     *                                                          the one other call already observed for this method
+     *                                                          and it has the right shape (same argument count) as
+     *                                                          this failing one — the one case where pairing this
+     *                                                          call against that other one, argument by argument, is
+     *                                                          a fact rather than a guess. Same rule
+     *                                                          UnsatisfiedExpectation::$argumentComparisons uses.
      */
     public function __construct(
         public readonly string $label,
@@ -28,12 +37,14 @@ trait UnexpectedCallFields
         public readonly string $argumentsDescription,
         public readonly bool $fabricated = false,
         public readonly array $otherObservedCalls = [],
+        public readonly ?array $argumentComparisons = null,
     ) {
-        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls));
+        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons));
     }
 
     /**
      * @param  list<string>  $otherObservedCalls
+     * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function renderMessage(
         string $label,
@@ -41,6 +52,7 @@ trait UnexpectedCallFields
         string $argumentsDescription,
         bool $fabricated,
         array $otherObservedCalls = [],
+        ?array $argumentComparisons = null,
     ): string {
         $message = sprintf(
             'Double `%s` received an unexpected call to `%s(%s)`. Strict mode requires every call to be configured.',
@@ -49,16 +61,22 @@ trait UnexpectedCallFields
             $argumentsDescription,
         );
 
-        // A configuration suggestion only makes sense when there's nothing better to
-        // offer. It's a guess on three separate axes at once — the variable name
-        // (derived from the label, not the test's actual code), the return value
-        // (`...` is a placeholder, not real code), and the verb itself (allows() vs.
-        // expects() is a real decision this library can't make on the caller's
-        // behalf) — so once real, fact-based correlation data exists, that guess
-        // gets dropped rather than sitting next to a stronger, non-speculative fact.
-        $message .= $otherObservedCalls !== []
-            ? "\n\n".CallListFormatter::renderCorrelationParagraph($method, $otherObservedCalls)
-            : ' '.self::renderSuggestion($label, $method);
+        // A configuration suggestion, or even the plain correlation fact, only
+        // makes sense when there's nothing better to offer. Once there's
+        // exactly one other call this one is a checked near miss of,
+        // pinpointing exactly how it differs is strictly more useful than
+        // either — a guess on three axes (variable name, return value,
+        // allows() vs. expects()) or a bare list of unrelated past calls.
+        if ($argumentComparisons !== null) {
+            $message .= "\n\n".CallListFormatter::renderComparisonBlock(
+                sprintf('The following similar call was made to `%s`:', $method),
+                $argumentComparisons,
+            );
+        } elseif ($otherObservedCalls !== []) {
+            $message .= "\n\n".CallListFormatter::renderCorrelationParagraph($method, $otherObservedCalls);
+        } else {
+            $message .= ' '.self::renderSuggestion($label, $method);
+        }
 
         return DoubleException::appendFabricatedNote($message, $fabricated);
     }

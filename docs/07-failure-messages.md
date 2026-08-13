@@ -19,31 +19,47 @@ $repository->verify();
 ```
 Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
 
-The following calls to `find` were made during this test: `find('Baz')`
-
-Argument 1: expected 'baz', got 'Baz'
+The following similar call was made to `find`:
+  value:
+    - 'baz'
+    + 'Baz'
 ```
 
-That second line comes straight from the call log: `find()` really was called, just not with anything that matched. The third line only appears when there's exactly one such call — with two or more, there's no fact-based way to say which one this expectation was "supposed" to match, so the message correlates without guessing.
+That block only appears when there's exactly one call to correlate against — with two or more, there's no fact-based way to say which one this expectation was "supposed" to match, so the message doesn't guess. "Similar," rather than the plainer "the following calls...were made," is warranted here specifically: it's a checked fact that this one call has the right shape (same method, same argument count), not a guess.
 
-When that one call is a long string, this line becomes a diff instead of dumping both values in full — whatever's shared collapses to `…`, keeping just the part that's actually different:
+`value` is `find()`'s real parameter name, not a generic "argument 1" — reflected straight off the interface being doubled. Every argument gets its own labeled line this way, whether it matched or not, so a multi-argument call reads as one block instead of scattered fragments:
 
 ```
-Argument 1 differs:
-- '…m dolor sit baz amet, con…'
-+ '…m dolor sit Baz amet, con…'
+Double `foo` expected `save('baz', 5, true)` to be called exactly 1 time, but it was never called.
+
+The following similar call was made to `save`:
+  value: 'baz'
+  count:
+    - 5
+    + 6
+  active: true
+```
+
+`value` and `active` matched, so they're shown plainly for context; `count` didn't, so it gets a diff instead. As many arguments can differ as actually did — nothing gets collapsed away.
+
+When a differing value is a long string, its diff elides whatever's shared instead of dumping both values in full — collapsing to `…`, keeping just the part that's actually different:
+
+```
+  query:
+    - '…m dolor sit baz amet, con…'
+    + '…m dolor sit Baz amet, con…'
 ```
 
 A multi-line string (a JSON body, a rendered template, a SQL statement) diffs line by line instead, the same way a `git diff` would — only the changed line, plus a line of context on each side, survives:
 
 ```
-Argument 1 differs:
-  ...
-      "id": 1,
--     "name": "baz",
-+     "name": "Baz",
-      "active": true
-  ...
+  body:
+      ...
+          "id": 1,
+    -     "name": "baz",
+    +     "name": "Baz",
+          "active": true
+      ...
 ```
 
 ## A Call Wasn't Configured
@@ -66,6 +82,20 @@ requires every call to be configured.
 
 The following calls to `bar` were made during this test: `bar(1)`
 ```
+
+That example shows a different argument count (`bar(1)` vs. `bar(1, 2)`), so there's no argument-by-argument pairing to make — just the fact that a call happened. When the prior call has the same shape, though, it gets the same diff treatment as an unmet expectation, for the same reason: pairing this call against that one specific prior call is a fact, not a guess, once it's the only one on record:
+
+```
+Double `foo` received an unexpected call to `bar('Baz')`. Strict mode
+requires every call to be configured.
+
+The following similar call was made to `bar`:
+  value:
+    - 'baz'
+    + 'Baz'
+```
+
+This same diff also appears for a `received($method)->with(...)` assertion (see [Verification](06-verification.md)) that fails on argument mismatch — the same fact, checked against the past instead of the future.
 
 ### Method Name Suggestions
 

@@ -99,28 +99,36 @@
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">baz</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">Baz</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> note the capital B</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">verify</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
 
-The following similar call was made to `find`: `find('Baz')`
-
-Argument 1: expected 'baz', got 'Baz'
+The following similar call was made to `find`:
+  value:
+    - 'baz'
+    + 'Baz'
 </code></pre></div>
-<p>That second line comes straight from the call log: <code>find()</code> really was called, just not with anything that matched. It only appears when there's exactly one such call — with two or more, there's no fact-based way to say which one this expectation was &quot;supposed&quot; to match, so the message correlates without guessing. &quot;Similar,&quot; rather than the plainer &quot;the following calls...were made,&quot; is warranted here specifically: it's a checked fact that this one call has the right shape (same method, same argument count) and differs in exactly one place, not a guess. The third line, naming that one argument, only appears alongside that same checked fact — two or more differing arguments falls back to the plain wording instead, since there's no longer one clear thing to point at:</p>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `save('baz', 5)` to be called exactly 1 time, but it was never called.
+<p>That block only appears when there's exactly one call to correlate against — with two or more, there's no fact-based way to say which one this expectation was &quot;supposed&quot; to match, so the message doesn't guess. &quot;Similar,&quot; rather than the plainer &quot;the following calls...were made,&quot; is warranted here specifically: it's a checked fact that this one call has the right shape (same method, same argument count), not a guess.</p>
+<p><code>value</code> is <code>find()</code>'s real parameter name, not a generic &quot;argument 1&quot; — reflected straight off the interface being doubled. Every argument gets its own labeled line this way, whether it matched or not, so a multi-argument call reads as one block instead of scattered fragments:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `save('baz', 5, true)` to be called exactly 1 time, but it was never called.
 
-The following calls to `save` were made during this test: `save('Baz', 6)`
+The following similar call was made to `save`:
+  value: 'baz'
+  count:
+    - 5
+    + 6
+  active: true
 </code></pre></div>
-<p>When that one call is a long string, this line becomes a diff instead of dumping both values in full — whatever's shared collapses to <code>…</code>, keeping just the part that's actually different:</p>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Argument 1 differs:
-- '…m dolor sit baz amet, con…'
-+ '…m dolor sit Baz amet, con…'
+<p><code>value</code> and <code>active</code> matched, so they're shown plainly for context; <code>count</code> didn't, so it gets a diff instead. As many arguments can differ as actually did — nothing gets collapsed away.</p>
+<p>When a differing value is a long string, its diff elides whatever's shared instead of dumping both values in full — collapsing to <code>…</code>, keeping just the part that's actually different:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>  query:
+    - '…m dolor sit baz amet, con…'
+    + '…m dolor sit Baz amet, con…'
 </code></pre></div>
 <p>A multi-line string (a JSON body, a rendered template, a SQL statement) diffs line by line instead, the same way a <code>git diff</code> would — only the changed line, plus a line of context on each side, survives:</p>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Argument 1 differs:
-  ...
-      &quot;id&quot;: 1,
--     &quot;name&quot;: &quot;baz&quot;,
-+     &quot;name&quot;: &quot;Baz&quot;,
-      &quot;active&quot;: true
-  ...
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>  body:
+      ...
+          &quot;id&quot;: 1,
+    -     &quot;name&quot;: &quot;baz&quot;,
+    +     &quot;name&quot;: &quot;Baz&quot;,
+          &quot;active&quot;: true
+      ...
 </code></pre></div>
 <h2 id="a-call-wasnt-configured">A Call Wasn't Configured</h2>
 <p>In <a href="/creating-doubles#strict">Strict mode</a>, a call that doesn't match a configured expectation fails the moment it happens:</p>
@@ -135,6 +143,16 @@ requires every call to be configured.
 
 The following calls to `bar` were made during this test: `bar(1)`
 </code></pre></div>
+<p>That example shows a different argument count (<code>bar(1)</code> vs. <code>bar(1, 2)</code>), so there's no argument-by-argument pairing to make — just the fact that a call happened. When the prior call has the same shape, though, it gets the same diff treatment as an unmet expectation, for the same reason: pairing this call against that one specific prior call is a fact, not a guess, once it's the only one on record:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` received an unexpected call to `bar('Baz')`. Strict mode
+requires every call to be configured.
+
+The following similar call was made to `bar`:
+  value:
+    - 'baz'
+    + 'Baz'
+</code></pre></div>
+<p>This same diff also appears for a <code>received($method)-&gt;with(...)</code> assertion (see <a href="/verification">Verification</a>) that fails on argument mismatch — the same fact, checked against the past instead of the future.</p>
 <h3 id="method-name-suggestions">Method Name Suggestions</h3>
 <p>A typo'd method name is caught the moment you configure it:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">sav</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> meant &quot;save&quot;</span></div></code></pre></div>

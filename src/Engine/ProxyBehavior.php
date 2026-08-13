@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\ArgumentFormatter;
 use JMac\Testing\Double;
 
@@ -138,18 +139,57 @@ final class ProxyBehavior
     private static function handleUnmatchedCall(DoubleState $state, string $method, array $arguments, object $double): mixed
     {
         return match ($state->mode()) {
-            // callsFor($method) already includes this very call — recordCall() above ran
-            // before findMatch() — so the last entry is dropped to leave only calls that
-            // happened before this one.
-            Mode::Strict => throw ExceptionFactory::unexpectedCall(
-                $state->label(),
-                $method,
-                ArgumentFormatter::describe($arguments),
-                $state->isFabricated(),
-                array_map(ArgumentFormatter::describe(...), array_slice($state->callsFor($method), 0, -1)),
-            ),
+            Mode::Strict => throw self::unexpectedCall($state, $method, $arguments),
             Mode::Loose => SafeDefaultResolver::resolveForMethod($state, $method, $double),
             Mode::Passthru => $state->passthruTarget()->{$method}(...$arguments),
         };
+    }
+
+    private static function unexpectedCall(DoubleState $state, string $method, array $arguments): \Throwable
+    {
+        // callsFor($method) already includes this very call — recordCall() above ran
+        // before findMatch() — so the last entry is dropped to leave only calls that
+        // happened before this one.
+        $otherRawCalls = array_slice($state->callsFor($method), 0, -1);
+
+        return ExceptionFactory::unexpectedCall(
+            $state->label(),
+            $method,
+            ArgumentFormatter::describe($arguments),
+            $state->isFabricated(),
+            array_map(ArgumentFormatter::describe(...), $otherRawCalls),
+            self::comparisonsAgainstThePriorCall($state, $method, $arguments, $otherRawCalls),
+        );
+    }
+
+    /**
+     * Exactly one other call already observed for this method is the one
+     * case where pairing this failing call against it, argument by
+     * argument, is a fact rather than a guess — with two or more, there's
+     * no fact-based way to tell which one it "should" have resembled. Same
+     * criterion Double::verifyState() uses for the symmetric
+     * never-satisfied-expectation case.
+     *
+     * Reuses MethodExpectation::compareArguments() rather than a second
+     * comparison algorithm: the prior call's own arguments become literal
+     * with() constraints, so this failing call is diffed against them
+     * exactly the way it would be against a real expects()/allows().
+     *
+     * @param  list<array>  $otherRawCalls
+     * @return list<ArgumentComparison>|null
+     */
+    private static function comparisonsAgainstThePriorCall(DoubleState $state, string $method, array $arguments, array $otherRawCalls): ?array
+    {
+        if (count($otherRawCalls) !== 1) {
+            return null;
+        }
+
+        $comparison = (new MethodExpectation($method, required: false))
+            ->with(...$otherRawCalls[0])
+            ->compareArguments($arguments);
+
+        return ($comparison['kind'] ?? null) === 'comparisons'
+            ? ArgumentLabeler::label($state->parameterNames($method), $comparison['comparisons'])
+            : null;
     }
 }
