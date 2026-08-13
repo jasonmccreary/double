@@ -5,7 +5,10 @@
 </p>
 
 
-# Double
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/templates/assets/images/double-logo-wordmark-dark.svg">
+  <img src="docs/templates/assets/images/double-logo-wordmark.svg" alt="Double" width="320" height="100">
+</picture>
 
 A modern PHP double library that puts developer experience first.
 
