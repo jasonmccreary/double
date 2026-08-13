@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50" width="320" height="100">
-  <text x="0" y="36" font-family="&#39;JetBrains Mono&#39;, monospace" font-weight="500" font-size="32" fill="#14161a">Double</text>
-  <g transform="translate(119,17.6) scale(0.25)">
-    <circle cx="29" cy="19" r="12.5" fill="#45484c"></circle>
-    <circle cx="29" cy="61" r="12.5" fill="#45484c"></circle>
-    <circle cx="71" cy="19" r="12.5" fill="#e67339"></circle>
-    <circle cx="71" cy="61" r="12.5" fill="#e67339"></circle>
-  </g>
-</svg>

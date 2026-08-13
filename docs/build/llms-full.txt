@@ -1,0 +1,931 @@
+# Double
+
+> Documentation for Double, a modern, human-friendly PHP double library.
+
+<!-- https://testdoublephp.com/ -->
+
+# Introduction
+
+[Double](https://github.com/jasonmccreary/double) is a modern PHP double library that puts developer experience first. It was built, from the ground up, on four goals:
+
+- **Zero learning curve.** Create a `Double` and start testing immediately. There's no upfront decision between a mock, a spy, or a partial.
+- **Failures for humans.** When an expectation isn't met, the message names the double, the call, and suggests a fix. No terse technical output to decode.
+- **One clean API.** Double isn't fancy, just a handful of methods you already know. No aliases. No nuances.
+- **Ready for contribution.** Small, well-bounded internals mean no reverse-engineering the whole library for your first PR.
+
+---
+
+Before digging into each goal, we believe code speaks louder than words. So let's start with an example of using Double:
+
+```php
+use JMac\Testing\Double;
+
+$repository = Double::for(BookRepository::class);
+$repository->expects('find')->with(123)->returns($book);
+
+$service = new CatalogService($repository);
+$service->lookup(123);
+
+$repository->received('recordView')->with($book);
+```
+
+Double has been designed to be read by a human. This code reads like a sentence: it creates a _double for_ `BookRepository`. That double _expects_ `find` to be called _with_ `123`, and _returns_ `$book`. The double also _received_ a call to `recordView` _with_ `$book`.
+
+## Zero learning curve
+
+Testing already has a barrier to entry. Double does not want to add to that. So there's nothing to decide or learn before getting started. `Double::for()` creates a **loose** double by default — which returns a sensible, type-safe value.
+
+As you set expectations for your double, it automatically adjusts its behavior. You may, of course, set [strict](03-creating-doubles.md#strict) or [passthru](03-creating-doubles.md#passthru) mode if needed. But Double does not require deciding between a mock, a spy, or a partial ahead of time.
+
+## Failures for humans
+
+Double ensures its failures are immediately actionable. First, by actually failing the test. Under PHPUnit, an unmet expectation doesn't just throw — it fails the test the same way a built-in assertion would.
+
+Second, by ensuring the failure messages are as helpful as possible. Each one names the double, the expected call, and why it failed. Most even suggest what to do next. Here's an example:
+
+```
+Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
+
+The following calls to `find` were made during this test: `find('Baz')`
+```
+
+## One clean API
+
+The grammar is already familiar. Not just if you've used Mockery or PHPUnit, but other testing libraries outside PHP such as RSpec, testdouble.js, or Mockito. There's nothing reinvented or fancy in Double.
+
+In fact, we've made an effort to streamline the grammar. As you'll see, nearly every method is a single word. No fillers. No aliases. While aliases provide flexibility, they also require learning the nuance of each. Consider `shouldReceive()` versus `expects()`. Double keeps one verb per concept: `allows()` and `expects()`.
+
+```php
+$repository->expects('find')->with(123)->returns($book);   // called exactly once
+$repository->allows('save')->returns(true);                // called any number of times
+
+$repository->allows('find')->with(999)->throws(new NotFoundException());
+
+$repository->save($book);
+$repository->received('save')->with($book);                // check it after the fact
+```
+
+## Ready for contribution
+
+The codebase is split into a handful of small modules, each with one responsibility. If you want to add an [argument matcher](05-argument-matching.md), start in `src/Matching/`. If you want to tweak an exception message, start in the relevant `*Fields` trait in `src/Exceptions/`. You don't need to untangle the entire codebase to make your contribution.
+
+## Where to Next
+
+- [Installation](02-installation.md) — get it into your project.
+- [Creating Doubles](03-creating-doubles.md) — make your first double and choose how it behaves.
+- [Expectations](04-expectations.md) — the verbs you'll reach for in nearly every test.
+
+---
+
+<!-- https://testdoublephp.com/installation -->
+
+# Installation
+
+You may install this library as a development dependency with Composer:
+
+```sh
+composer require --dev jasonmccreary/double
+```
+
+## Requirements
+
+This library needs PHP 8.3 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner. The core library doesn't know or care what's running your tests.
+
+## Test Suite Integration
+
+If PHPUnit happens to be installed in your project, this library notices and improves a couple of things automatically — Pest included, since Pest tests run on real PHPUnit `TestCase` instances under the hood:
+
+- Failures are reported as PHPUnit failures rather than generic errors, so they're attributed to the right test.
+- You may add a trait to your suite to have every expectation verified automatically, without calling `->verify()` yourself. For PHPUnit that means your base test case; for Pest, `uses()`.
+
+None of this requires configuration. It's detected the moment your tests run. The full details live in [Test Suite Integration](08-test-suite-integration.md). If you're using another test runner, or none at all, everything still works the same way; you just call `$double->verify()` yourself, as shown in [Verification](06-verification.md).
+
+## Confirming It Works
+
+```php
+<?php
+
+use JMac\Testing\Double;
+
+require 'vendor/autoload.php';
+
+$double = Double::for(Countable::class);
+$double->allows('count')->returns(3);
+
+var_dump($double->count()); // int(3)
+```
+
+If that prints `int(3)`, you're ready to go. Head over to [Creating Doubles](03-creating-doubles.md) to see what a real one looks like.
+
+---
+
+<!-- https://testdoublephp.com/creating-doubles -->
+
+# Creating Doubles
+
+You may create a double for any class or interface using `Double::for()`:
+
+```php
+use JMac\Testing\Double;
+
+$repository = Double::for(BookRepository::class);
+```
+
+This returns a real object. It satisfies `instanceof BookRepository`, it passes any type hint that expects one, and you may hand it straight to whatever you're testing:
+
+```php
+$service = new CatalogService($repository);
+```
+
+Nothing about the double is configured yet. See [Expectations](04-expectations.md) for that. This page covers the double itself: how to create one, what it's called in failure messages, and how it behaves before you've told it anything.
+
+## Doubling More Than One Thing at Once
+
+Sometimes the code you're testing needs a single object that satisfies more than one contract. A logger that's also flushable, for example. You may pass more than one target to `for()` to get one double implementing all of them:
+
+```php
+$logger = Double::for(LoggerInterface::class, FlushableInterface::class);
+
+$logger instanceof LoggerInterface;    // true
+$logger instanceof FlushableInterface; // true
+```
+
+Every target after the first must be an interface, the same rule PHP applies to intersection types, since a class may only extend one parent.
+
+## Wrapping a Real Instance
+
+If you already have a real object in hand (built by a factory, resolved from a container, or otherwise), you may pass the instance itself to `for()` instead of a class name:
+
+```php
+$double = Double::for($realBook)->passthru();
+```
+
+`Double::for($realBook)` doubles `$realBook`'s class and remembers the instance, so a later `->passthru()` call knows what to delegate to without you needing to repeat yourself (`Double::for(Book::class)->passthru($realBook)` would work just as well). More on what `passthru()` does in [Modes](#modes) below.
+
+## Labels
+
+Every double is given a label, derived from its class or interface name. `BookRepository::class` becomes `"BookRepository"`. This label appears in every failure message the double produces (see [Failure Messages](07-failure-messages.md)), so you always know which double is involved without hunting through generated class names.
+
+## Reserved Method Names
+
+Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that seven method names are reserved on every double:
+
+```
+expects, allows, strict, passthru, received, unused, verify
+```
+
+If the class or interface you're doubling declares a real method with one of these names, `Double::for()` throws right away, naming the exact method:
+
+```php
+interface AuthorizerInterface
+{
+    public function allows(string $ability): bool;
+}
+
+Double::for(AuthorizerInterface::class);
+// Can't create a double for `AuthorizerInterface`. It contains `allows`
+// which collides with Double's internal methods.
+```
+
+This does come up in practice. `allows()` is part of Laravel's own `Gate` contract, for instance. It's worth knowing about early, rather than discovering it as a confusing test failure later.
+
+## What Can't Be Doubled
+
+A couple of things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
+
+- **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
+- **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
+
+Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [Expectations](04-expectations.md#static-methods).
+
+### Doubling a Final Class
+
+`Double::bypassFinals()` lifts the `final`-class restriction for the rest of the process:
+
+```php
+use JMac\Testing\Double;
+
+Double::bypassFinals();
+
+$logger = Double::for(FinalLogger::class); // no longer rejected
+```
+
+It works by rewriting `final class` out of a target's source the first time PHP reads it, before compiling it — so it only helps for a class PHP hasn't loaded yet. Call it as early as possible, ideally the very first line of your PHPUnit bootstrap file, ahead of even `require __DIR__.'/vendor/autoload.php'`. A class already `use`d, instantiated, or reflected on elsewhere in the process by the time you call `bypassFinals()` is already compiled as final, and stays rejected.
+
+It's global for the process (there's no way to know in advance which classes a later `Double::for()` call will name) and it's narrow in what it touches: only `final` immediately before `class`. A final *method* on an otherwise non-final class is left alone — the double simply inherits that method's real implementation unoverridden, same as it always has.
+
+### Readonly Classes
+
+Unlike `final`, a `readonly` class needs no opt-in — it doubles the same as any other class:
+
+```php
+readonly class Money
+{
+    public function __construct(public int $cents) {}
+}
+
+Double::for(Money::class); // works, no bypassFinals() needed
+```
+
+PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is. That costs the double nothing, since it never declares properties of its own — it only overrides methods.
+
+## Modes
+
+Every double has exactly one mode, chosen either when you create it or on the very next call, and it stays that way afterward. Mode answers one question: **what happens when a call doesn't match anything you've configured?** It never changes what `expects()`/`allows()` mean. Those work the same way in every mode.
+
+### Loose (the Default)
+
+```php
+$repository = Double::for(BookRepository::class);
+
+$repository->allows('find')->with(123)->returns($book);
+
+$repository->find(123); // $book
+$repository->find(456); // a safe default, see below
+```
+
+This is what you get from a plain `Double::for(...)`, with nothing extra to opt into. An unconfigured call never throws. It returns a sensible, type-safe value based on the method's declared return type:
+
+| Return Type | What You Get |
+|---|---|
+| `void` | nothing |
+| no type, nullable, or `mixed` | `null` |
+| `bool` | `false` |
+| `int` / `float` | `0` / `0.0` |
+| `string` | `''` |
+| `array` / `iterable` | `[]` |
+| `self` / `static` | the double itself |
+| an enum | its first case |
+| a union type | the first branch that resolves cleanly, preferring `null` if it's an option |
+| a non-nullable class or interface | a fresh double of that type, generated for you |
+
+That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later. It hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
+
+```
+Double `Book` was returned automatically. This only happens one
+level deep from the original double. To respond to `author()`,
+you'll need to configure it explicitly. For example:
+`$book->allows('author')->returns($anotherDouble)`.
+```
+
+Loose mode doesn't stop you from configuring specific calls. You may freely mix "stub these calls" with "fall back to a safe default for everything else."
+
+### Strict
+
+```php
+$repository = Double::for(BookRepository::class)->strict();
+
+$repository->allows('find')->with(123)->returns($book);
+
+$repository->find(123); // $book
+$repository->find(456); // throws, nothing was configured for this
+```
+
+Any call that doesn't match a configured expectation fails immediately, by name. Reach for this when you'd rather a test fail the moment its setup is incomplete, instead of discovering it indirectly further down.
+
+### Passthru
+
+```php
+$logger = Double::for(Logger::class)->passthru($realLogger);
+
+$logger->info('hello');   // delegates to $realLogger->info('hello')
+$logger->error('uh oh');  // still recorded, so received('error') works
+```
+
+Unconfigured calls delegate to a real object you supply. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or delegated, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
+
+Calling `->passthru()` with no argument tries to build the real instance for you through reflection, and explains plainly if that isn't possible:
+
+```
+Can't auto-instantiate `Logger` to passthru. Constructing it threw:
+"...". You may need to pass an existing instance instead. For
+example: `->passthru($existingInstance)`.
+```
+
+Passthru only applies to classes, since an interface has no implementation to delegate to.
+
+If you only want one specific call to delegate to a real object, rather than the whole double, `resolves()` is the better fit. See [Expectations](04-expectations.md).
+
+---
+
+<!-- https://testdoublephp.com/expectations -->
+
+# Expectations
+
+This is the part you'll write the most: telling a double what you expect to happen, and what should happen when it does.
+
+```php
+$repository->expects('find')->with(123)->returns($book);
+```
+
+Read left to right, that's the whole sentence: expect a call to `find`, with `123`, and return `$book`. Every modifier here has a sensible default if you leave it off.
+
+## `expects()` and `allows()`
+
+Both register a configured call. The difference is what happens if it never happens:
+
+```php
+$repository->expects('save');  // must be called exactly once; verify() fails otherwise
+$repository->allows('save');   // may be called any number of times, including zero
+```
+
+You may reach for `expects()` when the call is the point of the test (the thing you're actually asserting happened), and `allows()` for setup that just needs to respond to a call, without the count being part of what you're testing.
+
+## Constraining Arguments with `with()`
+
+```php
+$repository->allows('find')->with(123)->returns($book);
+```
+
+Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly against the actual argument. See [Argument Matching](05-argument-matching.md) for exactly how that comparison works, and for matchers to reach for when an exact value is too strict.
+
+## Deciding What Happens
+
+```php
+$repository->allows('find')->with(123)->returns($book);
+$repository->allows('find')->with(999)->throws(new NotFoundException());
+$repository->allows('calculateTax')->resolves(fn (...$args) => $realGateway->calculateTax(...$args));
+```
+
+- `returns(...)` hands back a value.
+- `throws(...)` throws an exception instead.
+- `resolves(...)` computes the return value with a closure, given the real call's arguments. This is also how you may delegate a single call to a real object without switching the whole double to [passthru](03-creating-doubles.md#passthru).
+
+If you leave all three off, a matched call falls back to the same safe default that [Loose mode](03-creating-doubles.md#loose-the-default) uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare `null` that turns into a `TypeError` further down.
+
+## Sequential Returns
+
+You may pass more than one value to `returns()` (or `throws()`), and each call receives the next value in the list, holding at the last one once the list runs out:
+
+```php
+$repository->allows('find')->with(1)->returns($first, $second);
+
+$repository->find(1); // $first
+$repository->find(1); // $second
+$repository->find(1); // $second again
+```
+
+This is one expectation with a queue attached, not several competing expectations, so it composes cleanly with everything else on this page.
+
+## Counting Calls with `times()`
+
+```php
+$repository->expects('save')->times(3);                 // exactly 3
+$repository->expects('save')->times(1, 3);               // between 1 and 3
+$repository->expects('save')->times(minimum: 2);         // at least 2
+$repository->allows('save')->times(maximum: 5);          // at most 5
+$repository->allows('save')->never();                    // shorthand for times(0)
+```
+
+One overloaded verb covers every count you'd want, rather than a separate word for each shape. `never()` remains as its own method because it reads more naturally than the equivalent `times()` call for that common case.
+
+## Matching Order
+
+When more than one expectation could match a call, write your setup top to bottom and the last one that applies wins:
+
+```php
+$repository->allows('find')->returns(null);              // a default, declared first
+$repository->allows('find')->with(123)->returns($book);  // a specific override, declared second
+```
+
+This mirrors how you'd naturally write the setup: state a broad default, then layer specific overrides underneath it.
+
+## Keeping Calls in Order
+
+Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract: you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `ordered()`:
+
+```php
+$connection->expects('open')->ordered();
+$connection->expects('write')->ordered();
+$connection->expects('close')->ordered();
+```
+
+Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
+
+## Static Methods
+
+`expects()`, `allows()`, and `received()` only work with instance methods. There's no instance for a double to intercept a static call through. Configuring one is rejected up front, with a clear reason, rather than silently doing nothing:
+
+```php
+$repository->expects('findAll'); // findAll() is `public static function`
+// Can't configure `findAll` on a double for `BookRepository` since
+// it's a static method. Static methods can't be doubled.
+```
+
+---
+
+<!-- https://testdoublephp.com/argument-matching -->
+
+# Argument Matching
+
+A plain value passed to `with()` covers most tests: `with(123)` matches the literal `123`. What "matches" means depends on the value's type. Scalars, arrays, and `null` are compared with `===`, so the actual argument must be identical in type and value — `123` matches `123` but not `'123'`. Objects are compared with `==` instead, so the actual argument must be `==`-equal: same class, same property values, but not necessarily the same instance. That default is enough for most calls, since most tests care that the right data arrived, not that it's the very same object reference.
+
+For anything looser than that (any argument at all, an instance of a class, a string in a particular shape, or that exact instance rather than merely an equal one), reach for `Argument` and its dynamic matchers.
+
+```php
+use JMac\Testing\Matching\Argument;
+
+$repository->allows('find')->with(Argument::any())->returns($book);
+$repository->allows('save')->with(Argument::type(Book::class))->returns(true);
+```
+
+`Argument` is a small, standalone facade rather than a method on `Double` itself. A matcher constrains one argument to a call, it isn't a double, so it gets its own class.
+
+## No Arguments at All
+
+```php
+$repository->allows('reset')->with(Argument::none())->returns(true);
+```
+
+Asserts the call took zero arguments. A bare `->with()` (nothing passed to it) already means the same thing, as a side effect of the general matching rule; `none()` exists so that intent reads clearly at the call site rather than relying on the reader already knowing that. It must be the only thing passed to `with()`.
+
+## Any Argument
+
+```php
+$repository->allows('find')->with(Argument::any())->returns($book);
+```
+
+Matches anything, including `null`. Useful when a position needs to be filled in `with()` but you don't care what's there.
+
+## One of Several Values
+
+```php
+$repository->allows('find')->with(Argument::any(1, 2, 3))->returns($book);
+```
+
+Give `any()` one or more values and it narrows to "matches one of these" rather than "matches anything." Each alternative may be a plain value or another matcher.
+
+## Same Exact Instance
+
+```php
+$repository->allows('save')->with(Argument::same($book))->returns(true);
+```
+
+A plain object passed to `with()` matches an equivalent object, as described above. `Argument::same()` is for when you need this exact instance and no other, checked with `===`. It's named after PHPUnit's own `assertSame()`.
+
+## By Type
+
+```php
+$repository->allows('save')->with(Argument::type(Book::class))->returns(true);
+$repository->allows('save')->with(Argument::type('int'))->returns(true);
+```
+
+A class or interface name matches via `instanceof`. A PHP scalar type name (`'int'`, `'string'`, `'bool'`, `'array'`, and so on) matches via the corresponding `is_*()` function.
+
+## Pattern Matching
+
+```php
+$repository->allows('find')->with(Argument::matches('/^\d+$/'))->returns($book);
+```
+
+Matches a string (or anything `Stringable`) against a regular expression. `$pattern` includes its own delimiters, the same way `preg_match()` expects. A malformed pattern is caught at setup time, not buried in a warning during the test run.
+
+## Searching a Collection
+
+```php
+$repository->allows('saveAll')->with(Argument::contains($book))->returns(true);
+$repository->allows('saveAll')->with(Argument::contains(Argument::type(Book::class)))->returns(true);
+$repository->allows('saveAll')->with(Argument::contains(fn ($value, $key) => $value->isbn === '123'))->returns(true);
+```
+
+Matches an array (or anything iterable) with at least one element satisfying `$needle`: a plain value, another matcher, or a callback invoked as `($value, $key)` for each element.
+
+## Capturing What Was Passed
+
+```php
+$captured = null;
+$repository->allows('save')->with(Argument::capture($captured))->returns(true);
+
+$repository->save($book);
+
+$captured === $book; // true
+```
+
+Matches anything, like `any()`, and also writes the real value into `$captured` once that call is confirmed as the match. Useful when you want to run further assertions against exactly what was passed. `$captured` always holds the most recent match.
+
+## Trailing Arguments
+
+```php
+$repository->allows('combine')->with('-', Argument::remaining())->returns('a-b-c');
+
+$repository->combine('-', 'a');           // matches
+$repository->combine('-', 'a', 'b', 'c'); // also matches
+```
+
+A trailing marker meaning "however many further arguments there are, leave them unconstrained." It must be the last argument passed to `with()`.
+
+## Custom Logic
+
+```php
+$repository->allows('find')->with(Argument::satisfies(fn ($id) => $id > 100))->returns($book);
+```
+
+For anything the other matchers don't cover, you may pass a predicate. One trade-off to keep in mind: a failure message can only describe this as `satisfies(...)`. It has no way to show what your closure checks. If you're using `satisfies()` to express "not this," "matches this pattern," or "contains this," the matchers above produce a clearer failure message for the same idea.
+
+## Negating
+
+```php
+$repository->allows('find')->with(Argument::not(5))->returns($book);
+$repository->allows('find')->with(Argument::not()->type('int'))->returns($book);
+```
+
+`not($value)` negates a plain value directly. `not()` with no argument gives you an object with its own verbs: `type()`, `same()`, `satisfies()`, `contains()`, `matches()`, `any()`. That lets a negated verb read left to right instead of nested inside out.
+
+---
+
+<!-- https://testdoublephp.com/verification -->
+
+# Verification
+
+`expects()` and `allows()` describe what you expect to happen before the code under test runs. Verification is the other half: confirming, afterward, that things happened the way you set up.
+
+There are three things you may check, and two ways to check them.
+
+## Checking Your Expectations: `verify()`
+
+```php
+$repository->expects('save')->with($book);
+
+$service->create($book);
+
+$repository->verify();
+```
+
+`verify()` looks at every `expects()` you configured on the double and fails if any of them weren't met. If you're using PHPUnit or Pest, you don't need to call this yourself at all. See [Test Suite Integration](08-test-suite-integration.md) for a trait that runs it automatically at the end of every test. Otherwise, call it once, wherever your test naturally ends.
+
+When something's unmet, the message doesn't just say it didn't happen. It shows you what did happen instead, if anything, which is usually enough to spot a typo or a stale value at a glance. See [Failure Messages](07-failure-messages.md) for an example.
+
+## Checking What Happened: `received()`
+
+Sometimes you'd rather not declare an expectation up front, and just look back afterward to confirm something happened:
+
+```php
+$service->create($book);
+
+$repository->received('save')->with($book);
+```
+
+You may compose it the same way you would an expectation:
+
+```php
+$repository->received('save')->with($book)->times(2);
+$repository->received('delete')->never();
+```
+
+Leave every modifier off and `received('save')` already means "was this called at least once." Add `with()` to narrow it to specific arguments, and `never()`/`times()` to be precise about the count.
+
+### When the Check Runs
+
+A `received()` call doesn't check anything the moment you write it, since it doesn't yet know whether you're about to chain `->with()` or `->never()` onto it. The check runs once the chain is finished, which for most test code is the instant the statement completes:
+
+```php
+$repository->received('save')->with($book)->never(); // checked right here
+```
+
+If you assign a `received()` chain to something that outlives the statement (a property on the test case, say, rather than a local variable), there's no guarantee it's checked right away. Using the [`VerifiesDoubles` trait](08-test-suite-integration.md) removes this concern entirely: every `received()` assertion made during a test is checked once that test ends, regardless of what you did with it.
+
+## Checking Nothing Happened: `unused()`
+
+`received($method)->never()` checks one named method. Sometimes you want something stronger: a double that a code path should never have touched at all, regardless of which of its methods that would have been:
+
+```php
+$service->create($book);
+
+$logger->unused();
+```
+
+`unused()` fails the moment any method was called on the double, naming every call it actually saw:
+
+```
+Double `Logger` expected no calls at all, but received: `info('something happened')`.
+```
+
+Unlike `received()`, there's no fluent chain to wait on. `unused()` checks immediately, the same way `verify()` does, rather than deferring until the statement (or the test) finishes.
+
+This is also the fix for a well-known Mockery trap: `shouldNotHaveBeenCalled()` sounds like "this spy received no calls," but it only checks whether the mock itself was invoked as a callable. It says nothing about calls to its methods, which is what most people actually mean. `unused()` checks exactly that: every method, zero calls.
+
+---
+
+<!-- https://testdoublephp.com/failure-messages -->
+
+# Failure Messages
+
+A failing test is a message to whoever's looking at it next. This library aims for every one of its messages to name the double, name the call, and point at what to do about it.
+
+Here's what you'll actually see when things go wrong.
+
+## An Expectation Wasn't Met
+
+The most common cause isn't a call that never happened. It's a call that happened with a slightly different value than expected: a typo, a stale variable, a case-sensitivity slip. `verify()` doesn't just report that an expectation went unmet. If that method was called with something else, it shows you exactly what:
+
+```php
+$repository->expects('find')->with('baz');
+
+$repository->find('Baz'); // note the capital B
+
+$repository->verify();
+```
+
+```
+Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
+
+The following similar call was made to `find`: `find('Baz')`
+
+Argument 1: expected 'baz', got 'Baz'
+```
+
+That second line comes straight from the call log: `find()` really was called, just not with anything that matched. It only appears when there's exactly one such call — with two or more, there's no fact-based way to say which one this expectation was "supposed" to match, so the message correlates without guessing. "Similar," rather than the plainer "the following calls...were made," is warranted here specifically: it's a checked fact that this one call has the right shape (same method, same argument count) and differs in exactly one place, not a guess. The third line, naming that one argument, only appears alongside that same checked fact — two or more differing arguments falls back to the plain wording instead, since there's no longer one clear thing to point at:
+
+```
+Double `foo` expected `save('baz', 5)` to be called exactly 1 time, but it was never called.
+
+The following calls to `save` were made during this test: `save('Baz', 6)`
+```
+
+When that one call is a long string, this line becomes a diff instead of dumping both values in full — whatever's shared collapses to `…`, keeping just the part that's actually different:
+
+```
+Argument 1 differs:
+- '…m dolor sit baz amet, con…'
++ '…m dolor sit Baz amet, con…'
+```
+
+A multi-line string (a JSON body, a rendered template, a SQL statement) diffs line by line instead, the same way a `git diff` would — only the changed line, plus a line of context on each side, survives:
+
+```
+Argument 1 differs:
+  ...
+      "id": 1,
+-     "name": "baz",
++     "name": "Baz",
+      "active": true
+  ...
+```
+
+## A Call Wasn't Configured
+
+In [Strict mode](03-creating-doubles.md#strict), a call that doesn't match a configured expectation fails the moment it happens:
+
+```
+Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured. For example:
+`$foo->allows('bar')->returns(...)`.
+```
+
+That example is a starting point, not something to paste verbatim. `$foo` is only a best guess at your variable name (derived from the double's label), and whether you actually want `allows()` or `expects()` here is your call to make, not the library's.
+
+If `bar` was already called successfully elsewhere in the test, you'll see that instead of the guess: a fact pulled straight from the call log, not a suggestion:
+
+```
+Double `foo` received an unexpected call to `bar(1, 2)`. Strict mode
+requires every call to be configured.
+
+The following calls to `bar` were made during this test: `bar(1)`
+```
+
+### Method Name Suggestions
+
+A typo'd method name is caught the moment you configure it:
+
+```php
+$repository->expects('sav'); // meant "save"
+```
+
+```
+Can't configure `sav` on a double for `BookRepository`. That method
+does not exist. Did you mean `save`?
+```
+
+The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
+
+## A Call Happened Too Many Times
+
+If a call matches an expectation but would push it past its configured maximum, that call fails immediately:
+
+```
+Double `foo` received 4 calls to `bar(1)`, but your expectation
+only allowed 3 calls.
+```
+
+## A Call Happened Out of Order
+
+For expectations marked [`ordered()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
+
+```
+Double `Connection` received `open()` out of order. Using `ordered`,
+this was expected to be called before `close()` was called.
+```
+
+## Setup Mistakes
+
+A handful of failures are about the test's setup rather than the double misbehaving mid-test, and these are caught the moment you make the mistake:
+
+- Doubling a class that doesn't exist, or that's `final` (see [What Can't Be Doubled](03-creating-doubles.md#what-cant-be-doubled)).
+- A method name that collides with the library's own control verbs (see [Reserved Method Names](03-creating-doubles.md#reserved-method-names)).
+- Setting a double's mode twice.
+- Configuring a static method with `expects()`/`allows()`/`received()` (see [Static Methods](04-expectations.md#static-methods)).
+- Calling `->passthru()` with no argument when there's nothing to auto-instantiate.
+
+## Fabricated Doubles
+
+[Loose mode](03-creating-doubles.md#loose-the-default) sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:
+
+```
+Note: this double was returned automatically. You will need to
+configure it explicitly if you want it to behave differently.
+```
+
+And if a generated double is asked to fabricate something of its own, that's where a line is drawn:
+
+```
+Double `Book` was returned automatically. This only happens one
+level deep from the original double. To respond to `author()`,
+you'll need to configure it explicitly. For example:
+`$book->allows('author')->returns($anotherDouble)`.
+```
+
+One generated double for free, and then a clear stop with a fix you may paste directly, rather than a silently growing chain of generated objects.
+
+---
+
+<!-- https://testdoublephp.com/test-suite-integration -->
+
+# Test Suite Integration
+
+Nothing in this library requires PHPUnit. But if it's installed in your project, three things improve automatically — and since Pest tests run on real `PHPUnit\Framework\TestCase` instances under the hood, all three apply the same way whether you're on PHPUnit or Pest.
+
+## Failures Read as Failures
+
+PHPUnit only reports a thrown exception as a **failure** (attributed cleanly to the assertion that didn't hold) if it extends PHPUnit's own `AssertionFailedError`. Anything else is reported as an **error** instead. An unmatched call or an unmet expectation is very much the former, so when PHPUnit is present, this library's exceptions are automatically the failure-flavored version. There's nothing to configure. It's detected the moment your tests run, and it works the same way with both PHPUnit 11 and 12.
+
+Setup mistakes remain **errors**, which is correct: a `final` class you tried to double, or a reserved method name collision, tell you the test can't run as written, not that an assertion about your code's behavior failed.
+
+## Passing Checks Count as Assertions
+
+PHPUnit flags a test "risky" when it runs to completion without ever touching its assertion counter, usually a sign the test forgot to check anything. A test whose only check is `$double->received(...)`, `$double->unused()`, or a satisfied `expects()`/`allows()` verified via `verify()` (or the `VerifiesDoubles` trait below) is a real, meaningful check, but without this integration PHPUnit would have no way to know that: nothing in this library ever touched PHPUnit's own assertion API.
+
+When PHPUnit is present, a passing verification registers a genuine PHPUnit assertion behind the scenes, so tests like these are never flagged as risky. Nothing to configure. This is on by default, and a failing check throws exactly as before.
+
+## Automatic Verification
+
+`JMac\Testing\Integrations\PHPUnit\VerifiesDoubles` is a trait you mix into your test suite to stop calling `->verify()` yourself. Unlike the two checks above, this one needs a deliberate step to enable — it hooks in via PHPUnit's `#[Before]`/`#[After]` attributes, so it only works on a suite built on `PHPUnit\Framework\TestCase`, which covers both PHPUnit and Pest, just wired in differently for each. See [Framework Integration](#framework-integration) below for the setup.
+
+Once enabled, every double created during a test (and every `received()` assertion made on one) is checked automatically once that test finishes. `$double->verify()` still works everywhere, including here — adding the trait doesn't change what `verify()` does, it just gives you a way to stop calling it yourself. If you're on a different test runner, or don't want the trait, calling `verify()` explicitly, as shown in [Verification](06-verification.md), is the only thing you need.
+
+## Framework Integration
+
+Wiring the `VerifiesDoubles` trait in looks a little different depending on your framework:
+
+### PHPUnit Integration
+
+Add the trait to your base test case:
+
+```php
+use JMac\Testing\Integrations\PHPUnit\VerifiesDoubles;
+
+abstract class TestCase extends \PHPUnit\Framework\TestCase
+{
+    use VerifiesDoubles;
+}
+```
+
+### Pest Integration
+
+Pest doesn't use a base test case in the traditional sense, so mix the trait in with `uses()` instead, typically in `tests/Pest.php`:
+
+```php
+use JMac\Testing\Integrations\PHPUnit\VerifiesDoubles;
+
+uses(VerifiesDoubles::class)->in('Feature', 'Unit');
+```
+
+Scope the `in()` call to whichever directories your doubles live in — the whole `tests/` directory works too if you want it everywhere.
+
+---
+
+<!-- https://testdoublephp.com/migrating-from-mockery -->
+
+# Migrating from Mockery
+
+Most of what you already know from Mockery carries over directly. This page provides a full mapping of the methods and concepts from Mockery to their Double equivalent.
+
+You may [automate the conversion from Mockery to Double](https://laravelshift.com/mockery-test-double-converter) for free with Shift.
+
+## Quick Reference
+
+| Mockery | This Library |
+|---|---|
+| `Mockery::mock(Foo::class)` | `Double::for(Foo::class)` |
+| `Mockery::spy(Foo::class)` | `Double::for(Foo::class)`. Spy-style checking is `received()`, available on every double (see [below](#theres-no-separate-spy)) |
+| `Mockery::mock()->shouldIgnoreMissing()` | `Double::for(Foo::class)`. This is simply the default; see [Modes](03-creating-doubles.md#modes) |
+| `Mockery::mock(Foo::class, [$args])->shouldDeferMissing()` | `Double::for(Foo::class)->passthru($realInstance)` |
+| `shouldReceive('foo')->once()->andReturn($x)` | `expects('foo')->returns($x)`. Exactly-once is `expects()`'s default |
+| `shouldReceive('foo')->andReturn($x)` | `allows('foo')->returns($x)` |
+| `shouldReceive('foo')->andReturn($a, $b)` | `allows('foo')->returns($a, $b)` |
+| `shouldReceive('foo')->andThrow($e)` | `allows('foo')->throws($e)` |
+| `shouldReceive('foo')->andReturnUsing($fn)` | `allows('foo')->resolves($fn)` |
+| `shouldHaveReceived('foo')` | `received('foo')` |
+| `shouldNotHaveReceived('foo')` | `received('foo')->never()` |
+| `shouldNotHaveBeenCalled()` | `unused()`. See [the trap below](#theres-no-separate-spy) |
+| `once()` / `twice()` | `times(1)` / `times(2)` |
+| `atLeast()->times($n)` | `times(minimum: $n)` |
+| `atMost()->times($n)` | `times(maximum: $n)` |
+| `between($min, $max)` | `times($min, $max)` |
+| `ordered()` | `ordered()` |
+| `globally()` | not available. Ordering applies per double; see [below](#ordering) |
+| `byDefault()` | not available. See [below](#a-few-things-that-didnt-carry-over) |
+| `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [Test Suite Integration](08-test-suite-integration.md) |
+
+## Argument Matchers
+
+| Mockery | This Library |
+|---|---|
+| `Mockery::any()` | `Argument::any()` |
+| `Mockery::type($type)` | `Argument::type($type)` |
+| `Mockery::on($callback)` | `Argument::satisfies($callback)` |
+| `Mockery::capture()` | `Argument::capture($reference)` |
+| `Mockery::pattern($regex)` | `Argument::matches($regex)` |
+| `Mockery::anyOf($a, $b)` | `Argument::any($a, $b)` |
+| `Mockery::notAnyOf($a, $b)` | `Argument::not()->any($a, $b)` |
+| `Mockery::not($value)` | `Argument::not($value)` |
+| `Mockery::contains(...)` / `hasKey(...)` / `hasValue(...)` | `Argument::contains(...)`. See [Searching a Collection](05-argument-matching.md#searching-a-collection) |
+| `Mockery::mustBe($value)` / `isEqual($value)` | a plain value passed to `with()`, already the default |
+| `Mockery::isSame($value)` | `Argument::same($value)` |
+| `Mockery::ducktype(...)` | not available. See [below](#a-few-things-that-didnt-carry-over) |
+| `andAnyOtherArgs()` | `Argument::remaining()` |
+| `withNoArgs()` | `Argument::none()`, or `with()` with nothing passed. See [No Arguments at All](05-argument-matching.md#no-arguments-at-all) |
+
+## Modes, Not Mock Kinds
+
+Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in [Creating Doubles](03-creating-doubles.md):
+
+- Mockery's plain `mock()`, once you call `shouldIgnoreMissing()`, behaves like **Loose** mode here, which is simply the default, nothing to opt into.
+- A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).
+- `shouldDeferMissing()` maps to **Passthru** mode (`->passthru($realInstance)`).
+
+### There's No Separate "Spy"
+
+In Mockery, `spy()` is its own constructor. Here, `received()` (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a "spy" up front; you reach for `received()` whenever you want to check after the fact, on the same double you'd otherwise configure with `expects()`/`allows()`. See [Verification](06-verification.md).
+
+Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy received no calls," but Mockery only checks whether the mock was invoked as a callable. It says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap `unused()` exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.
+
+## Ordering
+
+Mockery orders calls per-mock by default, with `globally()` available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.
+
+## A Few Things That Didn't Carry Over
+
+A couple of Mockery features aren't available here, by design:
+
+- **Aliases.** If you're used to `shouldReceive()`, `andReturn()`, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See [One Clean API](01-introduction.md#one-clean-api).
+- **`ducktype()`.** Matching "anything with these methods" isn't included. `Argument::satisfies()` covers the same need without a dedicated verb.
+- **Static method mocking** (Mockery's `alias:` mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See [Static Methods](04-expectations.md#static-methods).
+- **`byDefault()`.** Marking an expectation as a fallback that a later, more specific one can override. For the common case (an unbounded fallback, `allows()` with no `times()`/minimum), just register the fallback first and the override second: expectations are matched most-recently-registered first, falling back to earlier ones when a later one's `with()` constraints don't match the actual call. What doesn't carry over is Mockery's eviction behavior: a `byDefault()` expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at `verify()`.
+
+---
+
+<!-- https://testdoublephp.com/contributing -->
+
+# Contributing
+
+This page covers the standing policies behind the library's design, plus two walkthroughs for the contributions that come up most: adding a matcher and improving a failure message. Read the relevant section before sending a PR. A change that runs against one of these policies will need to be restructured before it can be merged.
+
+## No Aliases
+
+This library has exactly one canonical verb per concept: `expects()` / `allows()` for configuration, `returns()` / `throws()` / `resolves()` for outcomes, `with()` for argument constraints, counts (`times()`, `never()`), and `received()` for spy-style assertions. There are no aliases for any of these, not for familiarity with Mockery, PHPUnit's native mocks, Prophecy, or Phake, and not ever. See [One Clean API](01-introduction.md#one-clean-api) for the reasoning, and [Migrating from Mockery](09-migrating-from-mockery.md) if you're looking for the familiar name instead of adding one.
+
+Counts specifically: `times()` is overloaded (`times(3)` exact, `times(1, 3)` between, `times(minimum: 2)` at least, `times(maximum: 5)` at most) rather than growing into `once()`/`twice()`/`atMost()`/`between()` as separate words. `never()` is the one exception kept as its own verb rather than folded into `times(0)`.
+
+A PR that adds a convenience alias (e.g. `andReturn()` next to `returns()`, or `shouldReceive()` next to `expects()`) will be declined, even though "add a familiar alias for people migrating from X" reads as helpful on its face. Every other PHP mocking library accumulated its API exactly this way: one library, four verbs for the same concept, forever. Migration help for people coming from Mockery or PHPUnit's native mocks belongs in documentation (a rosetta-stone table), not in the API surface.
+
+If you think a concept is genuinely missing a verb (not an alias for one that already exists), open an issue to discuss it before sending a PR.
+
+## Public API Stability
+
+Two things are frozen as semver-guaranteed public API, not internal details that merely happen to be reachable: the `Matcher` interface (`matches()`, `describe()`, `explainMismatch()`) and the public readonly fields on every concrete `DoubleException` subclass. This extends to any value object one of those fields exposes. `UnsatisfiedExpectationException::$expectations` is a `list<Diagnostics\UnsatisfiedExpectation>`, for example, and `UnsatisfiedExpectation`'s own public readonly fields (`method`, `description`, `expectedMin`, `expectedMax`, `timesCalled`, `otherObservedCalls`) are frozen right along with it. A consumer reading `$exception->expectations[0]->description` is exactly the "structured access for anything that wants it" case this freeze exists for.
+
+Practically: a PR widening `Matcher` itself, or renaming/removing/retyping a field on an existing exception (or on a value object one of those fields exposes), is a major-version change and needs to be flagged as one. Reach for an additive, optional interface (e.g. `ExplainsWithDetail extends Matcher`) instead when a matcher genuinely needs to convey more. `Argument` (the static facade) is not covered by this freeze and can keep growing incrementally.
+
+## Module Boundaries
+
+The codebase is split into `JMac\Testing\Engine`, `JMac\Testing\Matching`, `JMac\Testing\Diagnostics`, and `JMac\Testing\Exceptions`. Only `Engine` is allowed to depend on the others. `Diagnostics` has zero dependencies on the rest of the library. It's the shared home for rendering/formatting logic (`ValueFormatter`, `ArgumentFormatter`, `Pluralizer`) that more than one other module needs, specifically so that logic has exactly one implementation instead of being hand-duplicated per module. `Matching` and `Exceptions` each depend only on `Diagnostics`, nothing else. A PR that introduces a dependency pointing the wrong direction (e.g. `Matching` referencing `Engine` directly, or `Diagnostics` referencing anything) will need to be restructured before it can be merged.
+
+## Walkthrough: Adding a Matcher
+
+Every argument constraint (`Argument::any()`, `Argument::same()`, a predicate closure, and any future one) is a class in `src/Matching/` implementing the `Matcher` interface, plus one static entry point on the `Argument` facade (`src/Matching/Argument.php`). Concretely, using `SameMatcher` as the reference shape:
+
+1. **Implement `Matcher`** in a new `src/Matching/YourMatcher.php`: `matches(mixed $actual): bool`, `describe(): string` (used in failure messages and in `with()`'s own argument description), and `explainMismatch(mixed $actual): ?string` (`null` when it matched; otherwise prose explaining why it didn't; see `SameMatcher::explainMismatch()` for the shape). Depend only on `JMac\Testing\Diagnostics\ValueFormatter` if you need to render a value. Nothing in `Engine`.
+2. **Add a static entry point** on `Argument`, e.g. `public static function yourMatcher(mixed $expected): Matcher { return new YourMatcher($expected); }`. Don't add an alias for an existing matcher. See [No Aliases](#no-aliases) above.
+3. **Unit test it** in `tests/Matching/YourMatcherTest.php`: cover `matches()` (true and false cases), `describe()`, and both branches of `explainMismatch()`. See `SameMatcherTest` for the pattern.
+4. **Optionally**, if the matcher's `describe()` output should be proven inside a real rendered failure message, add a case to `tests/Exceptions/CallDescriptionMessagesTest.php` plus its golden file in `tests/fixtures/exceptions/describe-matcher-*.txt` (see [Walkthrough: Improving a Message](#walkthrough-improving-a-message) below for how golden files work).
+
+Nothing else needs to change. `Matching` depends only on `Diagnostics`, and `ProxyBehavior`/`MethodExpectation` only ever talk to a constraint through the `Matcher` interface, never a concrete matcher class.
+
+## Walkthrough: Improving a Message
+
+Every exception's wording lives in one place: its `*Fields` trait in `src/Exceptions/` (e.g. `UnexpectedCallFields::renderMessage()`), shared between the plain exception and its `Integrations\PHPUnit\PHPUnitXxxException` sibling so both render identically with no separate edit. To change one:
+
+1. **Edit the `render()`/`renderMessage()` method** on the relevant `*Fields` trait (or the constructor directly, for an exception with no PHPUnit sibling, e.g. `ModeConfigurationException`).
+2. **Update the golden fixture(s)** in `tests/fixtures/exceptions/*.txt`. `GoldenFileTestCase::assertMatchesGolden()` does an exact string comparison against that file's contents, so a wording change will fail every test asserting against the old text until the corresponding `.txt` file is updated to match. There is no `--update-snapshots` flag; edit the fixture by hand (or regenerate it by printing the exception's new `getMessage()` and pasting it in).
+3. **Run the golden-file suite** that covers it: `tests/Exceptions/ExceptionMessagesTest.php`, `CallDescriptionMessagesTest.php`, or `ValidationMessagesTest.php`, depending on which exception you touched. Confirm the new fixture is exactly right.
+4. **Check `tests/Integrations/PHPUnit/PHPUnitExceptionsTest.php`** if the exception has a PHPUnit sibling: it asserts parity between the two, so it should pass without changes once step 1 is done (both read from the same trait), but it's the place a divergence would show up.

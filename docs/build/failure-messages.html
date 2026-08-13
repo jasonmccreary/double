@@ -15,22 +15,24 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Failure Messages · Double</title>
-<meta name="description" content="Documentation for Double, a modern, human-friendly PHP double library.">
+<meta name="description" content="A failing test is a message to whoever&#039;s looking at it next. This library aims for every one of its messages to name the double, name the call, and point…">
+
 <link rel="canonical" href="https://testdoublephp.com/failure-messages">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Double">
 <meta property="og:title" content="Failure Messages · Double">
-<meta property="og:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
+<meta property="og:description" content="A failing test is a message to whoever&#039;s looking at it next. This library aims for every one of its messages to name the double, name the call, and point…">
 <meta property="og:url" content="https://testdoublephp.com/failure-messages">
 <meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Failure Messages · Double">
-<meta name="twitter:description" content="Documentation for Double, a modern, human-friendly PHP double library.">
+<meta name="twitter:description" content="A failing test is a message to whoever&#039;s looking at it next. This library aims for every one of its messages to name the double, name the call, and point…">
 <meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
+<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"Failure Messages","description":"A failing test is a message to whoever's looking at it next. This library aims for every one of its messages to name the double, name the call, and point…","url":"https:\/\/testdoublephp.com\/failure-messages","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"Failure Messages","item":"https:\/\/testdoublephp.com\/failure-messages"}]}]</script>
 </head>
 <body class="antialiased">
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
@@ -97,11 +99,15 @@
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">baz</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">find</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">Baz</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">); </span><span style="color: #637777;">//</span><span style="color: #637777;"> note the capital B</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">verify</span><span style="color: #D6DEEB;">();</span></div></code></pre></div>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
 
-The following calls to `find` were made during this test: `find('Baz')`
+The following similar call was made to `find`: `find('Baz')`
 
 Argument 1: expected 'baz', got 'Baz'
 </code></pre></div>
-<p>That second line comes straight from the call log: <code>find()</code> really was called, just not with anything that matched. The third line only appears when there's exactly one such call — with two or more, there's no fact-based way to say which one this expectation was &quot;supposed&quot; to match, so the message correlates without guessing.</p>
+<p>That second line comes straight from the call log: <code>find()</code> really was called, just not with anything that matched. It only appears when there's exactly one such call — with two or more, there's no fact-based way to say which one this expectation was &quot;supposed&quot; to match, so the message correlates without guessing. &quot;Similar,&quot; rather than the plainer &quot;the following calls...were made,&quot; is warranted here specifically: it's a checked fact that this one call has the right shape (same method, same argument count) and differs in exactly one place, not a guess. The third line, naming that one argument, only appears alongside that same checked fact — two or more differing arguments falls back to the plain wording instead, since there's no longer one clear thing to point at:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `save('baz', 5)` to be called exactly 1 time, but it was never called.
+
+The following calls to `save` were made during this test: `save('Baz', 6)`
+</code></pre></div>
 <p>When that one call is a long string, this line becomes a diff instead of dumping both values in full — whatever's shared collapses to <code>…</code>, keeping just the part that's actually different:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Argument 1 differs:
 - '…m dolor sit baz amet, con…'

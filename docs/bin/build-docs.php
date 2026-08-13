@@ -236,6 +236,52 @@ function slugify_basename(string $basename): string
 }
 
 /**
+ * Pulls the plain-text content of a chapter's first "complete" `<p>` for
+ * use as a page-specific meta/OG/Twitter description, instead of every
+ * chapter sharing one site-wide description. Paragraphs ending in ':'
+ * (introducing a list or code block) are skipped, since they read as an
+ * incomplete sentence out of context — the scan moves on to the next
+ * paragraph instead. Returns null if the body has no usable paragraph
+ * (callers fall back to the site description).
+ */
+function first_paragraph_text(string $bodyHtml): ?string
+{
+    if (! preg_match_all('/<p>(.*?)<\/p>/s', $bodyHtml, $matches)) {
+        return null;
+    }
+
+    foreach ($matches[1] as $raw) {
+        $text = html_entity_decode(strip_tags($raw), ENT_QUOTES | ENT_HTML5);
+        $text = trim((string) preg_replace('/\s+/', ' ', $text));
+
+        if ($text !== '' && ! str_ends_with($text, ':')) {
+            return $text;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Truncates description text to a search-snippet-friendly length, breaking
+ * on a word boundary rather than mid-word.
+ */
+function truncate_description(string $text, int $limit = 155): string
+{
+    if (mb_strlen($text) <= $limit) {
+        return $text;
+    }
+
+    $truncated = mb_substr($text, 0, $limit);
+    $lastSpace = mb_strrpos($truncated, ' ');
+    if ($lastSpace !== false) {
+        $truncated = mb_substr($truncated, 0, $lastSpace);
+    }
+
+    return rtrim($truncated, " ,.;:").'…';
+}
+
+/**
  * Turns a chapter's output filename into the clean URL path Cloudflare
  * Pages actually serves it at (it drops the `.html` extension, and serves
  * `index.html` at the site root). Internal links are built from this, not
@@ -363,6 +409,9 @@ foreach ($chapters as &$chapter) {
     }
 
     $chapter['bodyHtml'] = $html;
+
+    $paragraph = first_paragraph_text($html);
+    $chapter['description'] = $paragraph !== null ? truncate_description($paragraph) : $siteDescription;
 }
 unset($chapter);
 
@@ -440,6 +489,14 @@ foreach (glob($assetsDir.'/*') as $asset) {
     copy_asset($asset, $siteDir.'/assets/'.basename($asset));
 }
 
+// These wordmark SVGs exist only for README.md's GitHub-rendered logo —
+// the deployed site builds its own inline SVG wordmark (see the
+// `wordmark-logo` markup in templates/page.html) — so drop them from the
+// build rather than shipping assets the site never references.
+foreach (['double-logo-wordmark.svg', 'double-logo-wordmark-dark.svg'] as $readmeOnlyImage) {
+    unlink($siteDir.'/assets/images/'.$readmeOnlyImage);
+}
+
 // The OG image's deployed filename carries a short hash of its own bytes
 // instead of a fixed name, so publishing a new image (source file keeps its
 // stable, keyword-bearing name) changes the URL and busts caches on its
@@ -452,7 +509,61 @@ $ogImageUrl = $siteUrl.'/assets/images/'.$ogImageFile;
 
 // --- assemble and write each page ---
 
-function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $siteUrl, string $ogImageUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName): string
+/**
+ * Builds the page's JSON-LD: a TechArticle describing the chapter, plus a
+ * BreadcrumbList back to the docs index. The homepage additionally
+ * describes the library itself (SoftwareSourceCode) and the site
+ * (WebSite), since that's the one page search engines are most likely to
+ * treat as the entity's canonical description.
+ *
+ * Deliberately not `JSON_UNESCAPED_SLASHES`: escaped slashes keep a
+ * `</script>`-shaped substring from ever appearing literally inside the
+ * script tag this gets embedded in.
+ */
+function build_structured_data(array $chapter, string $pageUrl, string $siteName, string $siteDescription, string $siteUrl, string $repoUrl, string $ogImageUrl): string
+{
+    $graph = [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'TechArticle',
+            'headline' => $chapter['title'],
+            'description' => $chapter['description'],
+            'url' => $pageUrl,
+            'image' => $ogImageUrl,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'name' => $siteName,
+                'url' => $siteUrl.'/',
+            ],
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Documentation', 'item' => $siteUrl.'/'],
+                ['@type' => 'ListItem', 'position' => 2, 'name' => $chapter['title'], 'item' => $pageUrl],
+            ],
+        ],
+    ];
+
+    if ($chapter['htmlFile'] === 'index.html') {
+        $graph[] = [
+            '@context' => 'https://schema.org',
+            '@type' => 'SoftwareSourceCode',
+            'name' => $siteName,
+            'description' => $siteDescription,
+            'codeRepository' => $repoUrl,
+            'programmingLanguage' => 'PHP',
+            'url' => $siteUrl.'/',
+        ];
+    }
+
+    $json = json_encode($graph, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+
+    return '<script type="application/ld+json">'.$json.'</script>';
+}
+
+function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $siteUrl, string $ogImageUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName, string $robotsMeta = ''): string
 {
     $total = count($chapters);
 
@@ -465,26 +576,33 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         ])."\n";
     }
 
-    $prevIndex = $chapter['number'] - 2;
-    $nextIndex = $chapter['number'];
+    // Synthetic pages (e.g. 404) aren't part of the chapter sequence and
+    // carry no 'number', so they get no pager.
+    $prevLink = '<span></span>';
+    $nextLink = '';
 
-    $prevLink = $prevIndex >= 0
-        ? render_template('pager-link', [
-            'HREF' => clean_url($chapters[$prevIndex]['htmlFile']),
-            'DIRECTION_CLASS' => 'prev',
-            'DIRECTION_LABEL' => '&larr; Previous',
-            'TITLE' => htmlspecialchars($chapters[$prevIndex]['title'], ENT_QUOTES),
-        ])
-        : '<span></span>';
+    if (isset($chapter['number'])) {
+        $prevIndex = $chapter['number'] - 2;
+        $nextIndex = $chapter['number'];
 
-    $nextLink = $nextIndex < $total
-        ? render_template('pager-link', [
-            'HREF' => clean_url($chapters[$nextIndex]['htmlFile']),
-            'DIRECTION_CLASS' => 'next',
-            'DIRECTION_LABEL' => 'Next &rarr;',
-            'TITLE' => htmlspecialchars($chapters[$nextIndex]['title'], ENT_QUOTES),
-        ])
-        : '';
+        $prevLink = $prevIndex >= 0
+            ? render_template('pager-link', [
+                'HREF' => clean_url($chapters[$prevIndex]['htmlFile']),
+                'DIRECTION_CLASS' => 'prev',
+                'DIRECTION_LABEL' => '&larr; Previous',
+                'TITLE' => htmlspecialchars($chapters[$prevIndex]['title'], ENT_QUOTES),
+            ])
+            : '<span></span>';
+
+        $nextLink = $nextIndex < $total
+            ? render_template('pager-link', [
+                'HREF' => clean_url($chapters[$nextIndex]['htmlFile']),
+                'DIRECTION_CLASS' => 'next',
+                'DIRECTION_LABEL' => 'Next &rarr;',
+                'TITLE' => htmlspecialchars($chapters[$nextIndex]['title'], ENT_QUOTES),
+            ])
+            : '';
+    }
 
     $tocItems = '';
     foreach ($chapter['toc'] as $entry) {
@@ -511,14 +629,24 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
         : '';
 
     $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
+    $description = $chapter['description'] ?? $siteDescription;
+
+    // Noindex pages (e.g. 404) aren't a real doc entity — skip describing
+    // them to search engines rather than emitting structured data no one
+    // should be crawling anyway.
+    $structuredData = str_contains($robotsMeta, 'noindex')
+        ? ''
+        : build_structured_data($chapter, $pageUrl, $siteName, $siteDescription, $siteUrl, $repoUrl, $ogImageUrl);
 
     return render_template('page', [
         'TITLE' => htmlspecialchars($chapter['title'], ENT_QUOTES),
         'SITE_NAME' => $siteName,
-        'DESCRIPTION' => htmlspecialchars($siteDescription, ENT_QUOTES),
+        'DESCRIPTION' => htmlspecialchars($description, ENT_QUOTES),
         'REPO_URL' => $repoUrl,
         'PAGE_URL' => htmlspecialchars($pageUrl, ENT_QUOTES),
         'OG_IMAGE_URL' => htmlspecialchars($ogImageUrl, ENT_QUOTES),
+        'ROBOTS_META' => $robotsMeta,
+        'STRUCTURED_DATA' => $structuredData,
         'SIDEBAR_ITEMS' => $sidebarItems,
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
@@ -535,3 +663,70 @@ foreach ($chapters as $chapter) {
     file_put_contents($siteDir.'/'.$chapter['htmlFile'], $page);
     echo "wrote {$chapter['htmlFile']}\n";
 }
+
+// --- robots.txt, sitemap.xml, llms.txt, llms-full.txt ---
+
+file_put_contents($siteDir.'/robots.txt', <<<TXT
+User-agent: *
+Allow: /
+
+Sitemap: {$siteUrl}/sitemap.xml
+
+TXT);
+echo "wrote robots.txt\n";
+
+$sitemapUrls = '';
+foreach ($chapters as $chapter) {
+    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
+    $lastmod = date('Y-m-d', filemtime($chapter['file']));
+    $sitemapUrls .= "  <url>\n    <loc>{$pageUrl}</loc>\n    <lastmod>{$lastmod}</lastmod>\n  </url>\n";
+}
+$sitemapXml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{$sitemapUrls}</urlset>
+
+XML;
+file_put_contents($siteDir.'/sitemap.xml', $sitemapXml);
+echo "wrote sitemap.xml\n";
+
+$llmsLinks = '';
+foreach ($chapters as $chapter) {
+    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
+    $llmsLinks .= "- [{$chapter['title']}]({$pageUrl}): {$chapter['description']}\n";
+}
+$llmsTxt = <<<TXT
+# {$siteName}
+
+> {$siteDescription}
+
+## Docs
+
+{$llmsLinks}
+TXT;
+file_put_contents($siteDir.'/llms.txt', $llmsTxt);
+echo "wrote llms.txt\n";
+
+$llmsFullSections = [];
+foreach ($chapters as $chapter) {
+    $markdown = trim(file_get_contents($chapter['file']));
+    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
+    $llmsFullSections[] = "<!-- {$pageUrl} -->\n\n{$markdown}";
+}
+$llmsFullTxt = "# {$siteName}\n\n> {$siteDescription}\n\n".implode("\n\n---\n\n", $llmsFullSections)."\n";
+file_put_contents($siteDir.'/llms-full.txt', $llmsFullTxt);
+echo "wrote llms-full.txt\n";
+
+// --- 404 page (Cloudflare Pages serves build/404.html for unmatched paths) ---
+
+$notFoundChapter = [
+    'htmlFile' => '404.html',
+    'title' => 'Page Not Found',
+    'description' => "The page you're looking for doesn't exist or has moved.",
+    'toc' => [],
+];
+$notFoundBody = '<p>The page you\'re looking for doesn\'t exist or has moved. Try the '
+    .'<a href="/">introduction</a> or use search to find what you need.</p>';
+$notFoundPage = render_page($notFoundChapter, $chapters, $notFoundBody, $siteName, $siteDescription, $repoUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName, '<meta name="robots" content="noindex">');
+file_put_contents($siteDir.'/404.html', $notFoundPage);
+echo "wrote 404.html\n";
