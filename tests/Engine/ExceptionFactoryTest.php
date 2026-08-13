@@ -10,6 +10,7 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -55,5 +56,34 @@ final class ExceptionFactoryTest extends TestCase
         $exception = ExceptionFactory::outOfOrderCall('BookRepository', 'find', 'delete', false);
 
         $this->assertInstanceOf(PHPUnitOutOfOrderCallException::class, $exception);
+    }
+
+    /**
+     * Every one of these is an AssertionFailedError, but merely constructing
+     * one doesn't touch PHPUnit's own assertion counter — only a real
+     * Assert::*() call does. Without registerPass(), a test whose only
+     * "check" is one of these exceptions would be flagged risky ("did not
+     * perform any assertions") on top of failing.
+     */
+    public function test_every_exception_registers_a_phpunit_pass_on_construction(): void
+    {
+        $factoryCalls = [
+            fn () => ExceptionFactory::unexpectedCall('BookRepository', 'count', '', false),
+            fn () => ExceptionFactory::expectationCallLimitExceeded('BookRepository', 'delete', '1', 1, 2, false),
+            fn () => ExceptionFactory::expectationCallMismatch('BookRepository', 'find', '456', false),
+            fn () => ExceptionFactory::unsatisfiedExpectation('BookRepository', [], false),
+            fn () => ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1),
+            fn () => ExceptionFactory::outOfOrderCall('BookRepository', 'find', 'delete', false),
+            fn () => ExceptionFactory::unsatisfiedReceivedAssertion('BookRepository', 'was never called', false),
+            fn () => ExceptionFactory::unusedAssertion('BookRepository', [], false),
+        ];
+
+        foreach ($factoryCalls as $factoryCall) {
+            $before = Assert::getCount();
+
+            $factoryCall();
+
+            $this->assertGreaterThan($before, Assert::getCount());
+        }
     }
 }

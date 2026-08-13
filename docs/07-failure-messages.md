@@ -128,7 +128,7 @@ Double `foo` received a call to `find(456)` that doesn't match any
 of its configured expectations. `expects()` requires every call to
 match one exactly.
 
-Here's how it compares to the configured expectation for `find`:
+The following similar call was made to `find`:
   id:
     - 123
     + 456
