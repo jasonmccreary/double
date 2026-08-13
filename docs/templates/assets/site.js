@@ -213,6 +213,16 @@
       }
     }
 
+    // Near the bottom of the page, a short final section's heading may
+    // never cross the offset line — there isn't enough room below it to
+    // scroll that far. Once the page itself is scrolled to (or near) its
+    // end, force the last heading active rather than leaving an earlier
+    // one stuck highlighted.
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1;
+    if (atBottom) {
+      current = headings[headings.length - 1];
+    }
+
     tocLinks.forEach(function (link) {
       if (link.getAttribute('href') === '#' + current.id) {
         link.setAttribute('aria-current', 'location');
