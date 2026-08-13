@@ -31,6 +31,14 @@ use PHPUnit\Framework\TestCase;
  * Picks between a plain DoubleException and its PHPUnit-specific
  * counterpart via a runtime class_exists(TestCase::class) check, so
  * ProxyBehavior and Double never need to know PHPUnit exists.
+ *
+ * Every PHPUnit-specific exception built here extends AssertionFailedError,
+ * but merely throwing one doesn't touch PHPUnit's own assertion counter —
+ * that only increments via a real Assert::*() call. Left alone, a test that
+ * fails this way would be flagged risky ("did not perform any assertions")
+ * on top of failing. PhpUnitIntegration::registerPass() right before each
+ * one is constructed closes that gap, the same sanctioned integration point
+ * the success paths (verify(), unused(), received()) already use.
  */
 final class ExceptionFactory
 {
@@ -47,6 +55,8 @@ final class ExceptionFactory
         ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
         }
 
@@ -63,6 +73,8 @@ final class ExceptionFactory
         int $otherMatchingExpectations = 0,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitExpectationCallLimitExceededException(
                 $label,
                 $method,
@@ -98,6 +110,8 @@ final class ExceptionFactory
         ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons);
         }
 
@@ -110,6 +124,8 @@ final class ExceptionFactory
     public static function unsatisfiedExpectation(string $label, array $expectations, bool $fabricated): Diagnostic&\Throwable
     {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitUnsatisfiedExpectationException($label, $expectations, $fabricated);
         }
 
@@ -123,6 +139,8 @@ final class ExceptionFactory
         int $limit,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitFabricationLimitExceededException($label, $method, $returnType, $limit);
         }
 
@@ -136,6 +154,8 @@ final class ExceptionFactory
         bool $fabricated,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitOutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
         }
 
@@ -156,6 +176,8 @@ final class ExceptionFactory
         ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
         }
 
@@ -168,6 +190,8 @@ final class ExceptionFactory
     public static function unusedAssertion(string $label, array $calls, bool $fabricated): Diagnostic&\Throwable
     {
         if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
             return new PHPUnitUnusedAssertionException($label, $calls, $fabricated);
         }
 

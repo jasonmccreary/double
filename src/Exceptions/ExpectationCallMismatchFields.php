@@ -81,7 +81,7 @@ trait ExpectationCallMismatchFields
         // UnexpectedCallFields and UnsatisfiedExpectationFields both use.
         if ($argumentComparisons !== null) {
             $message .= "\n\n".CallListFormatter::renderComparisonBlock(
-                sprintf('Here\'s how it compares to the configured expectation for `%s`:', $method),
+                sprintf('The following similar call was made to `%s`:', $method),
                 $argumentComparisons,
             );
         } elseif ($configuredCalls !== []) {

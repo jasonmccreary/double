@@ -165,7 +165,7 @@ final class LooseModeTest extends TestCase
             $message = $exception->getMessage();
 
             $this->assertStringContainsString("received a call to `find(456)` that doesn't match", $message);
-            $this->assertStringContainsString("Here's how it compares to the configured expectation for `find`:\n  id:\n    - 123\n    + 456", $message);
+            $this->assertStringContainsString("The following similar call was made to `find`:\n  id:\n    - 123\n    + 456", $message);
         }
     }
 
