@@ -25,9 +25,7 @@ You may reach for `expects()` when the call is the point of the test (the thing 
 $repository->allows('find')->with(123)->returns($book);
 ```
 
-Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly: scalars and arrays with `===`, objects with `==` (an equivalent object, not necessarily the same instance; see [Argument Matching](05-argument-matching.md#same-exact-instance) if you need identity instead).
-
-For anything more flexible than an exact value, see [Argument Matching](05-argument-matching.md).
+Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly against the actual argument. See [Argument Matching](05-argument-matching.md) for exactly how that comparison works, and for matchers to reach for when an exact value is too strict.
 
 ## Deciding What Happens
 
