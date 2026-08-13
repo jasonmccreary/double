@@ -48,7 +48,7 @@ final class MethodExpectation
 
     public function __construct(
         private readonly string $method,
-        bool $required,
+        private readonly bool $required,
     ) {
         if ($required) {
             $this->minimumCalls = 1;
@@ -62,6 +62,18 @@ final class MethodExpectation
     public function method(): string
     {
         return $this->method;
+    }
+
+    /**
+     * True for expects(), false for allows() — set once at construction and
+     * never changed. Used by ProxyBehavior to decide whether an unmatched
+     * call to this method should throw immediately (see
+     * ExpectationCallMismatchException) instead of falling back to a mode's
+     * default handling of unmatched calls.
+     */
+    public function isRequired(): bool
+    {
+        return $this->required;
     }
 
     public function with(mixed ...$arguments): static
@@ -404,17 +416,28 @@ final class MethodExpectation
 
     public function describe(): string
     {
-        $arguments = $this->argumentConstraints === null
-            ? 'any arguments'
-            : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
-
         return sprintf(
             'expected `%s(%s)` to %s, but it was %s',
             $this->method,
-            $arguments,
+            $this->describeArguments(),
             $this->describeExpectedBound(),
             $this->describeActualCount(),
         );
+    }
+
+    /**
+     * The "(...)" part only — see CallListFormatter::describe()'s own
+     * docblock for the same convention. Split out of describe() so a caller
+     * that already has its own sentence around a call (e.g.
+     * ExpectationCallMismatchFields listing several configured expectations
+     * side by side) can reuse just the argument pattern, not the whole
+     * "expected ... to be called ..." sentence.
+     */
+    public function describeArguments(): string
+    {
+        return $this->argumentConstraints === null
+            ? 'any arguments'
+            : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
     }
 
     private function describeExpectedBound(): string

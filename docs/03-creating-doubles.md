@@ -147,6 +147,8 @@ you'll need to configure it explicitly. For example:
 
 Loose mode doesn't stop you from configuring specific calls. You may freely mix "stub these calls" with "fall back to a safe default for everything else."
 
+One exception: once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails, in every mode — `expects()` is a promise about that specific method, not just about the double overall, so Loose mode's safe default only ever covers methods you never mentioned at all. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still falls back to a safe default. See [A Call Didn't Match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
+
 ### Strict
 
 ```php

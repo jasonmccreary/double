@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
+use JMac\Testing\Exceptions\ExpectationCallMismatchException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
 use JMac\Testing\Exceptions\OutOfOrderCallException;
 use JMac\Testing\Exceptions\UnexpectedCallException;
@@ -15,6 +16,7 @@ use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
 use JMac\Testing\Exceptions\UnusedAssertionException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
@@ -81,6 +83,25 @@ final class ExceptionFactory
             $fabricated,
             $otherMatchingExpectations,
         );
+    }
+
+    /**
+     * @param  list<string>  $configuredCalls
+     * @param  ?list<ArgumentComparison>  $argumentComparisons
+     */
+    public static function expectationCallMismatch(
+        string $label,
+        string $method,
+        string $argumentsDescription,
+        bool $fabricated,
+        array $configuredCalls = [],
+        ?array $argumentComparisons = null,
+    ): Diagnostic&\Throwable {
+        if (self::phpUnitIsAvailable()) {
+            return new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons);
+        }
+
+        return new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons);
     }
 
     /**

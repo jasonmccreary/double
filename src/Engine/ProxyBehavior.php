@@ -25,9 +25,21 @@ final class ProxyBehavior
 
         $state->recordCall($method, $arguments);
 
-        $expectation = self::findMatch($state, $method, $arguments);
+        $candidates = $state->expectationsFor($method);
+        $expectation = self::findMatch($candidates, $arguments);
 
         if ($expectation === null) {
+            // expects() holds this method to a stricter standard than the
+            // double's own mode: once any expectation is required for it, an
+            // unmatched call is always a mismatch to report, never a call
+            // Loose mode is allowed to shrug off with a safe default. A
+            // Strict double would reject it anyway via handleUnmatchedCall()
+            // below, but this fires first regardless of mode since it's a
+            // strictly more specific diagnosis than that blanket rejection.
+            if (self::hasRequiredCandidate($candidates)) {
+                throw self::expectationCallMismatch($state, $method, $arguments, $candidates);
+            }
+
             return self::handleUnmatchedCall($state, $method, $arguments, $double);
         }
 
@@ -62,9 +74,11 @@ final class ProxyBehavior
     // every matching candidate is exhausted does the most-recently-registered
     // one get reused, purely so the "exceeds maximum" error still has a
     // concrete expectation to report against.
-    private static function findMatch(DoubleState $state, string $method, array $arguments): ?MethodExpectation
+    /**
+     * @param  list<MethodExpectation>  $candidates
+     */
+    private static function findMatch(array $candidates, array $arguments): ?MethodExpectation
     {
-        $candidates = $state->expectationsFor($method);
         $fallback = null;
 
         for ($i = count($candidates) - 1; $i >= 0; $i--) {
@@ -187,6 +201,62 @@ final class ProxyBehavior
         $comparison = (new MethodExpectation($method, required: false))
             ->with(...$otherRawCalls[0])
             ->compareArguments($arguments);
+
+        return ($comparison['kind'] ?? null) === 'comparisons'
+            ? ArgumentLabeler::label($state->parameterNames($method), $comparison['comparisons'])
+            : null;
+    }
+
+    /**
+     * @param  list<MethodExpectation>  $candidates
+     */
+    private static function hasRequiredCandidate(array $candidates): bool
+    {
+        foreach ($candidates as $candidate) {
+            if ($candidate->isRequired()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<MethodExpectation>  $candidates  every expectation registered for $method —
+     *                                               always non-empty here, since this is only
+     *                                               reached once hasRequiredCandidate() confirms
+     *                                               at least one exists
+     */
+    private static function expectationCallMismatch(DoubleState $state, string $method, array $arguments, array $candidates): \Throwable
+    {
+        return ExceptionFactory::expectationCallMismatch(
+            $state->label(),
+            $method,
+            ArgumentFormatter::describe($arguments),
+            $state->isFabricated(),
+            array_map(static fn (MethodExpectation $candidate): string => $candidate->describeArguments(), $candidates),
+            self::comparisonsAgainstTheOnlyCandidate($state, $method, $arguments, $candidates),
+        );
+    }
+
+    /**
+     * Exactly one expectation registered for $method is the one case where
+     * pairing this failing call against it, argument by argument, is a fact
+     * rather than a guess between several candidates — same criterion
+     * comparisonsAgainstThePriorCall() uses for the symmetric unexpected-call
+     * case. Unlike that one, no synthetic MethodExpectation is needed here:
+     * $candidates[0] already *is* a real, registered expectation.
+     *
+     * @param  list<MethodExpectation>  $candidates
+     * @return list<ArgumentComparison>|null
+     */
+    private static function comparisonsAgainstTheOnlyCandidate(DoubleState $state, string $method, array $arguments, array $candidates): ?array
+    {
+        if (count($candidates) !== 1) {
+            return null;
+        }
+
+        $comparison = $candidates[0]->compareArguments($arguments);
 
         return ($comparison['kind'] ?? null) === 'comparisons'
             ? ArgumentLabeler::label($state->parameterNames($method), $comparison['comparisons'])

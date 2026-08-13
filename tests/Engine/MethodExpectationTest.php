@@ -350,6 +350,26 @@ final class MethodExpectationTest extends TestCase
         $this->assertSame('expected `find(any arguments)` to be called between 1 and 3 times, but it was never called', $expectation->describe());
     }
 
+    public function test_describe_arguments_renders_just_the_argument_pattern(): void
+    {
+        $expectation = (new MethodExpectation('find', required: true))->with(123);
+
+        $this->assertSame('123', $expectation->describeArguments());
+    }
+
+    public function test_describe_arguments_renders_any_arguments_when_with_was_never_called(): void
+    {
+        $expectation = new MethodExpectation('find', required: false);
+
+        $this->assertSame('any arguments', $expectation->describeArguments());
+    }
+
+    public function test_is_required_reflects_expects_versus_allows(): void
+    {
+        $this->assertTrue((new MethodExpectation('find', required: true))->isRequired());
+        $this->assertFalse((new MethodExpectation('find', required: false))->isRequired());
+    }
+
     public function test_with_accepts_a_matcher_alongside_bare_literals(): void
     {
         $expectation = (new MethodExpectation('find', required: false))

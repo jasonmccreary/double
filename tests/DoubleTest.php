@@ -11,6 +11,7 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnexpectedCallException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
@@ -626,6 +627,22 @@ final class DoubleTest extends TestCase
         }
     }
 
+    /**
+     * expects()'s per-method mismatch is a strictly more specific diagnosis
+     * than Strict mode's own blanket "nothing was configured" rejection, so
+     * it takes precedence even on a double that would have rejected this
+     * call anyway.
+     */
+    public function test_expects_mismatch_takes_precedence_over_strict_modes_blanket_rejection(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        $this->expectException(PHPUnitExpectationCallMismatchException::class);
+
+        $double->find(456);
+    }
+
     public function test_mode_can_only_be_set_once(): void
     {
         $double = Double::for(BookRepositoryInterface::class)->strict();
@@ -949,10 +966,16 @@ final class DoubleTest extends TestCase
      * The one-observed-call case can go further than correlation: since
      * there's exactly one real call to pair the expectation against, the
      * message can name the real parameter and say how it differed.
+     *
+     * A wildcard allows() absorbs the mismatched call so it reaches
+     * verify() at all — without it, expects()'s own per-method strictness
+     * (see LooseModeTest::test_an_expects_configured_method_throws_immediately_on_a_mismatched_call())
+     * would reject find(456) immediately, before verify() ever ran.
      */
     public function test_verify_failure_names_the_mismatched_argument_by_its_real_parameter_name(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->returns(null);
         $double->expects('find')->with(123)->returns(new Book('Dune'));
 
         $double->find(456);
@@ -996,10 +1019,15 @@ final class DoubleTest extends TestCase
      * format doesn't get noisy as more arguments differ — every differing
      * argument gets named by its real parameter name, each with its own
      * diff, alongside whichever arguments still matched.
+     *
+     * Same wildcard-allows()-absorbs-the-call reasoning as
+     * test_verify_failure_names_the_mismatched_argument_by_its_real_parameter_name()
+     * above — otherwise expects() would reject combine('Baz', 'y') immediately.
      */
     public function test_verify_failure_names_every_differing_argument_when_several_differ(): void
     {
         $double = Double::for(VariadicInterface::class);
+        $double->allows('combine')->returns('');
         $double->expects('combine')->with('baz', 'x')->returns('stubbed');
 
         $double->combine('Baz', 'y');
