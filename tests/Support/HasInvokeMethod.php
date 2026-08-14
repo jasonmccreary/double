@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Support;
 
-class HasMagicMethod
+class HasInvokeMethod
 {
-    public function __call(string $name, array $arguments): mixed
+    public function __invoke(int $value): string
     {
         return 'real';
     }

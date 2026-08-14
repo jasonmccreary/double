@@ -99,3 +99,24 @@ $repository->expects('findAll'); // findAll() is `public static function`
 // Can't configure `findAll` on a double for `BookRepository` since
 // it's a static method. Static methods can't be doubled.
 ```
+
+## Magic Methods
+
+Most magic methods can't be doubled, and configuring one is rejected up front:
+
+```php
+$logger->expects('__get'); // __get() is a magic method
+// Can't configure `__get` on a double for `Logger` since
+// it's a magic method. Magic methods can't be doubled.
+```
+
+The exceptions are `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` — each has a fixed, ordinary method signature rather than PHP's dynamic-dispatch behavior, so a double configures and intercepts them exactly like any other method:
+
+```php
+$verify = Double::for(VerifyPasskey::class); // an invokable single-action class
+$verify->expects('__invoke')->returns($passkey);
+
+$verify($credential, $options); // runs the double, not the real action
+```
+
+Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__callStatic` — stays rejected. Those exist to intercept access to members that don't exist at all, so there's no fixed call shape for `expects()`/`allows()` to match against.

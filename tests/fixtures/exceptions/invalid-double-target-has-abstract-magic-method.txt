@@ -1,2 +1,2 @@
 
-Can't create a double for `MagicMethodInterface` since it declares a magic method (`__toString`). Magic methods can't be doubled.
+Can't create a double for `MagicMethodInterface` since it declares a magic method (`__call`). Magic methods can't be doubled.

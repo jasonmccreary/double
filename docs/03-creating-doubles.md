@@ -75,6 +75,8 @@ A couple of things are rejected when you call `for()`, with a clear reason, rath
 
 Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [Expectations](04-expectations.md#static-methods).
 
+Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [Magic Methods](04-expectations.md#magic-methods).
+
 ### Doubling a Final Class
 
 `Double::bypassFinals()` lifts the `final`-class restriction for the rest of the process:

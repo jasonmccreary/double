@@ -6,10 +6,13 @@ namespace JMac\Testing\Exceptions;
 
 /**
  * Thrown when expects()/allows()/received() is configured for a magic
- * method that exists on the double's target. A generated double's magic
- * methods are never overridden (see ClassGenerator::overridableMethods()),
- * so an expectation configured here could never be satisfied — rejected up
- * front instead of failing confusingly later.
+ * method that exists on the double's target — except the fixed-signature
+ * ones in ClassGenerator::DOUBLEABLE_MAGIC_METHODS (__invoke, __toString,
+ * etc.), which are overridden like any other method and never reach this.
+ * Everything else is never overridden (see
+ * ClassGenerator::overridableMethods()), so an expectation configured here
+ * could never be satisfied — rejected up front instead of failing
+ * confusingly later.
  */
 class MagicMethodException extends DoubleException
 {

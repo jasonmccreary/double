@@ -6,7 +6,7 @@ namespace JMac\Testing\Tests\Support;
 
 interface MagicMethodInterface
 {
-    public function __toString(): string;
+    public function __call(string $name, array $arguments): mixed;
 
     public function greet(): string;
 }

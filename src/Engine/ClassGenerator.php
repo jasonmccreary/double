@@ -19,6 +19,20 @@ final class ClassGenerator
 {
     private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'unused', 'verify'];
 
+    /**
+     * Magic methods with a fixed, reflectable signature — a real single entry
+     * point, not PHP's dynamic-dispatch mechanism for members that don't
+     * exist (__get/__set/__isset/__unset/__call/__callStatic, which stay
+     * blocked). These get treated like any other method: overridden by
+     * ClassGenerator and configurable via Double::expects()/allows().
+     *
+     * __set_state isn't listed despite having a fixed signature — it's
+     * always static, so it's already excluded by the static-method check
+     * everywhere this list is consulted, making a magic-method carve-out for
+     * it moot.
+     */
+    public const DOUBLEABLE_MAGIC_METHODS = ['__invoke', '__toString', '__serialize', '__unserialize', '__clone'];
+
     private static int $counter = 0;
 
     /**
@@ -183,9 +197,11 @@ final class ClassGenerator
 
     /**
      * Same failure shape as assertNoAbstractStaticMethods() above, for magic
-     * methods (anything starting with "__") instead of static ones. Runs
-     * after the static check, so something both static and magic
-     * (__callStatic, in practice) is already caught there first.
+     * methods (anything starting with "__") instead of static ones — except
+     * DOUBLEABLE_MAGIC_METHODS, which overridableMethods() does override, so
+     * an abstract one there is exactly as fine as any other abstract public
+     * method. Runs after the static check, so something both static and
+     * magic (__callStatic, in practice) is already caught there first.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
@@ -194,7 +210,10 @@ final class ClassGenerator
     {
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if (str_starts_with($method->getName(), '__') && $method->isAbstract()) {
+                if (str_starts_with($method->getName(), '__')
+                    && ! in_array($method->getName(), self::DOUBLEABLE_MAGIC_METHODS, true)
+                    && $method->isAbstract()
+                ) {
                     throw InvalidDoubleTargetException::hasAbstractMagicMethod(implode('&', $targets), $method->getName());
                 }
             }
@@ -316,7 +335,7 @@ final class ClassGenerator
                     || $method->isStatic()
                     || $method->isConstructor()
                     || $method->isDestructor()
-                    || str_starts_with($method->getName(), '__')
+                    || (str_starts_with($method->getName(), '__') && ! in_array($method->getName(), self::DOUBLEABLE_MAGIC_METHODS, true))
                 ) {
                     continue;
                 }

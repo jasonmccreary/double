@@ -198,6 +198,8 @@ A couple of things are rejected when you call `for()`, with a clear reason, rath
 
 Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [Expectations](04-expectations.md#static-methods).
 
+Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [Magic Methods](04-expectations.md#magic-methods).
+
 ### Doubling a Final Class
 
 `Double::bypassFinals()` lifts the `final`-class restriction for the rest of the process:
@@ -413,6 +415,27 @@ $repository->expects('findAll'); // findAll() is `public static function`
 // Can't configure `findAll` on a double for `BookRepository` since
 // it's a static method. Static methods can't be doubled.
 ```
+
+## Magic Methods
+
+Most magic methods can't be doubled, and configuring one is rejected up front:
+
+```php
+$logger->expects('__get'); // __get() is a magic method
+// Can't configure `__get` on a double for `Logger` since
+// it's a magic method. Magic methods can't be doubled.
+```
+
+The exceptions are `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` — each has a fixed, ordinary method signature rather than PHP's dynamic-dispatch behavior, so a double configures and intercepts them exactly like any other method:
+
+```php
+$verify = Double::for(VerifyPasskey::class); // an invokable single-action class
+$verify->expects('__invoke')->returns($passkey);
+
+$verify($credential, $options); // runs the double, not the real action
+```
+
+Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__callStatic` — stays rejected. Those exist to intercept access to members that don't exist at all, so there's no fixed call shape for `expects()`/`allows()` to match against.
 
 ---
 
@@ -740,7 +763,7 @@ Double `foo` received a call to `find(456)` that doesn't match any
 of its configured expectations. `expects()` requires every call to
 match one exactly.
 
-Here's how it compares to the configured expectation for `find`:
+The following similar call was made to `find`:
   id:
     - 123
     + 456

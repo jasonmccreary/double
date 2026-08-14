@@ -371,7 +371,7 @@ final class Double
             throw new StaticMethodException($state->target(), $method, $state->isFabricated());
         }
 
-        if (str_starts_with($method, '__')) {
+        if (str_starts_with($method, '__') && ! in_array($method, ClassGenerator::DOUBLEABLE_MAGIC_METHODS, true)) {
             throw new MagicMethodException($state->target(), $method, $state->isFabricated());
         }
     }

@@ -24,10 +24,12 @@ use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\HasHookedProperty;
+use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\HookedPropertyInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
+use JMac\Testing\Tests\Support\InvokableInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
 use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\NewInInitializerParamInterface;
@@ -222,17 +224,19 @@ final class ClassGeneratorTest extends TestCase
     }
 
     /**
-     * Regression check: an interface's __toString() is abstract like any
+     * Regression check: an interface's __call() is abstract like any
      * other method it declares — before assertNoAbstractMagicMethods()
      * existed, this crashed with the identical uncatchable PHP fatal error
      * as the abstract-static-method case above ("must therefore be declared
      * abstract or implement the remaining methods"), just for a magic
-     * method instead of a static one.
+     * method instead of a static one. __call is a dynamic-dispatch magic
+     * method (see ClassGenerator::DOUBLEABLE_MAGIC_METHODS), so it stays
+     * rejected — unlike __invoke below.
      */
     public function test_rejects_a_target_with_an_abstract_magic_method(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('magic method (`__toString`)');
+        $this->expectExceptionMessage('magic method (`__call`)');
 
         (new ClassGenerator)->generate(MagicMethodInterface::class);
     }
@@ -248,6 +252,32 @@ final class ClassGeneratorTest extends TestCase
         $generated = (new ClassGenerator)->generate(HasMagicMethod::class);
 
         $this->assertTrue(class_exists($generated));
+    }
+
+    /**
+     * __invoke is in ClassGenerator::DOUBLEABLE_MAGIC_METHODS — a fixed,
+     * reflectable signature, not dynamic dispatch — so an abstract one on an
+     * interface is overridden like any other abstract method instead of
+     * being rejected the way abstract __call is above.
+     */
+    public function test_does_not_reject_an_interface_with_an_abstract_invoke_method(): void
+    {
+        $generated = (new ClassGenerator)->generate(InvokableInterface::class);
+
+        $this->assertTrue(class_exists($generated));
+    }
+
+    /**
+     * __invoke on a concrete class is overridden, not just inherited —
+     * unlike the still-blocked __call case above, so calling the double
+     * runs the proxy, not HasInvokeMethod's real implementation.
+     */
+    public function test_overrides_invoke_on_a_concrete_class(): void
+    {
+        $double = Double::for(HasInvokeMethod::class);
+        $double->allows('__invoke')->returns('doubled');
+
+        $this->assertSame('doubled', $double(1));
     }
 
     /**

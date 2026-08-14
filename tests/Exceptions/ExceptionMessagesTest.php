@@ -353,7 +353,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     public function test_renders_invalid_double_target_has_abstract_magic_method(): void
     {
-        $exception = InvalidDoubleTargetException::hasAbstractMagicMethod('MagicMethodInterface', '__toString');
+        $exception = InvalidDoubleTargetException::hasAbstractMagicMethod('MagicMethodInterface', '__call');
 
         $this->assertMatchesGolden('invalid-double-target-has-abstract-magic-method', $exception->getMessage());
     }
@@ -379,7 +379,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     public function test_renders_magic_method(): void
     {
-        $exception = new MagicMethodException('HasMagicMethod', '__toString');
+        $exception = new MagicMethodException('HasMagicMethod', '__call');
 
         $this->assertMatchesGolden('magic-method', $exception->getMessage());
     }
@@ -572,7 +572,7 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     public function test_renders_magic_method_on_a_fabricated_double(): void
     {
-        $exception = new MagicMethodException('HasMagicMethod', '__toString', fabricated: true);
+        $exception = new MagicMethodException('HasMagicMethod', '__call', fabricated: true);
 
         $this->assertMatchesGolden('magic-method-fabricated', $exception->getMessage());
     }

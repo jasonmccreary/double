@@ -22,6 +22,7 @@ use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
@@ -689,10 +690,12 @@ final class DoubleTest extends TestCase
     }
 
     /**
-     * "__toString" genuinely exists on HasMagicMethod, so this must fail
+     * "__call" genuinely exists on HasMagicMethod, so this must fail
      * with MagicMethodException specifically, not UnknownMethodException —
      * same reasoning as the static-method case above, for a magic method
-     * instead of a static one.
+     * instead of a static one. __call is dynamic dispatch (see
+     * ClassGenerator::DOUBLEABLE_MAGIC_METHODS), so it stays rejected —
+     * unlike __invoke below.
      */
     public function test_expects_rejects_a_magic_method(): void
     {
@@ -701,7 +704,21 @@ final class DoubleTest extends TestCase
         $this->expectException(MagicMethodException::class);
         $this->expectExceptionMessage('magic method');
 
-        $double->expects('__toString');
+        $double->expects('__call');
+    }
+
+    /**
+     * __invoke has a fixed, reflectable signature rather than PHP's
+     * dynamic-dispatch magic (see ClassGenerator::DOUBLEABLE_MAGIC_METHODS),
+     * so expects() configures it like any other method, and calling the
+     * double as `$double(...)` runs the proxy instead of throwing.
+     */
+    public function test_expects_configures_invoke(): void
+    {
+        $double = Double::for(HasInvokeMethod::class);
+        $double->expects('__invoke')->with(1)->returns('doubled');
+
+        $this->assertSame('doubled', $double(1));
     }
 
     public function test_received_passes_when_the_method_was_called_at_least_once(): void
@@ -895,7 +912,17 @@ final class DoubleTest extends TestCase
         $this->expectException(MagicMethodException::class);
         $this->expectExceptionMessage('magic method');
 
-        $double->received('__toString');
+        $double->received('__call');
+    }
+
+    public function test_received_passes_for_a_doubleable_magic_method(): void
+    {
+        $double = Double::for(HasInvokeMethod::class);
+        $double->allows('__invoke')->returns('doubled');
+
+        $double(1);
+
+        $double->received('__invoke');
     }
 
     public function test_unused_passes_when_nothing_was_called_at_all(): void
