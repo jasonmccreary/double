@@ -236,6 +236,7 @@ final class ProxyBehavior
             $state->isFabricated(),
             array_map(static fn (MethodExpectation $candidate): string => $candidate->describeArguments(), $candidates),
             self::comparisonsAgainstTheOnlyCandidate($state, $method, $arguments, $candidates),
+            $state->mode() === Mode::Passthru,
         );
     }
 

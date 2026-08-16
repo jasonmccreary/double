@@ -108,14 +108,15 @@ final class ExceptionFactory
         bool $fabricated,
         array $configuredCalls = [],
         ?array $argumentComparisons = null,
+        bool $passthru = false,
     ): Diagnostic&\Throwable {
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons);
+            return new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
         }
 
-        return new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons);
+        return new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
     }
 
     /**

@@ -44,6 +44,11 @@ trait ExpectationCallMismatchFields
      *                                                          against a single candidate falls back
      *                                                          to the plain $configuredCalls list
      *                                                          below, same as UnexpectedCallFields.
+     * @param  bool  $passthru  whether the double this call was made on is in passthru mode —
+     *                          this exception fires the same way regardless of mode, but only
+     *                          passthru's "real behavior unless overridden" premise makes
+     *                          rejecting the call instead of delegating worth calling out
+     *                          explicitly (see DoubleException::passthruNote()).
      */
     public function __construct(
         public readonly string $label,
@@ -52,8 +57,9 @@ trait ExpectationCallMismatchFields
         public readonly bool $fabricated = false,
         public readonly array $configuredCalls = [],
         public readonly ?array $argumentComparisons = null,
+        public readonly bool $passthru = false,
     ) {
-        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons));
+        parent::__construct(self::renderMessage($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru));
     }
 
     /**
@@ -67,6 +73,7 @@ trait ExpectationCallMismatchFields
         bool $fabricated,
         array $configuredCalls = [],
         ?array $argumentComparisons = null,
+        bool $passthru = false,
     ): string {
         $message = sprintf(
             'Double `%s` received a call to `%s(%s)` that doesn\'t match any of its configured expectations. `expects()` requires every call to match one exactly.',
@@ -92,6 +99,8 @@ trait ExpectationCallMismatchFields
                 CallListFormatter::describe($method, $configuredCalls),
             );
         }
+
+        $message = DoubleException::appendPassthruNote($message, $passthru);
 
         return DoubleException::appendFabricatedNote($message, $fabricated);
     }

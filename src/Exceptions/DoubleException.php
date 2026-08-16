@@ -63,6 +63,35 @@ abstract class DoubleException extends \RuntimeException implements Diagnostic
     }
 
     /**
+     * Passthru mode's whole premise is "real behavior unless overridden," so
+     * an `expects()` mismatch rejecting the call instead of delegating to the
+     * real object is easy to read as a bug rather than the deliberate,
+     * mode-independent contract it is (see ExpectationCallMismatchFields).
+     * Named and shaped after fabricatedNote() above, for the same reason.
+     */
+    final public static function passthruNote(bool $passthru): string
+    {
+        if (! $passthru) {
+            return '';
+        }
+
+        return "\n\nNote: this double is in passthru mode, but uses `expects()` — where every "
+            .'call must have a configured expectation. Use `allows()` instead if you want '
+            .'unmatched calls passed through to the real object.';
+    }
+
+    /**
+     * Joins $message with passthruNote()'s own "\n\n"-prefixed text, mirroring
+     * appendFabricatedNote() above.
+     */
+    final public static function appendPassthruNote(string $message, bool $passthru): string
+    {
+        $note = self::passthruNote($passthru);
+
+        return $note === '' ? $message : rtrim($message, "\n").$note;
+    }
+
+    /**
      * A best-effort variable name for a code snippet in a message, derived
      * from a double's label (e.g. "SecondLink" -> "secondLink"). Non-identifier
      * characters are stripped since a label isn't always a valid identifier

@@ -175,6 +175,8 @@ $logger->error('uh oh');  // still recorded, so received('error') works
 
 Unconfigured calls delegate to a real object you supply. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or delegated, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
 
+One exception, easy to miss because Passthru's whole premise is "real behavior unless overridden": once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails — the same rule [Loose mode](#loose-the-default) follows, and for the same reason: `expects()` is a promise about that specific method, not just about the double overall, so it doesn't relax for Passthru's fallback any more than it does for Loose's. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still delegates to the real object, same as a method with nothing configured for it at all. If you meant "override this one call, leave the rest real," reach for `allows()` — `expects()` is for asserting a method is called with exactly the arguments you named. See [A Call Didn't Match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
+
 Calling `->passthru()` with no argument tries to build the real instance for you through reflection, and explains plainly if that isn't possible:
 
 ```

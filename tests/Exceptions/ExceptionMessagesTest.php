@@ -473,6 +473,25 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('expectation-call-mismatch-with-multiple-candidates', $exception->getMessage());
     }
 
+    /**
+     * Passthru mode's whole premise is "real behavior unless overridden," so
+     * without this note, a mismatched expects() call rejecting instead of
+     * delegating to the real object reads like a bug, not the deliberate
+     * mode-independent contract it is.
+     */
+    public function test_renders_expectation_call_mismatch_in_passthru_mode(): void
+    {
+        $exception = new ExpectationCallMismatchException(
+            'BookRepository',
+            'find',
+            '456',
+            argumentComparisons: [new ArgumentComparison(label: 'id', differs: true, text: "- 123\n+ 456")],
+            passthru: true,
+        );
+
+        $this->assertMatchesGolden('expectation-call-mismatch-passthru', $exception->getMessage());
+    }
+
     public function test_renders_unsatisfied_expectation_on_a_fabricated_double(): void
     {
         $expectation = new UnsatisfiedExpectation(

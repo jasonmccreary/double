@@ -298,6 +298,8 @@ $logger->error('uh oh');  // still recorded, so received('error') works
 
 Unconfigured calls delegate to a real object you supply. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or delegated, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
 
+One exception, easy to miss because Passthru's whole premise is "real behavior unless overridden": once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails — the same rule [Loose mode](#loose-the-default) follows, and for the same reason: `expects()` is a promise about that specific method, not just about the double overall, so it doesn't relax for Passthru's fallback any more than it does for Loose's. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still delegates to the real object, same as a method with nothing configured for it at all. If you meant "override this one call, leave the rest real," reach for `allows()` — `expects()` is for asserting a method is called with exactly the arguments you named. See [A Call Didn't Match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
+
 Calling `->passthru()` with no argument tries to build the real instance for you through reflection, and explains plainly if that isn't possible:
 
 ```
@@ -770,6 +772,30 @@ The following similar call was made to `find`:
 ```
 
 This is deliberate: without it, a misconfigured `expects()` tends to surface as a confusing failure somewhere downstream instead — a `null` where you expected a real value, an assertion failing on the symptom instead of the cause. Only `expects()` raises this bar. A mismatched call to an `allows()`-only method still falls back to a safe default, the same as a method with nothing configured for it at all — `allows()` is the verb for "handle this case if it happens," not a promise about every call.
+
+The same rule applies in [Passthru mode](03-creating-doubles.md#passthru), and there it's worth a second look, since Passthru's whole premise is "real behavior unless overridden" — you might expect an unmatched call to simply delegate to the real object the way an unmatched call to an `allows()`-only method does. It doesn't. The message calls this out directly:
+
+```php
+$logger = Double::for(Logger::class)->passthru($realLogger);
+$logger->expects('log')->with('hello')->returns(true);
+
+$logger->log('goodbye'); // fails, does not delegate to $realLogger
+```
+
+```
+Double `foo` received a call to `log('goodbye')` that doesn't match
+any of its configured expectations. `expects()` requires every call
+to match one exactly.
+
+The following similar call was made to `log`:
+  message:
+    - 'hello'
+    + 'goodbye'
+
+Note: this double is in passthru mode, but uses `expects()` — where
+every call must have a configured expectation. Use `allows()` instead
+if you want unmatched calls passed through to the real object.
+```
 
 With two or more expectations registered for the method, there's no single one to diff against, so the message lists every configured pattern instead of guessing:
 

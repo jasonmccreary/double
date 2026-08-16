@@ -136,6 +136,30 @@ The following similar call was made to `find`:
 
 This is deliberate: without it, a misconfigured `expects()` tends to surface as a confusing failure somewhere downstream instead — a `null` where you expected a real value, an assertion failing on the symptom instead of the cause. Only `expects()` raises this bar. A mismatched call to an `allows()`-only method still falls back to a safe default, the same as a method with nothing configured for it at all — `allows()` is the verb for "handle this case if it happens," not a promise about every call.
 
+The same rule applies in [Passthru mode](03-creating-doubles.md#passthru), and there it's worth a second look, since Passthru's whole premise is "real behavior unless overridden" — you might expect an unmatched call to simply delegate to the real object the way an unmatched call to an `allows()`-only method does. It doesn't. The message calls this out directly:
+
+```php
+$logger = Double::for(Logger::class)->passthru($realLogger);
+$logger->expects('log')->with('hello')->returns(true);
+
+$logger->log('goodbye'); // fails, does not delegate to $realLogger
+```
+
+```
+Double `foo` received a call to `log('goodbye')` that doesn't match
+any of its configured expectations. `expects()` requires every call
+to match one exactly.
+
+The following similar call was made to `log`:
+  message:
+    - 'hello'
+    + 'goodbye'
+
+Note: this double is in passthru mode, but uses `expects()` — where
+every call must have a configured expectation. Use `allows()` instead
+if you want unmatched calls passed through to the real object.
+```
+
 With two or more expectations registered for the method, there's no single one to diff against, so the message lists every configured pattern instead of guessing:
 
 ```

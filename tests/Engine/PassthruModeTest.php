@@ -6,6 +6,7 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Double;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\InstantiableLogger;
@@ -30,6 +31,31 @@ final class PassthruModeTest extends TestCase
         $double->allows('log')->returns(false);
 
         $this->assertFalse($double->log('hello'));
+    }
+
+    /**
+     * expects() raises the bar for its own method regardless of mode (see
+     * ExpectationCallMismatchException) — Passthru is no exception. But
+     * Passthru's whole premise is "real behavior unless overridden," so this
+     * particular rejection is worth flagging in its own failure message,
+     * rather than leaving it to read like the fallback-to-real-object case
+     * silently broke.
+     */
+    public function test_passthru_with_expects_rejects_an_unmatched_call_instead_of_delegating(): void
+    {
+        $real = new InstantiableLogger;
+        $double = Double::for(InstantiableLogger::class)->passthru($real);
+        $double->expects('log')->with('hello')->returns(true);
+
+        try {
+            $double->log('goodbye');
+            $this->fail('Expected PHPUnitExpectationCallMismatchException to be thrown.');
+        } catch (PHPUnitExpectationCallMismatchException $exception) {
+            $this->assertStringContainsString(
+                'Note: this double is in passthru mode, but uses `expects()` — where every call must have a configured expectation.',
+                $exception->getMessage(),
+            );
+        }
     }
 
     public function test_passthru_delegated_calls_are_still_recorded_for_spy_assertions(): void
