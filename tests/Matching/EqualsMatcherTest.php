@@ -43,6 +43,22 @@ final class EqualsMatcherTest extends TestCase
         $this->assertFalse($matcher->matches(new Book('Other Title')));
     }
 
+    public function test_matches_objects_nested_in_arrays_by_loose_equality(): void
+    {
+        $matcher = new EqualsMatcher(['book' => new Book('Some Title')]);
+
+        $this->assertTrue($matcher->matches(['book' => new Book('Some Title')]));
+        $this->assertFalse($matcher->matches(['book' => new Book('Other Title')]));
+    }
+
+    public function test_matches_objects_nested_multiple_arrays_deep_by_loose_equality(): void
+    {
+        $matcher = new EqualsMatcher([['book' => new Book('Some Title')]]);
+
+        $this->assertTrue($matcher->matches([['book' => new Book('Some Title')]]));
+        $this->assertFalse($matcher->matches([['book' => new Book('Other Title')]]));
+    }
+
     public function test_describe_renders_the_expected_value(): void
     {
         $this->assertSame('123', (new EqualsMatcher(123))->describe());

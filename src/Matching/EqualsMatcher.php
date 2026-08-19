@@ -9,7 +9,11 @@ use JMac\Testing\Diagnostics\ValueFormatter;
 /**
  * For same-type values, === and == never disagree — using === for
  * everything but objects only removes cross-type surprises like '0' == 0,
- * never a legitimate same-type match.
+ * never a legitimate same-type match. Arrays recurse so an object nested
+ * inside one still matches by value instead of by identity.
+ *
+ * Like PHP's own === and ==, this doesn't support circular arrays (e.g.
+ * `$a['self'] = &$a`) — comparing one recurses until the stack overflows.
  */
 final class EqualsMatcher implements Matcher
 {
@@ -29,9 +33,28 @@ final class EqualsMatcher implements Matcher
 
     public function matches(mixed $actual): bool
     {
-        return is_object($this->expected)
-            ? $this->expected == $actual
-            : $this->expected === $actual;
+        return self::equals($this->expected, $actual);
+    }
+
+    private static function equals(mixed $expected, mixed $actual): bool
+    {
+        if (is_array($expected) && is_array($actual)) {
+            if (array_keys($expected) !== array_keys($actual)) {
+                return false;
+            }
+
+            foreach ($expected as $key => $value) {
+                if (! self::equals($value, $actual[$key])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return is_object($expected)
+            ? $expected == $actual
+            : $expected === $actual;
     }
 
     public function describe(): string

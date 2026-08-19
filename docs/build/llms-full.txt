@@ -445,7 +445,7 @@ Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__cal
 
 # Argument Matching
 
-A plain value passed to `with()` covers most tests: `with(123)` matches the literal `123`. What "matches" means depends on the value's type. Scalars, arrays, and `null` are compared with `===`, so the actual argument must be identical in type and value — `123` matches `123` but not `'123'`. Objects are compared with `==` instead, so the actual argument must be `==`-equal: same class, same property values, but not necessarily the same instance. That default is enough for most calls, since most tests care that the right data arrived, not that it's the very same object reference.
+A plain value passed to `with()` covers most tests: `with(123)` matches the literal `123`. What "matches" means depends on the value's type. Scalars, arrays, and `null` are compared with `===`, so the actual argument must be identical in type and value — `123` matches `123` but not `'123'`. For arrays, that includes key order: `['a' => 1, 'b' => 2]` doesn't match `['b' => 2, 'a' => 1]`. Objects are compared with `==` instead, so the actual argument must be `==`-equal: same class, same property values, but not necessarily the same instance. That default is enough for most calls, since most tests care that the right data arrived, not that it's the very same object reference.
 
 For anything looser than that (any argument at all, an instance of a class, a string in a particular shape, or that exact instance rather than merely an equal one), reach for `Argument` and its dynamic matchers.
 
