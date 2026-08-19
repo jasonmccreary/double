@@ -55,7 +55,7 @@ trait UnexpectedCallFields
         ?array $argumentComparisons = null,
     ): string {
         $message = sprintf(
-            'Double `%s` received an unexpected call to `%s(%s)`. Strict mode requires every call to be configured.',
+            'Double `%s` received an unexpected call to `%s(%s)`. This double is in Strict mode, so you need to configure every call.',
             $label,
             $method,
             $argumentsDescription,

@@ -1,8 +1,8 @@
-Double `BookRepository` received a call to `find(456)` that doesn't match any of its configured expectations. `expects()` requires every call to match one exactly.
+Double `BookRepository` received a call to `find(456)` that doesn't match any of its configured expectations.
 
 The following similar call was made to `find`:
   id:
     - 123
     + 456
 
-Note: this double is in passthru mode, but uses `expects()` — where every call must have a configured expectation. Use `allows()` instead if you want unmatched calls passed through to the real object.
+Note: this double is in passthru mode, but using `expects()` means every call needs to be configured. Use `allows()` instead if you want unmatched calls passed through to the real object.

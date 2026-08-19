@@ -52,7 +52,7 @@ final class PassthruModeTest extends TestCase
             $this->fail('Expected PHPUnitExpectationCallMismatchException to be thrown.');
         } catch (PHPUnitExpectationCallMismatchException $exception) {
             $this->assertStringContainsString(
-                'Note: this double is in passthru mode, but uses `expects()` — where every call must have a configured expectation.',
+                'Note: this double is in passthru mode, but using `expects()` means every call needs to be configured.',
                 $exception->getMessage(),
             );
         }

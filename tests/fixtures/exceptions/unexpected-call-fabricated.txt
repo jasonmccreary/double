@@ -1,3 +1,3 @@
-Double `Book` received an unexpected call to `getAuthor()`. Strict mode requires every call to be configured. For example: `$book->allows('getAuthor')->returns(...)`.
+Double `Book` received an unexpected call to `getAuthor()`. This double is in Strict mode, so you need to configure every call. For example: `$book->allows('getAuthor')->returns(...)`.
 
 Note: this double was returned automatically. You will need to configure it explicitly if you want it to behave differently.

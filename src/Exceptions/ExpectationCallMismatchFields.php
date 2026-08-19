@@ -16,8 +16,8 @@ use JMac\Testing\Diagnostics\Pluralizer;
  * (see UnexpectedCallFields).
  *
  * Distinct from UnexpectedCallException: that one is Strict mode's blanket
- * policy ("every call must be configured"), thrown regardless of what's been
- * configured for the method in question. This one fires only because
+ * policy (every call needs to be configured), thrown regardless of what's
+ * been configured for the method in question. This one fires only because
  * expects() was used on this specific method — the double as a whole may
  * still be in Loose mode.
  */
@@ -76,7 +76,7 @@ trait ExpectationCallMismatchFields
         bool $passthru = false,
     ): string {
         $message = sprintf(
-            'Double `%s` received a call to `%s(%s)` that doesn\'t match any of its configured expectations. `expects()` requires every call to match one exactly.',
+            'Double `%s` received a call to `%s(%s)` that doesn\'t match any of its configured expectations.',
             $label,
             $method,
             $argumentsDescription,

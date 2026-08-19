@@ -1,3 +1,3 @@
-Double `BookRepository` received an unexpected call to `find(6)`. Strict mode requires every call to be configured.
+Double `BookRepository` received an unexpected call to `find(6)`. This double is in Strict mode, so you need to configure every call.
 
 The following calls to `find` were made during this test: `find(1)`, `find(2)`, and 3 more

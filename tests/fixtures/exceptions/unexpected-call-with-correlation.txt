@@ -1,4 +1,4 @@
-Double `BookRepository` received an unexpected call to `find(456)`. Strict mode requires every call to be configured.
+Double `BookRepository` received an unexpected call to `find(456)`. This double is in Strict mode, so you need to configure every call.
 
 The following similar call was made to `find`:
   id:
