@@ -20,6 +20,32 @@ When PHPUnit is present, a passing verification registers a genuine PHPUnit asse
 
 Once enabled, every double created during a test (and every `received()` assertion made on one) is checked automatically once that test finishes. `$double->verify()` still works everywhere, including here — adding the trait doesn't change what `verify()` does, it just gives you a way to stop calling it yourself. If you're on a different test runner, or don't want the trait, calling `verify()` explicitly, as shown in [Verification](06-verification.md), is the only thing you need.
 
+## Driving Auto-Verification From a Custom Runner
+
+`VerifiesDoubles` is built entirely on public API, so a runner other than PHPUnit/Pest can get the same "arm before, verify after" behavior without the trait:
+
+```php
+Double::armAutoVerify(); // before the test runs
+
+// ...the test runs, creating doubles and received() assertions...
+
+Double::verifyAll(); // after the test finishes
+```
+
+`armAutoVerify()` resets and starts collecting every double created (and every `received()` assertion made) from that point on. `verifyAll()` checks everything collected since the matching `armAutoVerify()`, then disarms.
+
+That pairing assumes one test runs straight through from arm to verify. A runner that interleaves tests in one process — fibers or coroutines sharing a process, for instance — needs to park one test's in-flight state during a context switch so a sibling test resuming next doesn't sweep its doubles into the wrong `verifyAll()`. `Double::captureAutoVerifyScope()` lifts the live state out into an opaque `AutoVerifyScope` and resets the live state to disarmed/empty; `Double::restoreAutoVerifyScope()` installs a previously captured scope back as the live state:
+
+```php
+$parked[$fiberId] = Double::captureAutoVerifyScope(); // test suspends
+
+// ...a sibling test runs in the meantime...
+
+Double::restoreAutoVerifyScope($parked[$fiberId]); // test resumes
+```
+
+`restoreAutoVerifyScope()` overwrites the live state rather than merging into it, so always pair it with a `captureAutoVerifyScope()` of whatever's currently live if that state still needs checking.
+
 ## Framework Integration
 
 Wiring the `VerifiesDoubles` trait in looks a little different depending on your framework:
