@@ -18,9 +18,11 @@ jobs:
           # neither PHPUnit 11 nor 12 declares an upper PHP-version bound
           # (11.5.56's own composer.json just says "php >=8.2"), so there's
           # no technical reason to test only one PHPUnit major per PHP
-          # version. PHPUnit 13 is the exception: every 13.x release requires
-          # php >=8.4.1, so it's paired with 8.4+ only — there's no 8.3 row
-          # for it below, since that combination isn't installable.
+          # version. PHPUnit 12 requires php >=8.3 and PHPUnit 13 requires
+          # php >=8.4.1, so 8.2 is paired with PHPUnit 11 only.
+          - php: '8.2'
+            phpunit: '^11.0'
+            allow-failure: false
           - php: '8.3'
             phpunit: '^11.0'
             allow-failure: false
