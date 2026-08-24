@@ -1085,6 +1085,34 @@ final class DoubleTest extends TestCase
         Double::verifyAll();
     }
 
+    /**
+     * PHPUnit learns a check ran via registerPass() bumping its own Assert
+     * counter — invisible to any other runner. verifyAll()'s return value is
+     * that same signal made framework-agnostic: how many pending doubles and
+     * pending received() assertions it just checked, so a non-PHPUnit runner
+     * has something to treat as "this test asserted something" without
+     * reaching for PHPUnit\Framework\Assert.
+     */
+    public function test_verify_all_returns_the_number_of_checks_it_performed(): void
+    {
+        Double::armAutoVerify();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+        $double->delete(1);
+        $double->save(new Book('Dune'));
+        $this->heldAssertion = $double->received('save');
+
+        $this->assertSame(2, Double::verifyAll());
+    }
+
+    public function test_verify_all_returns_zero_when_nothing_was_pending(): void
+    {
+        Double::armAutoVerify();
+
+        $this->assertSame(0, Double::verifyAll());
+    }
+
     public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
     {
         Double::armAutoVerify();
@@ -1130,7 +1158,7 @@ final class DoubleTest extends TestCase
 
         // $double already left the pending list on the call above, so this
         // has nothing left to check regardless of $double's own state.
-        Double::verifyAll();
+        $this->assertSame(0, Double::verifyAll());
     }
 
     /**
@@ -1179,7 +1207,7 @@ final class DoubleTest extends TestCase
         // $this->heldAssertion already left the pending list and was
         // checked on the call above, so this has nothing left to check
         // regardless of its own state.
-        Double::verifyAll();
+        $this->assertSame(0, Double::verifyAll());
     }
 
     public function test_capture_auto_verify_scope_leaves_the_live_state_disarmed_and_empty(): void
