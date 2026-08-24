@@ -1181,4 +1181,80 @@ final class DoubleTest extends TestCase
         // regardless of its own state.
         Double::verifyAll();
     }
+
+    public function test_capture_auto_verify_scope_leaves_the_live_state_disarmed_and_empty(): void
+    {
+        Double::armAutoVerify();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+
+        Double::captureAutoVerifyScope();
+
+        // Capturing reset the live state, so this double — created after
+        // arming but before the capture — was lifted out along with it.
+        // A fresh verifyAll() against the now-empty live state has nothing
+        // left to check, even though $double's own expectation is unmet —
+        // there is deliberately nothing left to assert here.
+        $this->expectNotToPerformAssertions();
+
+        Double::verifyAll();
+    }
+
+    public function test_restore_auto_verify_scope_reinstalls_a_previously_captured_scope(): void
+    {
+        Double::armAutoVerify();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+
+        $scope = Double::captureAutoVerifyScope();
+
+        Double::restoreAutoVerifyScope($scope);
+
+        $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
+        $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called exactly 1 time, but it was never called/s');
+
+        Double::verifyAll();
+    }
+
+    public function test_restore_auto_verify_scope_round_trips_a_held_received_assertion(): void
+    {
+        Double::armAutoVerify();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $this->heldAssertion = $double->received('save');
+
+        $scope = Double::captureAutoVerifyScope();
+        Double::restoreAutoVerifyScope($scope);
+
+        $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
+
+        Double::verifyAll();
+    }
+
+    public function test_restore_auto_verify_scope_overwrites_rather_than_merges_the_live_state(): void
+    {
+        Double::armAutoVerify();
+
+        $parked = Double::for(BookRepositoryInterface::class);
+        $parked->expects('delete')->returns(null);
+        $parked->delete(1);
+
+        $scope = Double::captureAutoVerifyScope();
+
+        Double::armAutoVerify();
+
+        // Live again after the second armAutoVerify() — restoring $scope
+        // must replace this, not merge with it, so its unmet expectation
+        // is never checked.
+        $overwritten = Double::for(BookRepositoryInterface::class);
+        $overwritten->expects('save')->returns(true);
+
+        Double::restoreAutoVerifyScope($scope);
+
+        // Only $parked (satisfied) is live now, so this passes even though
+        // $overwritten's `save` expectation was never met.
+        Double::verifyAll();
+    }
 }
