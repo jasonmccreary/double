@@ -29,10 +29,12 @@ Double::armAutoVerify(); // before the test runs
 
 // ...the test runs, creating doubles and received() assertions...
 
-Double::verifyAll(); // after the test finishes
+$checkCount = Double::verifyAll(); // after the test finishes
 ```
 
 `armAutoVerify()` resets and starts collecting every double created (and every `received()` assertion made) from that point on. `verifyAll()` checks everything collected since the matching `armAutoVerify()`, then disarms.
+
+Outside PHPUnit, nothing tells a runner one of these checks actually happened — [Passing Checks Count as Assertions](#passing-checks-count-as-assertions) above is PHPUnit-only. `verifyAll()`'s return value is the framework-agnostic version of that same signal: how many doubles and `received()` assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.
 
 That pairing assumes one test runs straight through from arm to verify. A runner that interleaves tests in one process — fibers or coroutines sharing a process, for instance — needs to park one test's in-flight state during a context switch so a sibling test resuming next doesn't sweep its doubles into the wrong `verifyAll()`. `Double::captureAutoVerifyScope()` lifts the live state out into an opaque `AutoVerifyScope` and resets the live state to disarmed/empty; `Double::restoreAutoVerifyScope()` installs a previously captured scope back as the live state:
 

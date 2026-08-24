@@ -26,7 +26,8 @@ use JMac\Testing\Exceptions\UnknownMethodException;
  * `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies every double
  * created during a test. A non-PHPUnit runner wanting the same "arm before,
  * verify after" flow can drive it directly via `armAutoVerify()` /
- * `verifyAll()`, and `captureAutoVerifyScope()` /
+ * `verifyAll()` — the latter's return value doubles as a framework-agnostic
+ * "a check passed" signal — and `captureAutoVerifyScope()` /
  * `restoreAutoVerifyScope()` for the concurrent case (see `AutoVerifyScope`).
  */
 final class Double
@@ -263,6 +264,13 @@ final class Double
      * calls from its #[After] hook; call it yourself to drive the same
      * "arm before, verify after" flow from any other test runner.
      *
+     * Returns how many checks passed — PHPUnit learns a check ran via
+     * registerPass() bumping its own Assert counter, but that's invisible
+     * to any other runner, which would otherwise see a test that only ever
+     * used expects()/received() as having made no assertions at all. A
+     * non-PHPUnit runner can use this count as its own "this test asserted
+     * something" signal.
+     *
      * Both lists are drained up front, before iterating, so a failure
      * partway through never leaves stale entries to leak into whichever
      * test's verifyAll() runs next. Disarms too — otherwise a received()
@@ -271,7 +279,7 @@ final class Double
      * suite armed it and never disarmed, leaking a check into an unrelated
      * test or, worse, into process shutdown.
      */
-    public static function verifyAll(): void
+    public static function verifyAll(): int
     {
         self::$autoVerifyArmed = false;
 
@@ -288,6 +296,8 @@ final class Double
         foreach ($pendingReceived as $assertion) {
             $assertion->check();
         }
+
+        return count($pending) + count($pendingReceived);
     }
 
     /**
