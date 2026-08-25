@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\CheckEvent;
 use JMac\Testing\Diagnostics\ArgumentFormatter;
+use JMac\Testing\Double;
 
 /**
  * @internal
@@ -88,6 +90,7 @@ final class ReceivedAssertion
 
         if ($this->expectation->isSatisfied() && ! $this->expectation->exceedsMaximum()) {
             PhpUnitIntegration::registerPass();
+            Double::notify(new CheckEvent($this->state->label(), $this->method, passed: true, failure: null));
 
             return;
         }

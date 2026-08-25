@@ -29,6 +29,9 @@ use JMac\Testing\Exceptions\UnknownMethodException;
  * `verifyAll()` — the latter's return value doubles as a framework-agnostic
  * "a check passed" signal — and `captureAutoVerifyScope()` /
  * `restoreAutoVerifyScope()` for the concurrent case (see `AutoVerifyScope`).
+ * `listen()` is the live counterpart: a registered listener is notified with
+ * a `CheckEvent` as each check resolves, pass or fail, instead of only
+ * learning the aggregate outcome after the fact.
  */
 final class Double
 {
@@ -58,6 +61,16 @@ final class Double
     private static array $pendingReceived = [];
 
     private static bool $autoVerifyArmed = false;
+
+    /**
+     * Process-lifetime, unlike $pending/$pendingReceived above — a runner
+     * (e.g. a test framework's own reporter) registers a listener once at
+     * bootstrap and expects every subsequent test's checks to reach it, so
+     * armAutoVerify()/verifyAll() deliberately never touch this list.
+     *
+     * @var list<callable(CheckEvent): void>
+     */
+    private static array $listeners = [];
 
     private function __construct() {}
 
@@ -197,6 +210,7 @@ final class Double
 
         if ($unmet === []) {
             PhpUnitIntegration::registerPass();
+            self::notify(new CheckEvent($state->label(), method: null, passed: true, failure: null));
 
             return;
         }
@@ -338,6 +352,43 @@ final class Double
     }
 
     /**
+     * Registers $listener to be notified with a CheckEvent every time an
+     * expects()/allows()/received()/unused() check resolves, pass or fail —
+     * at the moment it resolves, not batched at verify time. Meant for a
+     * test framework's own reporting (e.g. logging every check into a
+     * per-test timeline alongside its other assertions), so it stays live
+     * across every test in the process; call clearListeners() to remove it.
+     */
+    public static function listen(callable $listener): void
+    {
+        self::$listeners[] = $listener;
+    }
+
+    /**
+     * Removes every listener registered via listen(). Mainly for this
+     * library's own tests, which need isolation between test methods since
+     * $listeners is otherwise a process-lifetime registry (see its
+     * property docblock above).
+     */
+    public static function clearListeners(): void
+    {
+        self::$listeners = [];
+    }
+
+    /**
+     * @internal Called by ExceptionFactory (every check failure in scope)
+     * and by verifyState()/unused()/ReceivedAssertion::check() (their pass
+     * branches) — never called directly for a check outside that scope
+     * (see CheckEvent's own docblock for exactly which checks these are).
+     */
+    public static function notify(CheckEvent $event): void
+    {
+        foreach (self::$listeners as $listener) {
+            $listener($event);
+        }
+    }
+
+    /**
      * @internal
      */
     public static function stateFor(object $double): DoubleState
@@ -400,6 +451,7 @@ final class Double
 
         if ($calls === []) {
             PhpUnitIntegration::registerPass();
+            self::notify(new CheckEvent($state->label(), method: null, passed: true, failure: null));
 
             return;
         }

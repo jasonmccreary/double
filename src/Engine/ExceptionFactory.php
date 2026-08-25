@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\CheckEvent;
 use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
+use JMac\Testing\Double;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\ExpectationCallMismatchException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
@@ -39,6 +41,13 @@ use PHPUnit\Framework\TestCase;
  * on top of failing. PhpUnitIntegration::registerPass() right before each
  * one is constructed closes that gap, the same sanctioned integration point
  * the success paths (verify(), unused(), received()) already use.
+ *
+ * Every method here except fabricationLimitExceeded() (an engine safety
+ * valve, not a check the test authored) also calls Double::notify() with
+ * the exception it just built, right before returning it — the single
+ * choke point every in-scope check failure passes through, so that's the
+ * only place this wiring needs to live. See CheckEvent's own docblock for
+ * exactly which checks are in scope.
  */
 final class ExceptionFactory
 {
@@ -57,10 +66,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
+            $exception = new PHPUnitUnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
+        } else {
+            $exception = new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
         }
 
-        return new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
+        Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     public static function expectationCallLimitExceeded(
@@ -75,7 +88,17 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitExpectationCallLimitExceededException(
+            $exception = new PHPUnitExpectationCallLimitExceededException(
+                $label,
+                $method,
+                $argumentsDescription,
+                $maximum,
+                $callNumber,
+                $fabricated,
+                $otherMatchingExpectations,
+            );
+        } else {
+            $exception = new ExpectationCallLimitExceededException(
                 $label,
                 $method,
                 $argumentsDescription,
@@ -86,15 +109,9 @@ final class ExceptionFactory
             );
         }
 
-        return new ExpectationCallLimitExceededException(
-            $label,
-            $method,
-            $argumentsDescription,
-            $maximum,
-            $callNumber,
-            $fabricated,
-            $otherMatchingExpectations,
-        );
+        Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     /**
@@ -113,10 +130,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
+            $exception = new PHPUnitExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
+        } else {
+            $exception = new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
         }
 
-        return new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
+        Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     /**
@@ -127,10 +148,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitUnsatisfiedExpectationException($label, $expectations, $fabricated);
+            $exception = new PHPUnitUnsatisfiedExpectationException($label, $expectations, $fabricated);
+        } else {
+            $exception = new UnsatisfiedExpectationException($label, $expectations, $fabricated);
         }
 
-        return new UnsatisfiedExpectationException($label, $expectations, $fabricated);
+        Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     public static function fabricationLimitExceeded(
@@ -157,10 +182,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitOutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
+            $exception = new PHPUnitOutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
+        } else {
+            $exception = new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
         }
 
-        return new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
+        Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     /**
@@ -179,10 +208,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
+            $exception = new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
+        } else {
+            $exception = new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
         }
 
-        return new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
+        Double::notify(new CheckEvent($label, $method === '' ? null : $method, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     /**
@@ -193,10 +226,14 @@ final class ExceptionFactory
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
-            return new PHPUnitUnusedAssertionException($label, $calls, $fabricated);
+            $exception = new PHPUnitUnusedAssertionException($label, $calls, $fabricated);
+        } else {
+            $exception = new UnusedAssertionException($label, $calls, $fabricated);
         }
 
-        return new UnusedAssertionException($label, $calls, $fabricated);
+        Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
+
+        return $exception;
     }
 
     // A `use` import alone never triggers autoloading, so this file stays
