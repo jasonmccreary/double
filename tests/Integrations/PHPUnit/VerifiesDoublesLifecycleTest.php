@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * VerifiesDoubles's #[Before]/#[After] hooks only run for real inside an
  * actual PHPUnit lifecycle (PHPUnit's own runBare() ordering, see
- * VerifiesDoubles's docblock) — unit-testing Double::armAutoVerify()/
+ * VerifiesDoubles's docblock) — unit-testing Double::enableAutoVerify()/
  * verifyAll() directly (as DoubleTest does) can't reproduce a bug that's
  * specifically about PHPUnit's hook sequencing. So these fixtures are run in
  * an isolated `vendor/bin/phpunit` process and the real output is asserted

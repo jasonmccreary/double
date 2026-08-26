@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests;
 
+use JMac\Testing\CheckEvent;
 use JMac\Testing\Double;
+use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\ReceivedAssertion;
 use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
@@ -28,6 +30,7 @@ use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\VariadicInterface;
+use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +48,18 @@ final class DoubleTest extends TestCase
      * these tests a real reproduction instead of a false positive.
      */
     private ?ReceivedAssertion $heldAssertion = null;
+
+    /**
+     * Double::$listeners is a process-lifetime registry, not reset per test
+     * the way $pending/$pendingReceived are (see Double::listen()'s own
+     * docblock) — without this, a listener registered in one test method
+     * here would still be live, and get notified, for every test after it.
+     */
+    #[After]
+    final public function clearCheckEventListeners(): void
+    {
+        Double::clearListeners();
+    }
 
     public function test_for_returns_an_instance_of_the_target(): void
     {
@@ -1073,7 +1088,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_passes_when_every_double_created_since_arming_is_satisfied(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $first = Double::for(BookRepositoryInterface::class);
         $second = Double::for(BookRepositoryInterface::class);
@@ -1095,7 +1110,7 @@ final class DoubleTest extends TestCase
      */
     public function test_verify_all_returns_the_number_of_checks_it_performed(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
@@ -1108,14 +1123,14 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_returns_zero_when_nothing_was_pending(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $this->assertSame(0, Double::verifyAll());
     }
 
     public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $satisfied = Double::for(BookRepositoryInterface::class);
         $unsatisfied = Double::for(BookRepositoryInterface::class);
@@ -1137,7 +1152,7 @@ final class DoubleTest extends TestCase
         $before = Double::for(BookRepositoryInterface::class);
         $before->expects('delete')->returns(null);
 
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $after = Double::for(BookRepositoryInterface::class);
         $after->expects('save')->returns(true);
@@ -1148,7 +1163,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_drains_pending_doubles_so_a_second_call_is_a_no_op(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
@@ -1173,7 +1188,7 @@ final class DoubleTest extends TestCase
      */
     public function test_verify_all_checks_a_received_assertion_held_past_the_test_method(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $this->heldAssertion = $double->received('save');
@@ -1185,7 +1200,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_passes_a_satisfied_received_assertion_held_past_the_test_method(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
@@ -1196,7 +1211,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_drains_pending_received_assertions_so_a_second_call_is_a_no_op(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
@@ -1210,17 +1225,17 @@ final class DoubleTest extends TestCase
         $this->assertSame(0, Double::verifyAll());
     }
 
-    public function test_capture_auto_verify_scope_leaves_the_live_state_disarmed_and_empty(): void
+    public function test_pause_auto_verify_leaves_the_live_state_off_and_empty(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
-        Double::captureAutoVerifyScope();
+        Double::pauseAutoVerify();
 
-        // Capturing reset the live state, so this double — created after
-        // arming but before the capture — was lifted out along with it.
+        // Pausing reset the live state, so this double — created after
+        // enabling but before the pause — was lifted out along with it.
         // A fresh verifyAll() against the now-empty live state has nothing
         // left to check, even though $double's own expectation is unmet —
         // there is deliberately nothing left to assert here.
@@ -1229,16 +1244,16 @@ final class DoubleTest extends TestCase
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_reinstalls_a_previously_captured_scope(): void
+    public function test_resume_auto_verify_reinstalls_a_previously_paused_snapshot(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
-        $scope = Double::captureAutoVerifyScope();
+        $snapshot = Double::pauseAutoVerify();
 
-        Double::restoreAutoVerifyScope($scope);
+        Double::resumeAutoVerify($snapshot);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called exactly 1 time, but it was never called/s');
@@ -1246,43 +1261,333 @@ final class DoubleTest extends TestCase
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_round_trips_a_held_received_assertion(): void
+    public function test_resume_auto_verify_round_trips_a_held_received_assertion(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $this->heldAssertion = $double->received('save');
 
-        $scope = Double::captureAutoVerifyScope();
-        Double::restoreAutoVerifyScope($scope);
+        $snapshot = Double::pauseAutoVerify();
+        Double::resumeAutoVerify($snapshot);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
 
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_overwrites_rather_than_merges_the_live_state(): void
+    public function test_resume_auto_verify_overwrites_rather_than_merges_the_live_state(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $parked = Double::for(BookRepositoryInterface::class);
         $parked->expects('delete')->returns(null);
         $parked->delete(1);
 
-        $scope = Double::captureAutoVerifyScope();
+        $snapshot = Double::pauseAutoVerify();
 
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
-        // Live again after the second armAutoVerify() — restoring $scope
-        // must replace this, not merge with it, so its unmet expectation
-        // is never checked.
+        // Live again after the second enableAutoVerify() — resuming
+        // $snapshot must replace this, not merge with it, so its unmet
+        // expectation is never checked.
         $overwritten = Double::for(BookRepositoryInterface::class);
         $overwritten->expects('save')->returns(true);
 
-        Double::restoreAutoVerifyScope($scope);
+        Double::resumeAutoVerify($snapshot);
 
         // Only $parked (satisfied) is live now, so this passes even though
         // $overwritten's `save` expectation was never met.
         Double::verifyAll();
+    }
+
+    public function test_listen_receives_a_passing_check_event_when_verify_all_succeeds(): void
+    {
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        Double::enableAutoVerify();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+        $double->delete(1);
+
+        Double::verifyAll();
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertNull($events[0]->method);
+        $this->assertTrue($events[0]->passed);
+        $this->assertNull($events[0]->failure);
+    }
+
+    public function test_listen_receives_a_passing_check_event_for_a_satisfied_received_assertion(): void
+    {
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->delete(1);
+        $double->received('delete');
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('delete', $events[0]->method);
+        $this->assertTrue($events[0]->passed);
+        $this->assertNull($events[0]->failure);
+    }
+
+    public function test_listen_receives_a_passing_check_event_for_unused(): void
+    {
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->unused();
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertNull($events[0]->method);
+        $this->assertTrue($events[0]->passed);
+        $this->assertNull($events[0]->failure);
+    }
+
+    /**
+     * The check that motivated this feature: this fires from inside
+     * ProxyBehavior/ExceptionFactory at the moment of the unmatched call
+     * itself — no enableAutoVerify()/verifyAll() involved — which is exactly
+     * the "immediate throws are invisible to introspection" gap the old,
+     * internal-only AutoVerifySnapshot-based approach couldn't close.
+     */
+    public function test_listen_receives_a_failing_check_event_for_an_unmatched_call_on_a_strict_double(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->count();
+        } catch (PHPUnitUnexpectedCallException) {
+            // notify() already ran inside ExceptionFactory, before this throw.
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('count', $events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitUnexpectedCallException::class, $events[0]->failure);
+    }
+
+    public function test_listen_receives_a_failing_check_event_when_a_call_limit_is_exceeded(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('delete')->never();
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->delete(1);
+        } catch (PHPUnitExpectationCallLimitExceededException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('delete', $events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitExpectationCallLimitExceededException::class, $events[0]->failure);
+    }
+
+    public function test_listen_receives_a_failing_check_event_for_an_out_of_order_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->allows('find')->ordered();
+        $double->allows('save')->ordered();
+        $double->save(new Book('Dune'));
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->find(1);
+        } catch (PHPUnitOutOfOrderCallException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('find', $events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitOutOfOrderCallException::class, $events[0]->failure);
+    }
+
+    public function test_listen_receives_a_failing_check_event_for_an_argument_mismatch_against_a_required_expectation(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+        $double->expects('find')->with(123)->returns(new Book('Dune'));
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->find(456);
+        } catch (PHPUnitExpectationCallMismatchException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('find', $events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitExpectationCallMismatchException::class, $events[0]->failure);
+    }
+
+    /**
+     * $method is null here, unlike the four immediate-throw checks above —
+     * verify()'s unmet-expectations check is inherently whole-double (it can
+     * bundle several unmet expectations across different methods into one
+     * failure already; see UnsatisfiedExpectationException).
+     */
+    public function test_listen_receives_a_failing_check_event_when_verify_finds_an_unmet_expectation(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->expects('delete')->returns(null);
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->verify();
+        } catch (PHPUnitUnsatisfiedExpectationException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertNull($events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitUnsatisfiedExpectationException::class, $events[0]->failure);
+    }
+
+    public function test_listen_receives_a_failing_check_event_for_an_unsatisfied_received_assertion(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->received('delete');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertSame('delete', $events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitUnsatisfiedReceivedAssertionException::class, $events[0]->failure);
+    }
+
+    public function test_listen_receives_a_failing_check_event_for_unused_when_a_call_was_observed(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->delete(1);
+
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        try {
+            $double->unused();
+        } catch (PHPUnitUnusedAssertionException) {
+        }
+
+        $this->assertCount(1, $events);
+        $this->assertSame('BookRepositoryInterface', $events[0]->label);
+        $this->assertNull($events[0]->method);
+        $this->assertFalse($events[0]->passed);
+        $this->assertInstanceOf(PHPUnitUnusedAssertionException::class, $events[0]->failure);
+    }
+
+    public function test_listen_notifies_every_registered_listener(): void
+    {
+        $firstCount = 0;
+        $secondCount = 0;
+        Double::listen(function (CheckEvent $event) use (&$firstCount): void {
+            $firstCount++;
+        });
+        Double::listen(function (CheckEvent $event) use (&$secondCount): void {
+            $secondCount++;
+        });
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->unused();
+
+        $this->assertSame(1, $firstCount);
+        $this->assertSame(1, $secondCount);
+    }
+
+    /**
+     * fabricationLimitExceeded() is a Loose-mode recursion guard, not a
+     * check the test authored — deliberately outside the scope listen()
+     * covers (see CheckEvent's own docblock). Called directly, the same way
+     * ExceptionFactoryTest already does, since reproducing the real
+     * recursive-fabrication scenario needs nothing this test cares about
+     * beyond confirming ExceptionFactory itself never notifies for it.
+     */
+    public function test_fabrication_limit_exceeded_does_not_emit_a_check_event(): void
+    {
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1);
+
+        $this->assertSame([], $events);
+    }
+
+    public function test_clear_listeners_stops_further_notifications(): void
+    {
+        /** @var list<CheckEvent> $events */
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        Double::clearListeners();
+
+        $double = Double::for(BookRepositoryInterface::class);
+        $double->unused();
+
+        $this->assertSame([], $events);
     }
 }

@@ -26,7 +26,7 @@ trait VerifiesDoubles
     // with no parent::setUp()/parent::tearDown() boilerplate needed to
     // avoid silently skipping them.
     #[Before]
-    final public function armDoubleAutoVerification(): void
+    final public function enableDoubleAutoVerification(): void
     {
         // Double::$pending has to be a plain list of real references, not a
         // WeakMap — a double that's purely a local variable in the test method
@@ -35,7 +35,7 @@ trait VerifiesDoubles
         // WeakMap by then. Confirmed empirically: an earlier version that just
         // re-walked the double->state WeakMap in #[After] passed a test with a
         // genuinely unmet expectation.
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
     }
 
     #[After]
