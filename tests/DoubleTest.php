@@ -1088,7 +1088,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_passes_when_every_double_created_since_arming_is_satisfied(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $first = Double::for(BookRepositoryInterface::class);
         $second = Double::for(BookRepositoryInterface::class);
@@ -1110,7 +1110,7 @@ final class DoubleTest extends TestCase
      */
     public function test_verify_all_returns_the_number_of_checks_it_performed(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
@@ -1123,14 +1123,14 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_returns_zero_when_nothing_was_pending(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $this->assertSame(0, Double::verifyAll());
     }
 
     public function test_verify_all_fails_when_any_double_created_since_arming_has_an_unmet_expectation(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $satisfied = Double::for(BookRepositoryInterface::class);
         $unsatisfied = Double::for(BookRepositoryInterface::class);
@@ -1152,7 +1152,7 @@ final class DoubleTest extends TestCase
         $before = Double::for(BookRepositoryInterface::class);
         $before->expects('delete')->returns(null);
 
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $after = Double::for(BookRepositoryInterface::class);
         $after->expects('save')->returns(true);
@@ -1163,7 +1163,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_drains_pending_doubles_so_a_second_call_is_a_no_op(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
@@ -1188,7 +1188,7 @@ final class DoubleTest extends TestCase
      */
     public function test_verify_all_checks_a_received_assertion_held_past_the_test_method(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $this->heldAssertion = $double->received('save');
@@ -1200,7 +1200,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_passes_a_satisfied_received_assertion_held_past_the_test_method(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
@@ -1211,7 +1211,7 @@ final class DoubleTest extends TestCase
 
     public function test_verify_all_drains_pending_received_assertions_so_a_second_call_is_a_no_op(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->save(new Book('Dune'));
@@ -1225,17 +1225,17 @@ final class DoubleTest extends TestCase
         $this->assertSame(0, Double::verifyAll());
     }
 
-    public function test_capture_auto_verify_scope_leaves_the_live_state_disarmed_and_empty(): void
+    public function test_pause_auto_verify_leaves_the_live_state_off_and_empty(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
-        Double::captureAutoVerifyScope();
+        Double::pauseAutoVerify();
 
-        // Capturing reset the live state, so this double — created after
-        // arming but before the capture — was lifted out along with it.
+        // Pausing reset the live state, so this double — created after
+        // enabling but before the pause — was lifted out along with it.
         // A fresh verifyAll() against the now-empty live state has nothing
         // left to check, even though $double's own expectation is unmet —
         // there is deliberately nothing left to assert here.
@@ -1244,16 +1244,16 @@ final class DoubleTest extends TestCase
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_reinstalls_a_previously_captured_scope(): void
+    public function test_resume_auto_verify_reinstalls_a_previously_paused_snapshot(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
 
-        $scope = Double::captureAutoVerifyScope();
+        $snapshot = Double::pauseAutoVerify();
 
-        Double::restoreAutoVerifyScope($scope);
+        Double::resumeAutoVerify($snapshot);
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/expected `delete\(any arguments\)` to be called exactly 1 time, but it was never called/s');
@@ -1261,40 +1261,40 @@ final class DoubleTest extends TestCase
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_round_trips_a_held_received_assertion(): void
+    public function test_resume_auto_verify_round_trips_a_held_received_assertion(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $this->heldAssertion = $double->received('save');
 
-        $scope = Double::captureAutoVerifyScope();
-        Double::restoreAutoVerifyScope($scope);
+        $snapshot = Double::pauseAutoVerify();
+        Double::resumeAutoVerify($snapshot);
 
         $this->expectException(PHPUnitUnsatisfiedReceivedAssertionException::class);
 
         Double::verifyAll();
     }
 
-    public function test_restore_auto_verify_scope_overwrites_rather_than_merges_the_live_state(): void
+    public function test_resume_auto_verify_overwrites_rather_than_merges_the_live_state(): void
     {
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $parked = Double::for(BookRepositoryInterface::class);
         $parked->expects('delete')->returns(null);
         $parked->delete(1);
 
-        $scope = Double::captureAutoVerifyScope();
+        $snapshot = Double::pauseAutoVerify();
 
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
-        // Live again after the second armAutoVerify() — restoring $scope
-        // must replace this, not merge with it, so its unmet expectation
-        // is never checked.
+        // Live again after the second enableAutoVerify() — resuming
+        // $snapshot must replace this, not merge with it, so its unmet
+        // expectation is never checked.
         $overwritten = Double::for(BookRepositoryInterface::class);
         $overwritten->expects('save')->returns(true);
 
-        Double::restoreAutoVerifyScope($scope);
+        Double::resumeAutoVerify($snapshot);
 
         // Only $parked (satisfied) is live now, so this passes even though
         // $overwritten's `save` expectation was never met.
@@ -1309,7 +1309,7 @@ final class DoubleTest extends TestCase
             $events[] = $event;
         });
 
-        Double::armAutoVerify();
+        Double::enableAutoVerify();
 
         $double = Double::for(BookRepositoryInterface::class);
         $double->expects('delete')->returns(null);
@@ -1364,10 +1364,9 @@ final class DoubleTest extends TestCase
     /**
      * The check that motivated this feature: this fires from inside
      * ProxyBehavior/ExceptionFactory at the moment of the unmatched call
-     * itself — no armAutoVerify()/verifyAll() involved — which is exactly
-     * the "immediate throws are invisible to introspection" gap the
-     *
-     * @internal AutoVerifyScope-based approach couldn't close.
+     * itself — no enableAutoVerify()/verifyAll() involved — which is exactly
+     * the "immediate throws are invisible to introspection" gap the old,
+     * internal-only AutoVerifySnapshot-based approach couldn't close.
      */
     public function test_listen_receives_a_failing_check_event_for_an_unmatched_call_on_a_strict_double(): void
     {

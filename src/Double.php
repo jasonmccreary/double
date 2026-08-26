@@ -24,11 +24,11 @@ use JMac\Testing\Exceptions\UnknownMethodException;
  * creates a double; `$double->verify()` is the manual verification call
  * every test runner can use. PHPUnit users can skip it via
  * `Integrations\PHPUnit\VerifiesDoubles`, which auto-verifies every double
- * created during a test. A non-PHPUnit runner wanting the same "arm before,
- * verify after" flow can drive it directly via `armAutoVerify()` /
+ * created during a test. A non-PHPUnit runner wanting the same "enable
+ * before, verify after" flow can drive it directly via `enableAutoVerify()` /
  * `verifyAll()` — the latter's return value doubles as a framework-agnostic
- * "a check passed" signal — and `captureAutoVerifyScope()` /
- * `restoreAutoVerifyScope()` for the concurrent case (see `AutoVerifyScope`).
+ * "a check passed" signal — and `pauseAutoVerify()` /
+ * `resumeAutoVerify()` for the concurrent case (see `AutoVerifySnapshot`).
  * `listen()` is the live counterpart: a registered listener is notified with
  * a `CheckEvent` as each check resolves, pass or fail, instead of only
  * learning the aggregate outcome after the fact.
@@ -42,7 +42,7 @@ final class Double
      * a local variable in a test method (the common case) is already
      * garbage-collected, and therefore already gone from a WeakMap, the
      * instant that method returns, well before any #[After] hook runs. Only
-     * appended to while $autoVerifyArmed is true, so a suite that never uses
+     * appended to while $autoVerifyEnabled is true, so a suite that never uses
      * VerifiesDoubles never pays for this at all. Holds the DoubleState
      * directly, not the double object, since create() already has it in
      * scope and verifying never needs anything else.
@@ -53,20 +53,20 @@ final class Double
 
     /**
      * Same strong-reference reasoning as $pending, same lifecycle
-     * (armAutoVerify() resets it, verifyAll() drains it) — the received()
+     * (enableAutoVerify() resets it, verifyAll() drains it) — the received()
      * counterpart, so both verbs get checked from the same #[After] hook.
      *
      * @var list<ReceivedAssertion>
      */
     private static array $pendingReceived = [];
 
-    private static bool $autoVerifyArmed = false;
+    private static bool $autoVerifyEnabled = false;
 
     /**
      * Process-lifetime, unlike $pending/$pendingReceived above — a runner
      * (e.g. a test framework's own reporter) registers a listener once at
      * bootstrap and expects every subsequent test's checks to reach it, so
-     * armAutoVerify()/verifyAll() deliberately never touch this list.
+     * enableAutoVerify()/verifyAll() deliberately never touch this list.
      *
      * @var list<callable(CheckEvent): void>
      */
@@ -187,7 +187,7 @@ final class Double
 
         self::states()[$instance] = $state;
 
-        if (self::$autoVerifyArmed) {
+        if (self::$autoVerifyEnabled) {
             self::$pending[] = $state;
         }
 
@@ -249,12 +249,12 @@ final class Double
     }
 
     /**
-     * Arms auto-verification: every double created (and every received()
-     * assertion made) from this call until the matching verifyAll() is
-     * checked there instead of needing its own verify()/assertion call.
-     * This is what PHPUnit's VerifiesDoubles trait calls from its #[Before]
-     * hook; call it yourself to drive the same "arm before, verify after"
-     * flow from any other test runner.
+     * Turns on auto-verification: every double created (and every
+     * received() assertion made) from this call until the matching
+     * verifyAll() is checked there instead of needing its own
+     * verify()/assertion call. This is what PHPUnit's VerifiesDoubles trait
+     * calls from its #[Before] hook; call it yourself to drive the same
+     * "enable before, verify after" flow from any other test runner.
      *
      * Idempotent — safe to call every test — and resets both lists fresh, so
      * a prior test that somehow skipped its own verifyAll() (e.g. a fatal
@@ -263,20 +263,21 @@ final class Double
      * A runner that interleaves tests (fibers/coroutines in one process)
      * can't just call this at the start of every test, since a context
      * switch may leave another test's state live — see
-     * captureAutoVerifyScope()/restoreAutoVerifyScope() for that case.
+     * pauseAutoVerify()/resumeAutoVerify() for that case.
      */
-    public static function armAutoVerify(): void
+    public static function enableAutoVerify(): void
     {
-        self::$autoVerifyArmed = true;
+        self::$autoVerifyEnabled = true;
         self::$pending = [];
         self::$pendingReceived = [];
     }
 
     /**
-     * Checks everything armAutoVerify() has been collecting since it was
-     * called, then disarms. This is what PHPUnit's VerifiesDoubles trait
-     * calls from its #[After] hook; call it yourself to drive the same
-     * "arm before, verify after" flow from any other test runner.
+     * Checks everything enableAutoVerify() has been collecting since it was
+     * called, then turns auto-verification back off. This is what PHPUnit's
+     * VerifiesDoubles trait calls from its #[After] hook; call it yourself
+     * to drive the same "enable before, verify after" flow from any other
+     * test runner.
      *
      * Returns how many checks passed — PHPUnit learns a check ran via
      * registerPass() bumping its own Assert counter, but that's invisible
@@ -287,15 +288,16 @@ final class Double
      *
      * Both lists are drained up front, before iterating, so a failure
      * partway through never leaves stale entries to leak into whichever
-     * test's verifyAll() runs next. Disarms too — otherwise a received()
-     * call in a test that never arms auto-verification itself could still
-     * get swept into $pendingReceived just because some earlier test in the
-     * suite armed it and never disarmed, leaking a check into an unrelated
-     * test or, worse, into process shutdown.
+     * test's verifyAll() runs next. Turns auto-verification back off too —
+     * otherwise a received() call in a test that never enables
+     * auto-verification itself could still get swept into $pendingReceived
+     * just because some earlier test in the suite enabled it and never
+     * turned it back off, leaking a check into an unrelated test or, worse,
+     * into process shutdown.
      */
     public static function verifyAll(): int
     {
-        self::$autoVerifyArmed = false;
+        self::$autoVerifyEnabled = false;
 
         $pending = self::$pending;
         self::$pending = [];
@@ -315,40 +317,40 @@ final class Double
     }
 
     /**
-     * Lifts the live auto-verify state (armed flag, pending doubles, pending
-     * received() assertions) out into an opaque AutoVerifyScope and resets
-     * the live state to disarmed/empty, as if verifyAll() had just drained
-     * it without doing any checking.
+     * Lifts the live auto-verify state (whether it's enabled, pending
+     * doubles, pending received() assertions) out into an opaque
+     * AutoVerifySnapshot and resets the live state to off/empty, as if
+     * verifyAll() had just drained it without doing any checking.
      *
      * For a runner that interleaves tests as fibers/coroutines in one
-     * process: call this when a test suspends, to park its in-flight state
+     * process: call this when a test suspends, to pause its in-flight state
      * so a sibling test resuming next doesn't sweep this one's doubles into
-     * its own verifyAll(). Pair with restoreAutoVerifyScope() when the
-     * suspended test resumes.
+     * its own verifyAll(). Pair with resumeAutoVerify() when the suspended
+     * test resumes.
      */
-    public static function captureAutoVerifyScope(): AutoVerifyScope
+    public static function pauseAutoVerify(): AutoVerifySnapshot
     {
-        $scope = new AutoVerifyScope(self::$autoVerifyArmed, self::$pending, self::$pendingReceived);
+        $snapshot = new AutoVerifySnapshot(self::$autoVerifyEnabled, self::$pending, self::$pendingReceived);
 
-        self::$autoVerifyArmed = false;
+        self::$autoVerifyEnabled = false;
         self::$pending = [];
         self::$pendingReceived = [];
 
-        return $scope;
+        return $snapshot;
     }
 
     /**
-     * Installs a previously captured AutoVerifyScope as the live auto-verify
-     * state, replacing whatever is currently live. Callers are expected to
-     * have already moved anything they care about out of the live state
-     * (via captureAutoVerifyScope()) before calling this — it overwrites,
-     * it doesn't merge.
+     * Installs a previously paused AutoVerifySnapshot as the live
+     * auto-verify state, replacing whatever is currently live. Callers are
+     * expected to have already moved anything they care about out of the
+     * live state (via pauseAutoVerify()) before calling this — it
+     * overwrites, it doesn't merge.
      */
-    public static function restoreAutoVerifyScope(AutoVerifyScope $scope): void
+    public static function resumeAutoVerify(AutoVerifySnapshot $snapshot): void
     {
-        self::$autoVerifyArmed = $scope->armed();
-        self::$pending = $scope->pending();
-        self::$pendingReceived = $scope->pendingReceived();
+        self::$autoVerifyEnabled = $snapshot->enabled();
+        self::$pending = $snapshot->pending();
+        self::$pendingReceived = $snapshot->pendingReceived();
     }
 
     /**
@@ -431,7 +433,7 @@ final class Double
 
         $assertion = new ReceivedAssertion($state, $method);
 
-        if (self::$autoVerifyArmed) {
+        if (self::$autoVerifyEnabled) {
             self::$pendingReceived[] = $assertion;
         }
 
