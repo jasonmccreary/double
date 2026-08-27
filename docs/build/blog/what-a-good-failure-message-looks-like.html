@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://rsms.me">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+(function () {
+  var stored = localStorage.getItem('td-theme');
+  if (stored === 'light' || stored === 'dark') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What a good failure message looks like · Double</title>
+<meta name="description" content="A close read of a real Double failure message, piece by piece.">
+
+<link rel="canonical" href="https://testdoublephp.com/blog/what-a-good-failure-message-looks-like">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Double">
+<meta property="og:title" content="What a good failure message looks like · Double">
+<meta property="og:description" content="A close read of a real Double failure message, piece by piece.">
+<meta property="og:url" content="https://testdoublephp.com/blog/what-a-good-failure-message-looks-like">
+<meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="article:published_time" content="2026-08-24">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What a good failure message looks like · Double">
+<meta name="twitter:description" content="A close read of a real Double failure message, piece by piece.">
+<meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" type="image/svg+xml" href="/assets/images/double-favicon.svg">
+<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"What a good failure message looks like","description":"A close read of a real Double failure message, piece by piece.","url":"https:\/\/testdoublephp.com\/blog\/what-a-good-failure-message-looks-like","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","datePublished":"2026-08-24","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Blog","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"What a good failure message looks like","item":"https:\/\/testdoublephp.com\/blog\/what-a-good-failure-message-looks-like"}]}]</script>
+</head>
+<body class="antialiased">
+<input type="checkbox" id="nav-toggle" class="nav-toggle">
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="wordmark" aria-label="Homepage">
+      <svg class="wordmark-logo" viewBox="0 0 160 50" aria-hidden="true">
+        <text x="0" y="36" font-weight="500" font-size="32">Double</text>
+        <g transform="translate(119,17.6) scale(0.25)">
+          <circle cx="29" cy="19" r="12.5" class="dot-a"></circle>
+          <circle cx="29" cy="61" r="12.5" class="dot-a"></circle>
+          <circle cx="71" cy="19" r="12.5" class="dot-b"></circle>
+          <circle cx="71" cy="61" r="12.5" class="dot-b"></circle>
+        </g>
+      </svg>
+    </a>
+<div class="topbar-search">
+  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
+    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span class="search-trigger-text">Search</span>
+    <span class="search-trigger-key">&#8984;K</span>
+  </button>
+</div>
+    <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
+      <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </label>
+    <nav class="topbar-links" aria-label="External">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M3 12h2M19 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+      <a class="topbar-link" href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    </nav>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <nav aria-label="Documentation">
+      <p class="sidebar-heading">Documentation</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="/">Introduction</a></li>
+        <li><a href="/installation">Installation</a></li>
+        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/expectations">Expectations</a></li>
+        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/verification">Verification</a></li>
+        <li><a href="/failure-messages">Failure Messages</a></li>
+        <li><a href="/test-suite-integration">Test Suite Integration</a></li>
+        <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
+        <li><a href="/contributing">Contributing</a></li>
+      </ol>
+    </nav>
+    <nav aria-label="Resources">
+      <p class="sidebar-heading">Resources</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="/blog" aria-current="page">Blog</a></li>
+        <li><a href="https://github.com/jasonmccreary/double">GitHub</a></li>
+        <li><a href="https://x.com/gonedark">X</a></li>
+      </ol>
+    </nav>
+  </aside>
+  <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+  <main class="content">
+    <div class="content-inner">
+      <article class="prose">
+        <h1 class="page-title">What a good failure message looks like</h1>
+<p>Most test doubles fail the same way: they tell you <em>that</em> something went wrong and leave you to figure out <em>what</em>. You get a boolean, a stack trace pointing at the library's internals instead of your test, or a dump of an object graph you now have to diff by eye. <a href="https://github.com/jasonmccreary/double">Double</a> treats that moment differently — the failure message is the product, not an afterthought.</p>
+<p>Here's a real one, produced by a genuinely common mistake — an expectation that's close, but not quite right:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `UserRepository` expected `update(42, 'jane@example.com', 'admin', true)` to be called exactly 1 time, but it was never called.
+
+The following similar call was made to `update`:
+  userId: 42
+  email: 'jane@example.com'
+  role:
+    - 'admin'
+    + 'editor'
+  active:
+    - true
+    + false
+</code></pre></div>
+<p>Nothing here is generic. Every line answers a question you'd otherwise have to go dig for: which double, which method, what you expected, and what actually happened instead. Four distinct pieces of information are doing that work, and each one deserves a closer look.</p>
+<h2 id="the-underlying-object">The underlying object</h2>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `UserRepository` expected ...
+</code></pre></div>
+<p>The message opens by naming <code>UserRepository</code>, not <code>Double</code> or some generic label. That's the real class or interface being doubled, pulled by reflection off the type you passed to <code>Double::for()</code> — not a variable name or a string you supplied yourself.</p>
+<p>That distinction matters as soon as a test double touches more than one collaborator. <code>$repository</code> tells you which PHP variable failed; <code>UserRepository</code> tells you which <em>dependency</em> failed, and that's the fact you actually need when a test file has three or four doubles in play and only one of their expectations broke. It's also the fact that survives refactors — rename the local variable and the message doesn't change, because it was never derived from the variable in the first place.</p>
+<h2 id="the-method-expectation">The method expectation</h2>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>... expected `update(42, 'jane@example.com', 'admin', true)` ...
+</code></pre></div>
+<p>This is the call as you configured it — not a paraphrase, the literal signature. Every argument is rendered in the same form you'd write it in PHP: <code>42</code> as an int, <code>'jane@example.com'</code> as a quoted string, <code>true</code> as a boolean. There's no <code>Object (0x1a2b3c4d)</code> or <code>Array (...)</code> placeholder standing in for a value the message decided not to show you.</p>
+<p>That fidelity is what makes the rest of the message legible. Once you can see the exact call you expected, you have a fixed point to compare everything else against — including the one place where the message inevitably has to draw a line: what happens after you scroll past this point in the article, which is where the failure itself is described.</p>
+<h2 id="the-problem">The problem</h2>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>... to be called exactly 1 time, but it was never called.
+</code></pre></div>
+<p>This is the part that names the actual failure, not just its symptom. &quot;The test failed&quot; is a symptom. &quot;This expected exactly one call and got zero&quot; is the problem — specific enough to act on without opening a debugger.</p>
+<p>That specificity comes from what <code>expects()</code> records rather than what it discovers after the fact. When you write <code>-&gt;expects('update')-&gt;with(...)</code>, Double knows the count you asked for; when the call log comes up empty, it can say <code>never called</code> instead of a vaguer <code>not called as expected</code>. The same slot in the message reads differently for a different kind of mismatch — <code>called 4 times, but your expectation only allowed 3</code> for a call that happened too often, for instance — because the message is built from what specifically went wrong, not from a single templated sentence with the numbers swapped in. The <a href="/failure-messages">Failure Messages</a> chapter walks through several of those variants.</p>
+<h2 id="the-similar-call">The similar call</h2>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>The following similar call was made to `update`:
+  userId: 42
+  email: 'jane@example.com'
+  role:
+    - 'admin'
+    + 'editor'
+  active:
+    - true
+    + false
+</code></pre></div>
+<p>This is the section that turns &quot;it was never called&quot; from a dead end into a lead. A call to <code>update</code> <em>did</em> happen during the test — just not with the arguments you expected. Rather than leaving you to line up two argument lists by eye, Double pairs them up field by field and shows you only what changed: <code>userId</code> and <code>email</code> matched, so they're printed plainly for context; <code>role</code> and <code>active</code> didn't, so each gets a diff.</p>
+<p>Two things keep this section honest rather than merely helpful-looking. First, the field names — <code>userId</code>, <code>email</code>, <code>role</code>, <code>active</code> — aren't invented; they're the real parameter names from <code>UserRepository::update()</code>, reflected straight off the interface being doubled. Second, this block only appears at all when there's exactly one candidate call to compare against. With two or more calls to <code>update</code> on record, there's no fact-based way to say which one this expectation was &quot;supposed&quot; to match — so the message doesn't guess, and lists the configured expectations instead. Every comparison you see here is a checked fact, not the library's best guess at what you meant.</p>
+<h2 id="reading-the-whole-thing">Reading the whole thing</h2>
+<p>Put back together, the message answers four questions in the order you'd actually ask them: which double, what did I expect, why did it fail, and what actually happened. That order isn't an accident — it's the same order this article walked through, because it's the order a developer reads in when a test goes red.</p>
+<p>This is one message, for one kind of failure. Double produces a distinct one for a call made out of order, a mismatched call under <code>expects()</code>, a double returned automatically that you didn't configure, and several others — each built from the same principle of naming facts instead of describing symptoms. The <a href="/failure-messages">Failure Messages</a> chapter is the full reference.</p>
+
+      </article>
+      <nav class="pager" aria-label="Chapter navigation"><span></span></nav>
+    </div>
+  </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#the-underlying-object">The underlying object</a></li>
+        <li><a href="#the-method-expectation">The method expectation</a></li>
+        <li><a href="#the-problem">The problem</a></li>
+        <li><a href="#the-similar-call">The similar call</a></li>
+        <li><a href="#reading-the-whole-thing">Reading the whole thing</a></li>
+
+    </ol>
+  </aside>
+
+</div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>Double</span>
+    <span>MIT Licensed</span>
+    <a href="https://github.com/jasonmccreary/double" title="Test Double on GitHub"><svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+    <span class="footer-spacer">jasonmccreary/test-double</span>
+  </div>
+</footer>
+<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
+
+<script src="/assets/site.js" defer></script>
+</body>
+</html>

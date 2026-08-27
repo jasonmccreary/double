@@ -18,7 +18,7 @@
 <meta name="description" content="{{DESCRIPTION}}">
 {{ROBOTS_META}}
 <link rel="canonical" href="{{PAGE_URL}}">
-<meta property="og:type" content="website">
+<meta property="og:type" content="{{OG_TYPE}}">
 <meta property="og:site_name" content="{{SITE_NAME}}">
 <meta property="og:title" content="{{TITLE}} · {{SITE_NAME}}">
 <meta property="og:description" content="{{DESCRIPTION}}">
@@ -26,12 +26,13 @@
 <meta property="og:image" content="{{OG_IMAGE_URL}}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+{{ARTICLE_META}}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{TITLE}} · {{SITE_NAME}}">
 <meta name="twitter:description" content="{{DESCRIPTION}}">
 <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
-<link rel="stylesheet" href="assets/site.css">
-<link rel="icon" type="image/svg+xml" href="assets/images/double-favicon.svg">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" type="image/svg+xml" href="/assets/images/double-favicon.svg">
 {{STRUCTURED_DATA}}
 </head>
 <body class="antialiased">
@@ -70,12 +71,20 @@
       <ol class="chapter-list" role="list">
 {{SIDEBAR_ITEMS}}      </ol>
     </nav>
+    <nav aria-label="Resources">
+      <p class="sidebar-heading">Resources</p>
+      <ol class="chapter-list" role="list">
+        <li><a href="/blog"{{BLOG_CURRENT}}>Blog</a></li>
+        <li><a href="{{REPO_URL}}">GitHub</a></li>
+        <li><a href="{{TWITTER_URL}}">X</a></li>
+      </ol>
+    </nav>
   </aside>
   <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
   <main class="content">
     <div class="content-inner">
       <article class="prose">
-        <h1 class="page-title">{{TITLE}}</h1>
+        <h1 class="page-title">{{TITLE_HTML}}</h1>
 {{BODY}}
       </article>
       <nav class="pager" aria-label="Chapter navigation">{{PAGER}}</nav>
@@ -92,6 +101,6 @@
   </div>
 </footer>
 {{SEARCH_SCRIPT}}
-<script src="assets/site.js" defer></script>
+<script src="/assets/site.js" defer></script>
 </body>
 </html>

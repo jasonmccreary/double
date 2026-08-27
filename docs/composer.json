@@ -12,10 +12,11 @@
     },
     "scripts": {
         "build": "php bin/build-docs.php",
-        "serve": "php -S localhost:8000 -t build"
+        "serve": "php -S localhost:8000 -t build router.php"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "process-timeout": 0
     },
     "minimum-stability": "stable"
 }

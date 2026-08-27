@@ -14,26 +14,26 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page Not Found · Double</title>
-<meta name="description" content="The page you&#039;re looking for doesn&#039;t exist or has moved.">
-<meta name="robots" content="noindex">
-<link rel="canonical" href="https://testdoublephp.com/404">
-<meta property="og:type" content="website">
+<title>Why not `hasReceived()` or `assertReceived()`? · Double</title>
+<meta name="description" content="Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.">
+
+<link rel="canonical" href="https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived">
+<meta property="og:type" content="article">
 <meta property="og:site_name" content="Double">
-<meta property="og:title" content="Page Not Found · Double">
-<meta property="og:description" content="The page you&#039;re looking for doesn&#039;t exist or has moved.">
-<meta property="og:url" content="https://testdoublephp.com/404">
+<meta property="og:title" content="Why not `hasReceived()` or `assertReceived()`? · Double">
+<meta property="og:description" content="Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.">
+<meta property="og:url" content="https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived">
 <meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-
+<meta property="article:published_time" content="2026-08-12">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Page Not Found · Double">
-<meta name="twitter:description" content="The page you&#039;re looking for doesn&#039;t exist or has moved.">
+<meta name="twitter:title" content="Why not `hasReceived()` or `assertReceived()`? · Double">
+<meta name="twitter:description" content="Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.">
 <meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="icon" type="image/svg+xml" href="/assets/images/double-favicon.svg">
-
+<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"Why not `hasReceived()` or `assertReceived()`?","description":"Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.","url":"https:\/\/testdoublephp.com\/blog\/why-not-hasreceived-or-assertreceived","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","datePublished":"2026-08-12","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Blog","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"Why not `hasReceived()` or `assertReceived()`?","item":"https:\/\/testdoublephp.com\/blog\/why-not-hasreceived-or-assertreceived"}]}]</script>
 </head>
 <body class="antialiased">
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
@@ -90,7 +90,7 @@
     <nav aria-label="Resources">
       <p class="sidebar-heading">Resources</p>
       <ol class="chapter-list" role="list">
-        <li><a href="/blog">Blog</a></li>
+        <li><a href="/blog" aria-current="page">Blog</a></li>
         <li><a href="https://github.com/jasonmccreary/double">GitHub</a></li>
         <li><a href="https://x.com/gonedark">X</a></li>
       </ol>
@@ -100,12 +100,34 @@
   <main class="content">
     <div class="content-inner">
       <article class="prose">
-        <h1 class="page-title">Page Not Found</h1>
-<p>The page you're looking for doesn't exist or has moved. Try the <a href="/">introduction</a> or use search to find what you need.</p>
+        <h1 class="page-title">Why not <code>hasReceived()</code> or <code>assertReceived()</code>?</h1>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
+<p>Read aloud, that line is already a sentence: &quot;repository received save with book.&quot; That's not an accident — every verb in Double's API was picked to read this way. Which is exactly why the question comes up: <code>hasReceived()</code> and <code>assertReceived()</code> are the prefixes you'd expect from a testing library, so <code>received()</code> on its own can look like something's missing.</p>
+<p>Nothing's missing. I'd rather give up a filler word — even if it leaves a slightly less complete-sounding English sentence — than let that word introduce ambiguity into what the code actually does.</p>
+<h2 id="one-word-no-strays">One word, no strays</h2>
+<p>I gave a lot of thought to the terms used within Double. I wanted them to be one word, and I didn't want them to stray too far from the norm. <code>expects</code>, <code>allows</code>, <code>received</code>, <code>verify</code> are all common words within mocking libraries — nothing here is invented vocabulary.</p>
+<p>Generally speaking, I tend not to use filler words anymore. They might make sense initially, but over time you realize they're often cost — extra characters — without benefit, especially in a typed language. You'll see this in Laravel: properties named <code>hidden</code> instead of <code>isHidden</code>. As a bool, <code>is</code> isn't adding much.</p>
+<h2 id="the-filler-word-that-creates-ambiguity">The filler word that creates ambiguity</h2>
+<p>Bringing it back to mocking libraries, these filler words can actually create <em>ambiguity</em>. Consider Mockery's <code>shouldReceive</code>:</p>
+<blockquote>
+<p><strong><code>shouldReceive</code> — read as <code>does</code>, actually means <code>can</code></strong></p>
+<p>Some people read <code>should</code> as <code>does</code>. But in fact it's closer to <code>can</code> — so, in Mockery, <code>shouldReceive</code> means &quot;may or may not receive.&quot; This filler word might have led to the biggest misconception/misuse of Mockery.</p>
+<p><code>does</code> (certain) sits at one end, <code>can</code> (maybe) at the other — and <code>should</code> lands a lot closer to <code>can</code> than most people assume.</p>
+</blockquote>
+<p>That's the failure mode a prefix invites: it reads as a claim about certainty, but it isn't one. <code>received()</code> doesn't have that problem, because it isn't claiming anything — it's just naming the fact you're checking. There's no tense or modal verb to misread, because there's no verb standing in front of the one that matters.</p>
+
       </article>
       <nav class="pager" aria-label="Chapter navigation"><span></span></nav>
     </div>
   </main>
+  <aside class="toc">
+    <p class="toc-label">On this page</p>
+    <ol role="list">
+        <li><a href="#one-word-no-strays">One word, no strays</a></li>
+        <li><a href="#the-filler-word-that-creates-ambiguity">The filler word that creates ambiguity</a></li>
+
+    </ol>
+  </aside>
 
 </div>
 <footer class="site-footer">

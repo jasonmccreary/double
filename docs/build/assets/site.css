@@ -468,6 +468,10 @@ body.search-open {
   font-family: var(--font-mono);
 }
 
+.sidebar nav + nav {
+  margin-top: var(--space-8);
+}
+
 .chapter-list {
   list-style: none;
   margin: 0;
@@ -495,6 +499,48 @@ body.search-open {
 .chapter-list a[aria-current="page"] {
   border-left-color: var(--accent);
   color: var(--ink);
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0 calc(-1 * var(--space-4));
+}
+
+.archive-list .archive-entry {
+  position: relative;
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease;
+}
+
+.archive-list .archive-entry:hover {
+  background: var(--bg-well);
+}
+
+.archive-list .archive-entry h2 {
+  margin: 0 0 var(--space-2);
+}
+
+.archive-list .archive-entry h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.archive-list .archive-entry h2 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.archive-list .archive-entry h2 a:hover {
+  color: var(--accent);
+}
+
+.archive-list .archive-entry p {
+  margin: 0;
+  color: var(--ink-muted);
 }
 
 .content {

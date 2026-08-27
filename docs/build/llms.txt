@@ -14,3 +14,9 @@
 - [Test Suite Integration](https://testdoublephp.com/test-suite-integration): Nothing in this library requires PHPUnit. But if it's installed in your project, three things improve automatically — and since Pest tests run on real…
 - [Migrating from Mockery](https://testdoublephp.com/migrating-from-mockery): Most of what you already know from Mockery carries over directly. This page provides a full mapping of the methods and concepts from Mockery to their…
 - [Contributing](https://testdoublephp.com/contributing): This page covers the standing policies behind the library's design, plus two walkthroughs for the contributions that come up most: adding a matcher and…
+
+## Blog
+
+- [What a good failure message looks like](https://testdoublephp.com/blog/what-a-good-failure-message-looks-like): A close read of a real Double failure message, piece by piece.
+- [How is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery): A reply to a question from r/PHP on what actually improves once you move from Mockery to Double.
+- [Why not `hasReceived()` or `assertReceived()`?](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived): Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.

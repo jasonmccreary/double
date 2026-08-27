@@ -40,4 +40,20 @@
     <loc>https://testdoublephp.com/contributing</loc>
     <lastmod>2026-08-05</lastmod>
   </url>
+  <url>
+    <loc>https://testdoublephp.com/blog/what-a-good-failure-message-looks-like</loc>
+    <lastmod>2026-08-24</lastmod>
+  </url>
+  <url>
+    <loc>https://testdoublephp.com/blog/how-is-double-better-than-mockery</loc>
+    <lastmod>2026-08-19</lastmod>
+  </url>
+  <url>
+    <loc>https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived</loc>
+    <lastmod>2026-08-12</lastmod>
+  </url>
+  <url>
+    <loc>https://testdoublephp.com/blog</loc>
+    <lastmod>2026-08-24</lastmod>
+  </url>
 </urlset>

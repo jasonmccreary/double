@@ -65,6 +65,7 @@ $siteDir = __DIR__.'/../build';
 $siteName = 'Double';
 $siteDescription = 'Documentation for Double, a modern, human-friendly PHP double library.';
 $repoUrl = 'https://github.com/jasonmccreary/double';
+$twitterUrl = 'https://x.com/gonedark';
 $siteUrl = 'https://testdoublephp.com';
 
 $torchlightToken = getenv('TORCHLIGHT_TOKEN') ?: null;
@@ -236,6 +237,28 @@ function slugify_basename(string $basename): string
 }
 
 /**
+ * Splits optional YAML-ish frontmatter (a `---`-delimited block of flat
+ * `key: value` lines) off the front of a Markdown file. Numbered chapters
+ * carry none of this, so an absent block just returns an empty frontmatter
+ * array and the untouched markdown — this only really applies to blog posts.
+ */
+function parse_frontmatter(string $markdown): array
+{
+    if (! preg_match('/^---\n(.*?)\n---\n+/s', $markdown, $match)) {
+        return ['frontmatter' => [], 'body' => $markdown];
+    }
+
+    $frontmatter = [];
+    foreach (explode("\n", $match[1]) as $line) {
+        if (preg_match('/^([\w-]+):\s*(.*)$/', $line, $pair)) {
+            $frontmatter[$pair[1]] = trim($pair[2]);
+        }
+    }
+
+    return ['frontmatter' => $frontmatter, 'body' => substr($markdown, strlen($match[0]))];
+}
+
+/**
  * Pulls the plain-text content of a chapter's first "complete" `<p>` for
  * use as a page-specific meta/OG/Twitter description, instead of every
  * chapter sharing one site-wide description. Paragraphs ending in ':'
@@ -290,7 +313,17 @@ function truncate_description(string $text, int $limit = 155): string
  */
 function clean_url(string $htmlFile): string
 {
-    return $htmlFile === 'index.html' ? '/' : '/'.substr($htmlFile, 0, -strlen('.html'));
+    if ($htmlFile === 'index.html') {
+        return '/';
+    }
+
+    // A section's own index.html (e.g. blog/index.html) serves at the
+    // section path itself, the same way the site root does.
+    if (str_ends_with($htmlFile, '/index.html')) {
+        return '/'.substr($htmlFile, 0, -strlen('/index.html'));
+    }
+
+    return '/'.substr($htmlFile, 0, -strlen('.html'));
 }
 
 /**
@@ -343,15 +376,47 @@ foreach ($files as $index => $file) {
         'basename' => $basename,
         'htmlFile' => $index === 0 ? 'index.html' : $slug.'.html',
         'number' => $index + 1,
+        'section' => 'Documentation',
         'title' => null,
         'bodyHtml' => null,
         'toc' => [],
     ];
 }
 
+// --- discover blog posts, newest published first ---
+
+$postFiles = glob($docsDir.'/blog/*.md');
+
+$posts = [];
+foreach ($postFiles as $file) {
+    $markdown = file_get_contents($file);
+    ['frontmatter' => $frontmatter] = parse_frontmatter($markdown);
+
+    if (empty($frontmatter['published'])) {
+        fwrite(STDERR, "{$file} is missing a `published` date in its frontmatter\n");
+        exit(1);
+    }
+
+    $posts[] = [
+        'file' => $file,
+        'basename' => basename($file, '.md'),
+        'htmlFile' => 'blog/'.basename($file, '.md').'.html',
+        'section' => 'Blog',
+        'published' => $frontmatter['published'],
+        'title' => null,
+        'bodyHtml' => null,
+        'toc' => [],
+    ];
+}
+
+usort($posts, static fn (array $a, array $b) => $b['published'] <=> $a['published']);
+
 $linkMap = [];
 foreach ($chapters as $chapter) {
     $linkMap[$chapter['basename'].'.md'] = clean_url($chapter['htmlFile']);
+}
+foreach ($posts as $post) {
+    $linkMap[$post['basename'].'.md'] = clean_url($post['htmlFile']);
 }
 
 // --- markdown environment ---
@@ -372,25 +437,44 @@ $environment->addRenderer(FencedCode::class, new DocsCodeRenderer($collector), 1
 
 $converter = new MarkdownConverter($environment);
 
-// --- render each chapter body, rewriting internal links as we go ---
+// --- render a chapter or post body, rewriting internal links as we go ---
 
-foreach ($chapters as &$chapter) {
-    $markdown = file_get_contents($chapter['file']);
+/**
+ * Renders one Markdown source file (a numbered chapter or a blog post) into
+ * the page array's 'title', 'bodyHtml', 'toc', and 'description' fields.
+ * Shared by both, since a blog post is just a chapter with frontmatter and
+ * no place in the chapter sequence.
+ */
+function process_page(array $page, MarkdownConverter $converter, array $linkMap, string $siteDescription): array
+{
+    $markdown = file_get_contents($page['file']);
+    ['frontmatter' => $frontmatter, 'body' => $markdown] = parse_frontmatter($markdown);
 
     if (! preg_match('/^#\s+(.+)\n+/', $markdown, $titleMatch)) {
-        fwrite(STDERR, "{$chapter['file']} doesn't start with a top-level heading\n");
+        fwrite(STDERR, "{$page['file']} doesn't start with a top-level heading\n");
         exit(1);
     }
 
-    $chapter['title'] = trim($titleMatch[1]);
+    $page['title'] = trim($titleMatch[1]);
+
+    // The plain title above is reused as-is in raw-text contexts (browser
+    // tab title, meta/OG tags, JSON-LD, sidebar links) where Markdown
+    // syntax would just show as literal characters. The on-page <h1> is
+    // the one place a title actually gets displayed as content, so it
+    // alone gets a real Markdown pass — letting `backticks` in a title
+    // render as code the same way they already do in an h2/h3.
+    $titleHtml = (string) $converter->convert($page['title']);
+    $page['titleHtml'] = trim((string) preg_replace('#^<p>(.*)</p>$#s', '$1', trim($titleHtml)));
+
     $body = substr($markdown, strlen($titleMatch[0]));
 
     $html = (string) $converter->convert($body);
 
-    // Point links at other chapters to the generated .html files instead
-    // of the source .md files.
+    // Point links at other chapters/posts to the generated .html files
+    // instead of the source .md files. Posts live one directory down, so
+    // their links back up to a chapter carry a `../` prefix.
     $html = preg_replace_callback(
-        '/href="([\w-]+\.md)(#[\w-]+)?"/',
+        '/href="(?:\.\.\/)?([\w-]+\.md)(#[\w-]+)?"/',
         static function (array $m) use ($linkMap) {
             $target = $linkMap[$m[1]] ?? $m[1];
 
@@ -405,15 +489,30 @@ foreach ($chapters as &$chapter) {
 
     preg_match_all('/<h2 id="([\w-]+)">(.*?)<\/h2>/', $html, $tocMatches, PREG_SET_ORDER);
     foreach ($tocMatches as $match) {
-        $chapter['toc'][] = ['id' => $match[1], 'text' => $match[2]];
+        $page['toc'][] = ['id' => $match[1], 'text' => $match[2]];
     }
 
-    $chapter['bodyHtml'] = $html;
+    $page['bodyHtml'] = $html;
 
-    $paragraph = first_paragraph_text($html);
-    $chapter['description'] = $paragraph !== null ? truncate_description($paragraph) : $siteDescription;
+    if (! empty($frontmatter['description'])) {
+        $page['description'] = $frontmatter['description'];
+    } else {
+        $paragraph = first_paragraph_text($html);
+        $page['description'] = $paragraph !== null ? truncate_description($paragraph) : $siteDescription;
+    }
+
+    return $page;
+}
+
+foreach ($chapters as &$chapter) {
+    $chapter = process_page($chapter, $converter, $linkMap, $siteDescription);
 }
 unset($chapter);
+
+foreach ($posts as &$post) {
+    $post = process_page($post, $converter, $linkMap, $siteDescription);
+}
+unset($post);
 
 // --- highlight every collected code block in one batch ---
 
@@ -522,6 +621,8 @@ $ogImageUrl = $siteUrl.'/assets/images/'.$ogImageFile;
  */
 function build_structured_data(array $chapter, string $pageUrl, string $siteName, string $siteDescription, string $siteUrl, string $repoUrl, string $ogImageUrl): string
 {
+    $section = $chapter['section'] ?? 'Documentation';
+
     $graph = [
         [
             '@context' => 'https://schema.org',
@@ -530,6 +631,7 @@ function build_structured_data(array $chapter, string $pageUrl, string $siteName
             'description' => $chapter['description'],
             'url' => $pageUrl,
             'image' => $ogImageUrl,
+            ...(empty($chapter['published']) ? [] : ['datePublished' => $chapter['published']]),
             'isPartOf' => [
                 '@type' => 'WebSite',
                 'name' => $siteName,
@@ -539,10 +641,15 @@ function build_structured_data(array $chapter, string $pageUrl, string $siteName
         [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
-            'itemListElement' => [
-                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Documentation', 'item' => $siteUrl.'/'],
-                ['@type' => 'ListItem', 'position' => 2, 'name' => $chapter['title'], 'item' => $pageUrl],
-            ],
+            // A section's own index page (e.g. the blog archive) has the
+            // section name as its title too — a two-level trail would read
+            // "Blog > Blog", so it collapses to one.
+            'itemListElement' => $chapter['title'] === $section
+                ? [['@type' => 'ListItem', 'position' => 1, 'name' => $chapter['title'], 'item' => $pageUrl]]
+                : [
+                    ['@type' => 'ListItem', 'position' => 1, 'name' => $section, 'item' => $siteUrl.'/'],
+                    ['@type' => 'ListItem', 'position' => 2, 'name' => $chapter['title'], 'item' => $pageUrl],
+                ],
         ],
     ];
 
@@ -563,7 +670,7 @@ function build_structured_data(array $chapter, string $pageUrl, string $siteName
     return '<script type="application/ld+json">'.$json.'</script>';
 }
 
-function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $siteUrl, string $ogImageUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName, string $robotsMeta = ''): string
+function render_page(array $chapter, array $chapters, string $bodyHtml, string $siteName, string $siteDescription, string $repoUrl, string $twitterUrl, string $siteUrl, string $ogImageUrl, bool $algoliaConfigured, ?string $algoliaAppId, ?string $algoliaApiKey, ?string $algoliaIndexName, string $robotsMeta = ''): string
 {
     $total = count($chapters);
 
@@ -575,6 +682,19 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
             'TITLE' => htmlspecialchars($c['title'], ENT_QUOTES),
         ])."\n";
     }
+
+    // The blog's own sidebar entry, not a per-post listing that would only
+    // grow — it's just current whenever we're anywhere in that section.
+    $section = $chapter['section'] ?? 'Documentation';
+    $blogCurrent = $section === 'Blog' ? ' aria-current="page"' : '';
+
+    // A section's own index page (e.g. the blog archive) isn't itself a
+    // dated article — only its posts are.
+    $isBlogPost = $section === 'Blog' && $chapter['title'] !== $section;
+    $ogType = $isBlogPost ? 'article' : 'website';
+    $articleMeta = $isBlogPost && ! empty($chapter['published'])
+        ? '<meta property="article:published_time" content="'.htmlspecialchars($chapter['published'], ENT_QUOTES).'">'
+        : '';
 
     // Synthetic pages (e.g. 404) aren't part of the chapter sequence and
     // carry no 'number', so they get no pager.
@@ -640,14 +760,19 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
 
     return render_template('page', [
         'TITLE' => htmlspecialchars($chapter['title'], ENT_QUOTES),
+        'TITLE_HTML' => $chapter['titleHtml'] ?? htmlspecialchars($chapter['title'], ENT_QUOTES),
         'SITE_NAME' => $siteName,
         'DESCRIPTION' => htmlspecialchars($description, ENT_QUOTES),
         'REPO_URL' => $repoUrl,
         'PAGE_URL' => htmlspecialchars($pageUrl, ENT_QUOTES),
         'OG_IMAGE_URL' => htmlspecialchars($ogImageUrl, ENT_QUOTES),
+        'OG_TYPE' => $ogType,
+        'ARTICLE_META' => $articleMeta,
         'ROBOTS_META' => $robotsMeta,
         'STRUCTURED_DATA' => $structuredData,
         'SIDEBAR_ITEMS' => $sidebarItems,
+        'BLOG_CURRENT' => $blogCurrent,
+        'TWITTER_URL' => htmlspecialchars($twitterUrl, ENT_QUOTES),
         'BODY' => $bodyHtml,
         'PAGER' => $prevLink.$nextLink,
         'TOC_SECTION' => $tocSection,
@@ -656,13 +781,52 @@ function render_page(array $chapter, array $chapters, string $bodyHtml, string $
     ])."\n";
 }
 
+mkdir($siteDir.'/blog', 0755, true);
+
 foreach ($chapters as $chapter) {
     $bodyHtml = apply_torchlight($chapter['bodyHtml'], $collector->blocks, $torchlightResults);
-    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
+    $page = render_page($chapter, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $twitterUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
 
     file_put_contents($siteDir.'/'.$chapter['htmlFile'], $page);
     echo "wrote {$chapter['htmlFile']}\n";
 }
+
+foreach ($posts as $post) {
+    $bodyHtml = apply_torchlight($post['bodyHtml'], $collector->blocks, $torchlightResults);
+    $page = render_page($post, $chapters, $bodyHtml, $siteName, $siteDescription, $repoUrl, $twitterUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
+
+    file_put_contents($siteDir.'/'.$post['htmlFile'], $page);
+    echo "wrote {$post['htmlFile']}\n";
+}
+
+// --- blog archive page: every post, newest first, no dates shown ---
+
+$archiveItems = '';
+$archiveToc = [];
+foreach ($posts as $post) {
+    $slug = basename($post['htmlFile'], '.html');
+    $archiveItems .= render_template('archive-item', [
+        'ID' => $slug,
+        'HREF' => clean_url($post['htmlFile']),
+        'TITLE' => htmlspecialchars($post['title'], ENT_QUOTES),
+        'DESCRIPTION' => htmlspecialchars($post['description'], ENT_QUOTES),
+    ])."\n";
+    $archiveToc[] = ['id' => $slug, 'text' => htmlspecialchars($post['title'], ENT_QUOTES)];
+}
+
+$blogIndex = [
+    'htmlFile' => 'blog/index.html',
+    'section' => 'Blog',
+    'published' => $posts ? $posts[0]['published'] : date('Y-m-d'),
+    'title' => 'Blog',
+    'description' => 'Long-form answers to real questions about Double.',
+    'bodyHtml' => render_template('archive-list', ['ITEMS' => $archiveItems]),
+    'toc' => $archiveToc,
+];
+
+$blogIndexPage = render_page($blogIndex, $chapters, $blogIndex['bodyHtml'], $siteName, $siteDescription, $repoUrl, $twitterUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName);
+file_put_contents($siteDir.'/'.$blogIndex['htmlFile'], $blogIndexPage);
+echo "wrote {$blogIndex['htmlFile']}\n";
 
 // --- robots.txt, sitemap.xml, llms.txt, llms-full.txt ---
 
@@ -676,9 +840,9 @@ TXT);
 echo "wrote robots.txt\n";
 
 $sitemapUrls = '';
-foreach ($chapters as $chapter) {
-    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
-    $lastmod = date('Y-m-d', filemtime($chapter['file']));
+foreach ([...$chapters, ...$posts, $blogIndex] as $item) {
+    $pageUrl = rtrim($siteUrl, '/').clean_url($item['htmlFile']);
+    $lastmod = $item['published'] ?? date('Y-m-d', filemtime($item['file']));
     $sitemapUrls .= "  <url>\n    <loc>{$pageUrl}</loc>\n    <lastmod>{$lastmod}</lastmod>\n  </url>\n";
 }
 $sitemapXml = <<<XML
@@ -695,6 +859,13 @@ foreach ($chapters as $chapter) {
     $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
     $llmsLinks .= "- [{$chapter['title']}]({$pageUrl}): {$chapter['description']}\n";
 }
+
+$llmsPostLinks = '';
+foreach ($posts as $post) {
+    $pageUrl = rtrim($siteUrl, '/').clean_url($post['htmlFile']);
+    $llmsPostLinks .= "- [{$post['title']}]({$pageUrl}): {$post['description']}\n";
+}
+
 $llmsTxt = <<<TXT
 # {$siteName}
 
@@ -703,14 +874,17 @@ $llmsTxt = <<<TXT
 ## Docs
 
 {$llmsLinks}
+## Blog
+
+{$llmsPostLinks}
 TXT;
 file_put_contents($siteDir.'/llms.txt', $llmsTxt);
 echo "wrote llms.txt\n";
 
 $llmsFullSections = [];
-foreach ($chapters as $chapter) {
-    $markdown = trim(file_get_contents($chapter['file']));
-    $pageUrl = rtrim($siteUrl, '/').clean_url($chapter['htmlFile']);
+foreach ([...$chapters, ...$posts] as $item) {
+    $markdown = trim(file_get_contents($item['file']));
+    $pageUrl = rtrim($siteUrl, '/').clean_url($item['htmlFile']);
     $llmsFullSections[] = "<!-- {$pageUrl} -->\n\n{$markdown}";
 }
 $llmsFullTxt = "# {$siteName}\n\n> {$siteDescription}\n\n".implode("\n\n---\n\n", $llmsFullSections)."\n";
@@ -727,6 +901,6 @@ $notFoundChapter = [
 ];
 $notFoundBody = '<p>The page you\'re looking for doesn\'t exist or has moved. Try the '
     .'<a href="/">introduction</a> or use search to find what you need.</p>';
-$notFoundPage = render_page($notFoundChapter, $chapters, $notFoundBody, $siteName, $siteDescription, $repoUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName, '<meta name="robots" content="noindex">');
+$notFoundPage = render_page($notFoundChapter, $chapters, $notFoundBody, $siteName, $siteDescription, $repoUrl, $twitterUrl, $siteUrl, $ogImageUrl, $algoliaConfigured, $algoliaAppId, $algoliaApiKey, $algoliaIndexName, '<meta name="robots" content="noindex">');
 file_put_contents($siteDir.'/404.html', $notFoundPage);
 echo "wrote 404.html\n";
