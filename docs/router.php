@@ -8,7 +8,6 @@
  * resolution at all — an unmatched path just falls through to the nearest
  * `index.html` above it, silently serving the wrong page.
  */
-
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 $docroot = __DIR__.'/build';
 
