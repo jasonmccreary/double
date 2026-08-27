@@ -14,26 +14,26 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What a good failure message looks like · Double</title>
+<title>What does a good failure message look like · Double</title>
 <meta name="description" content="A close read of a real Double failure message, piece by piece.">
 
-<link rel="canonical" href="https://testdoublephp.com/blog/what-a-good-failure-message-looks-like">
+<link rel="canonical" href="https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Double">
-<meta property="og:title" content="What a good failure message looks like · Double">
+<meta property="og:title" content="What does a good failure message look like · Double">
 <meta property="og:description" content="A close read of a real Double failure message, piece by piece.">
-<meta property="og:url" content="https://testdoublephp.com/blog/what-a-good-failure-message-looks-like">
+<meta property="og:url" content="https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like">
 <meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="article:published_time" content="2026-08-24">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="What a good failure message looks like · Double">
+<meta name="twitter:title" content="What does a good failure message look like · Double">
 <meta name="twitter:description" content="A close read of a real Double failure message, piece by piece.">
 <meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="icon" type="image/svg+xml" href="/assets/images/double-favicon.svg">
-<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"What a good failure message looks like","description":"A close read of a real Double failure message, piece by piece.","url":"https:\/\/testdoublephp.com\/blog\/what-a-good-failure-message-looks-like","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","datePublished":"2026-08-24","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Blog","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"What a good failure message looks like","item":"https:\/\/testdoublephp.com\/blog\/what-a-good-failure-message-looks-like"}]}]</script>
+<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"What does a good failure message look like","description":"A close read of a real Double failure message, piece by piece.","url":"https:\/\/testdoublephp.com\/blog\/what-does-a-good-failure-message-look-like","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","datePublished":"2026-08-24","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Blog","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"What does a good failure message look like","item":"https:\/\/testdoublephp.com\/blog\/what-does-a-good-failure-message-look-like"}]}]</script>
 </head>
 <body class="antialiased">
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
@@ -100,7 +100,7 @@
   <main class="content">
     <div class="content-inner">
       <article class="prose">
-        <h1 class="page-title">What a good failure message looks like</h1>
+        <h1 class="page-title">What does a good failure message look like</h1>
 <p>Most test doubles fail the same way: they tell you <em>that</em> something went wrong and leave you to figure out <em>what</em>. You get a boolean, a stack trace pointing at the library's internals instead of your test, or a dump of an object graph you now have to diff by eye. <a href="https://github.com/jasonmccreary/double">Double</a> treats that moment differently — the failure message is the product, not an afterthought.</p>
 <p>Here's a real one, produced by a genuinely common mistake — an expectation that's close, but not quite right:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `UserRepository` expected `update(42, 'jane@example.com', 'admin', true)` to be called exactly 1 time, but it was never called.

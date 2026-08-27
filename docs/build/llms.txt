@@ -17,6 +17,6 @@
 
 ## Blog
 
-- [What a good failure message looks like](https://testdoublephp.com/blog/what-a-good-failure-message-looks-like): A close read of a real Double failure message, piece by piece.
+- [What does a good failure message look like](https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like): A close read of a real Double failure message, piece by piece.
 - [How is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery): A reply to a question from r/PHP on what actually improves once you move from Mockery to Double.
 - [Why not `hasReceived()` or `assertReceived()`?](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived): Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.
