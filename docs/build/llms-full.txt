@@ -1073,12 +1073,12 @@ Every exception's wording lives in one place: its `*Fields` trait in `src/Except
 <!-- https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like -->
 
 ---
-title: What does a good failure message look like
+title: What does a good failure message look like?
 description: A close read of a real Double failure message, piece by piece.
 published: 2026-08-24
 ---
 
-# What does a good failure message look like
+# What does a good failure message look like?
 
 Most test doubles fail the same way: they tell you *that* something went wrong and leave you to figure out *what*. You get a boolean, a stack trace pointing at the library's internals instead of your test, or a dump of an object graph you now have to diff by eye. [Double](https://github.com/jasonmccreary/double) treats that moment differently — the failure message is the product, not an afterthought.
 
