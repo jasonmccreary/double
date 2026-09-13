@@ -43,7 +43,7 @@ trait AmbiguousExpectationFields
     {
         $message = sprintf(
             "Double `%s` has `%s(%s)` registered %s. This looks like an attempt to return values in sequence. To be explicit about the order, combine them into one expectation instead.\n\n".
-            "For example: `%s(...)->times(%d)->returns(...)`.",
+            'For example: `%s(...)->times(%d)->returns(...)`.',
             $label,
             $ambiguity->method,
             $ambiguity->argumentsDescription,
@@ -64,7 +64,7 @@ trait AmbiguousExpectationFields
 
         $message = sprintf(
             "%s registered ambiguously on double `%s`:\n\n%s\n\n".
-            "Each looks like an attempt to return values in sequence. To be explicit about the order, combine each into one expectation instead, using `times(n)->returns(...)`.",
+            'Each looks like an attempt to return values in sequence. To be explicit about the order, combine each into one expectation instead, using `times(n)->returns(...)`.',
             Pluralizer::pluralize($count, 'method was', 'methods were'),
             $label,
             implode("\n", array_map(

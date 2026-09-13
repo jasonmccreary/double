@@ -21,6 +21,6 @@ use PHPUnit\Framework\AssertionFailedError;
  */
 final class PHPUnitAmbiguousExpectationException extends AssertionFailedError implements Diagnostic
 {
-    use SelfDiagnosing;
     use AmbiguousExpectationFields;
+    use SelfDiagnosing;
 }
