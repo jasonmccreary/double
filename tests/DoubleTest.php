@@ -13,6 +13,7 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitAmbiguousExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitOutOfOrderCallException;
@@ -388,28 +389,83 @@ final class DoubleTest extends TestCase
         $double->verify();
     }
 
-    public function test_stacking_separate_expectations_for_the_same_method_and_args_no_longer_throws(): void
+    public function test_stacking_separate_expectations_for_the_same_method_and_args_is_rejected_as_ambiguous(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
         $first = new Book('First');
         $second = new Book('Second');
 
-        // The direct Mockery habit: two separate expectation objects for
-        // the same method+args, meant to be consumed one after another.
-        // This used to throw on the second call, since matching always
-        // re-picked the same (already-exhausted) most-recently-registered
-        // expectation instead of falling through to the one registered
-        // before it. `times()->returns(...)` (see
+        // The direct Mockery habit: two separate expectation objects for the
+        // same method+args, meant to be consumed one after another. Matching
+        // is most-recently-registered first (see ProxyBehavior::findMatch()),
+        // so this silently hands back values in the reverse of registration
+        // order rather than in sequence — verify() now catches that shape
+        // instead of letting it pass quietly. `times()->returns(...)` (see
         // test_sequential_returns_hold_at_the_last_value_on_further_calls())
-        // stays the documented idiom for this — note that registration
-        // order isn't preserved as call order here: the more-recently
-        // registered expectation still wins first, for as long as it has
-        // room.
+        // is the documented idiom for a real sequence of answers.
         $double->expects('find')->with(1)->returns($first);
         $double->expects('find')->with(1)->returns($second);
 
         $this->assertSame($second, $double->find(1));
         $this->assertSame($first, $double->find(1));
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `find(1)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_stacking_unconstrained_expects_for_the_same_method_is_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        // No with() at all on either side — the bare Mockery-conversion shape:
+        // repeating expects() with no arguments to try to get a sequence of
+        // answers.
+        $double->expects('save')->returns(true);
+        $double->expects('save')->returns(false);
+
+        $this->assertFalse($double->save(new Book('Anything')));
+        $this->assertTrue($double->save(new Book('Anything')));
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `save(any arguments)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_an_unconstrained_fallback_paired_with_a_narrower_override_is_not_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $default = new Book('Default');
+        $specific = new Book('Specific');
+
+        // Same method, but the fallback is unconstrained and unbounded
+        // (allows()'s default) while the override is narrower — the
+        // legitimate "default, then carve out an exception" idiom, which
+        // relies on differing matching rather than call limits.
+        $double->allows('find')->returns($default);
+        $double->allows('find')->with(123)->returns($specific);
+
+        $this->assertSame($specific, $double->find(123));
+        $this->assertSame($default, $double->find(456));
+
+        $double->verify();
+    }
+
+    public function test_an_unbounded_allows_paired_with_a_finite_expects_on_identical_matching_is_not_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $book = new Book('Title');
+
+        // Same method, identical (unconstrained) matching, but one side is
+        // left unbounded — mixing expects()/allows() doesn't matter, only
+        // whether every member of the group has its own finite call limit.
+        $double->allows('save')->returns(true);
+        $double->expects('save')->returns(false);
+
+        $double->save($book);
+        $double->save($book);
 
         $double->verify();
     }

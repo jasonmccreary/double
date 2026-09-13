@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\AmbiguousExpectation;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 
 /**
@@ -261,6 +262,52 @@ final class DoubleState
             $this->expectations,
             static fn (MethodExpectation $expectation): bool => ! $expectation->isSatisfied(),
         ));
+    }
+
+    /**
+     * Groups of two or more expectations registered for the same method,
+     * with identical argument matching, that each carry their own finite
+     * call limit — see AmbiguousExpectation's docblock for why this shape
+     * specifically (and not the legitimate unconstrained-fallback-plus-
+     * narrower-override idiom, which always differs in matching or leaves
+     * the fallback unbounded) is worth flagging at verify() time.
+     *
+     * @return list<AmbiguousExpectation>
+     */
+    public function ambiguousExpectations(): array
+    {
+        $bySignature = [];
+
+        foreach ($this->expectations as $expectation) {
+            $key = $expectation->method()."\0".$expectation->describeArguments();
+            $bySignature[$key]['method'] ??= $expectation->method();
+            $bySignature[$key]['arguments'] ??= $expectation->describeArguments();
+            $bySignature[$key]['members'][] = $expectation;
+        }
+
+        $ambiguities = [];
+
+        foreach ($bySignature as $group) {
+            if (count($group['members']) < 2) {
+                continue;
+            }
+
+            $allFinite = true;
+
+            foreach ($group['members'] as $expectation) {
+                if (! $expectation->hasFiniteCallLimit()) {
+                    $allFinite = false;
+
+                    break;
+                }
+            }
+
+            if ($allFinite) {
+                $ambiguities[] = new AmbiguousExpectation($group['method'], $group['arguments'], count($group['members']));
+            }
+        }
+
+        return $ambiguities;
     }
 
     /**

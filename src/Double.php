@@ -266,12 +266,21 @@ final class Double
     private static function verifyState(DoubleState $state): void
     {
         $unmet = $state->unmetExpectations();
+        $ambiguous = $state->ambiguousExpectations();
 
-        if ($unmet === []) {
+        if ($unmet === [] && $ambiguous === []) {
             PhpUnitIntegration::registerPass();
             self::notify(new CheckEvent($state->label(), method: null, passed: true, failure: null));
 
             return;
+        }
+
+        // Checked first: an ambiguous registration is a configuration
+        // mistake that can also masquerade as (or mask) an unmet-expectation
+        // failure downstream, so it's reported as the root cause rather than
+        // alongside whatever symptom it produced.
+        if ($ambiguous !== []) {
+            throw ExceptionFactory::ambiguousExpectations($state->label(), $ambiguous, $state->isFabricated());
         }
 
         throw ExceptionFactory::unsatisfiedExpectation(
