@@ -13,7 +13,7 @@ use JMac\Testing\Engine\ReceivedAssertion;
  * declaring its own `allows()`). The double it wraps implements only
  * $target's real interface — no control verbs mixed in at all, since at
  * least one of those names is already spoken for by $target's own real
- * method. This class exists to carry the seven verbs instead, so call-site
+ * method. This class exists to carry the eight verbs instead, so call-site
  * ergonomics stay identical to any other double
  * (`$gate->expects('allows')->with('foo')->returns(true)`); every method
  * here just forwards to the same `Double::` internals

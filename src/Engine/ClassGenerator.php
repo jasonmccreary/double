@@ -17,7 +17,7 @@ use JMac\Testing\Exceptions\ReservedNameCollisionException;
  */
 final class ClassGenerator
 {
-    private const RESERVED_METHODS = ['expects', 'allows', 'strict', 'passthru', 'received', 'unused', 'verify'];
+    private const RESERVED_METHODS = ['instance', 'expects', 'allows', 'strict', 'passthru', 'received', 'unused', 'verify'];
 
     /**
      * Magic methods with a fixed, reflectable signature — a real single entry
@@ -290,13 +290,13 @@ final class ClassGenerator
 
         // An ordinary generated double implements DoubleInterface for real,
         // not just as a docblock fiction for Double::for()'s
-        // @template/@return pairing — every one of the seven control verbs
+        // @template/@return pairing — every one of the eight control verbs
         // is a real, callable method. A bare (override-collision) double
         // can't do that: at least one of those verb names is a real method
         // the target itself declares, so DoubleControlMethods is never
         // mixed in at all, and the double only promises IdentifiableDouble
         // — real identity tracking, nothing else. Double::for() wraps it in
-        // OverriddenDouble, which is what actually carries the seven verbs
+        // OverriddenDouble, which is what actually carries the eight verbs
         // for this double, forwarding each one back to the double this
         // builds. A single-class target uses `extends`, so the interface
         // needs its own `implements` clause; an interface target already

@@ -9,14 +9,26 @@ use JMac\Testing\Double;
 /**
  * @internal
  *
- * Mixed into every generated double by ClassGenerator. These seven methods
- * (expects, allows, strict, passthru, received, unused, verify) are the
+ * Mixed into every generated double by ClassGenerator. These eight methods
+ * (instance, expects, allows, strict, passthru, received, unused, verify) are the
  * reserved control API — ClassGenerator's collision check runs before a
  * double using this trait is ever generated.
  */
 trait DoubleControlMethods
 {
     use DoubleIdentity;
+
+    /**
+     * Here purely for symmetry with `OverriddenDouble::instance()` — an
+     * ordinary double already *is* the target-shaped instance, so this just
+     * hands back `$this`. Lets call sites reach for `->instance()` without
+     * caring whether `Double::for()` handed back an ordinary double or an
+     * `OverriddenDouble` wrapper.
+     */
+    public function instance(): static
+    {
+        return $this;
+    }
 
     public function expects(string $method): MethodExpectation
     {

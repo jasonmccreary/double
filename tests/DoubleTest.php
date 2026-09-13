@@ -73,6 +73,19 @@ final class DoubleTest extends TestCase
     }
 
     /**
+     * Symmetry with OverriddenDouble::instance(): an ordinary double already
+     * is the target-shaped instance, so ->instance() just hands back $this,
+     * letting call sites reach for it regardless of which kind of double
+     * Double::for() returned.
+     */
+    public function test_instance_returns_the_double_itself(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        $this->assertSame($double, $double->instance());
+    }
+
+    /**
      * The end-to-end proof that Double::bypassFinals() actually works: a
      * target that would otherwise be rejected by
      * InvalidDoubleTargetException::isFinal() (see

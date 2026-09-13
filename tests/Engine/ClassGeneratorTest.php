@@ -28,6 +28,7 @@ use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\HookedPropertyInterface;
+use JMac\Testing\Tests\Support\InstanceCollisionInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\InvokableInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
@@ -355,6 +356,7 @@ final class ClassGeneratorTest extends TestCase
 
     public static function reservedNameFixtures(): iterable
     {
+        yield 'instance' => [InstanceCollisionInterface::class, 'instance'];
         yield 'expects' => [ExpectsCollisionInterface::class, 'expects'];
         yield 'allows' => [AllowsCollisionInterface::class, 'allows'];
         yield 'strict' => [StrictCollisionInterface::class, 'strict'];
@@ -411,7 +413,7 @@ final class ClassGeneratorTest extends TestCase
     /**
      * override: true and override: false for the exact same colliding
      * target must never share a cached generated class — they're
-     * structurally different (one carries the seven control verbs, the
+     * structurally different (one carries the eight control verbs, the
      * other doesn't), so caching them under the same key would make
      * behavior depend on which one happened to run first in the process.
      */

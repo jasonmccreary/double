@@ -116,7 +116,7 @@ final class Double
      * this existed. `override: true` breaks the T&DoubleInterface promise
      * too, deliberately: when $target actually has a reserved-name
      * collision, the return is an `OverriddenDouble` instead, which carries
-     * the same seven verbs but isn't $target-shaped — see that class's own
+     * the same eight verbs but isn't $target-shaped — see that class's own
      * docblock.
      *
      * `override` accepts `bool` in the variadic's own type only so it can be

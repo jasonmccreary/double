@@ -7,7 +7,7 @@ namespace JMac\Testing\Exceptions;
 /**
  * Thrown at Double::for() time when the target declares a real public
  * method with the same name as one of Double's own control verbs
- * (expects, allows, strict, passthru, received, unused, verify) — a deliberate,
+ * (instance, expects, allows, strict, passthru, received, unused, verify) — a deliberate,
  * permanent trade-off (see DoubleControlMethods), not a later hardening pass.
  * `Double::for($target, override: true)` is the escape hatch (see
  * OverriddenDouble) — named directly in the message below rather than left

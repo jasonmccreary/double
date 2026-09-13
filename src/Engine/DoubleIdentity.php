@@ -8,7 +8,7 @@ namespace JMac\Testing\Engine;
  * @internal
  *
  * Mixed into every generated double, `override` mode included — identity
- * tracking has to survive independent of whether the seven control verbs
+ * tracking has to survive independent of whether the eight control verbs
  * (`DoubleControlMethods`) do, since an `override`-generated double
  * deliberately omits those. Split out from `DoubleControlMethods` for
  * exactly that reason: two dunder-prefixed methods and a property, never

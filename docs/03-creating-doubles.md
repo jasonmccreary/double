@@ -45,10 +45,10 @@ Every double is given a label, derived from its class or interface name. `BookRe
 
 ## Reserved Method Names
 
-Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that seven method names are reserved on every double:
+Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that eight method names are reserved on every double:
 
 ```
-expects, allows, strict, passthru, received, unused, verify
+instance, expects, allows, strict, passthru, received, unused, verify
 ```
 
 If the class or interface you're doubling declares a real method with one of these names, `Double::for()` throws right away, naming the exact method:
@@ -87,6 +87,8 @@ $service = new PolicyChecker($gate->instance());
 ```
 
 `strict()`, `passthru()`, `received()`, `unused()`, and `verify()` all work exactly as they do on any other double, called on the wrapper the same way `expects()` is above.
+
+`instance()` works on an ordinary double too — it just hands back `$this`, since an ordinary double already is the target-shaped instance. That means `->instance()` is always safe to call, whether or not `Double::for()` actually needed `override` for a given target.
 
 `override: true` only changes anything when there's actually a collision to route around. Passed against a class with none, it's a no-op — `for()` returns the exact same double it always would. It also only supports a single target; combined with more than one target passed to `for()`, it's rejected.
 
