@@ -12,8 +12,9 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
  *
  * Holds everything about one double: the target it was created for, its
  * display label, its mode, every expectation registered against it (in
- * registration order, since matching prefers the last-registered candidate
- * that both matches and still has remaining call capacity — see
+ * registration order — matching tries every specific candidate before any
+ * generic one, and within each of those tiers prefers the last-registered
+ * candidate that both matches and still has remaining call capacity, see
  * ProxyBehavior::findMatch()), and every call actually observed, regardless
  * of whether it matched anything.
  */

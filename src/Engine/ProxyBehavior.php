@@ -68,19 +68,45 @@ final class ProxyBehavior
         return $expectation->resolveReturn($arguments);
     }
 
-    // Last-registered expectation whose arguments match *and still has room
-    // under its own times()/maximumCalls() budget* wins, falling through to
-    // less-recently-registered candidates once one is exhausted. Only once
-    // every matching candidate is exhausted does the most-recently-registered
-    // one get reused, purely so the "exceeds maximum" error still has a
-    // concrete expectation to report against.
+    // Specific candidates (see MethodExpectation::isSpecific()) are tried
+    // before generic ones, regardless of registration order — a with(123)
+    // expectation wins a foo(123) call whether it was registered before or
+    // after a bare foo(). Within each of those two tiers, matching is
+    // last-registered first, falling through to less-recently-registered
+    // candidates in that same tier once one is exhausted. A single fallback
+    // is carried across both tiers so that if nothing anywhere still has
+    // room, the "exceeds maximum" error still has a concrete expectation to
+    // report against — whichever exhausted candidate the scan happened to
+    // reach last, with no attempt to prefer the specific one, since it may
+    // already have been satisfied correctly and isn't the real culprit.
     /**
      * @param  list<MethodExpectation>  $candidates
      */
     private static function findMatch(array $candidates, array $arguments): ?MethodExpectation
     {
+        $specific = [];
+        $generic = [];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate->isSpecific()) {
+                $specific[] = $candidate;
+            } else {
+                $generic[] = $candidate;
+            }
+        }
+
         $fallback = null;
 
+        return self::findMatchInTier($specific, $arguments, $fallback)
+            ?? self::findMatchInTier($generic, $arguments, $fallback)
+            ?? $fallback;
+    }
+
+    /**
+     * @param  list<MethodExpectation>  $candidates  one tier only (see findMatch())
+     */
+    private static function findMatchInTier(array $candidates, array $arguments, ?MethodExpectation &$fallback): ?MethodExpectation
+    {
         for ($i = count($candidates) - 1; $i >= 0; $i--) {
             if (! $candidates[$i]->matchesArguments($arguments)) {
                 continue;
@@ -93,7 +119,7 @@ final class ProxyBehavior
             $fallback ??= $candidates[$i];
         }
 
-        return $fallback;
+        return null;
     }
 
     /**

@@ -8,6 +8,7 @@ use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Diagnostics\StringDiffer;
 use JMac\Testing\Diagnostics\ValueFormatter;
 use JMac\Testing\Matching\AllMatcher;
+use JMac\Testing\Matching\AnyMatcher;
 use JMac\Testing\Matching\CaptureMatcher;
 use JMac\Testing\Matching\EqualsMatcher;
 use JMac\Testing\Matching\Matcher;
@@ -484,6 +485,33 @@ final class MethodExpectation
         return $this->argumentConstraints === null
             ? 'any arguments'
             : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
+    }
+
+    /**
+     * Whether this expectation pins down at least one argument to something
+     * narrower than "anything" — the signal ProxyBehavior::findMatch() uses
+     * to try every specific candidate before falling back to generic ones,
+     * regardless of registration order. No with() at all, or with() made up
+     * entirely of Argument::any(), both mean "this call matches no matter
+     * what the arguments are" and so count as generic; any other matcher
+     * (including one mixed in alongside any()) counts as specific. Matchers
+     * are not compared against each other for how narrow they are — two
+     * specific expectations still fall back to plain registration order
+     * between themselves.
+     */
+    public function isSpecific(): bool
+    {
+        if ($this->argumentConstraints === null) {
+            return false;
+        }
+
+        foreach ($this->argumentConstraints as $constraint) {
+            if (! $constraint instanceof AnyMatcher) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function describeExpectedBound(): string
