@@ -50,13 +50,7 @@
         </g>
       </svg>
     </a>
-<div class="topbar-search">
-  <button type="button" class="search-trigger" id="search-trigger" aria-label="Search documentation">
-    <svg class="search-trigger-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M17.25 17.25l-3.75-3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <span class="search-trigger-text">Search</span>
-    <span class="search-trigger-key">&#8984;K</span>
-  </button>
-</div>
+
     <label for="nav-toggle" class="menu-btn" aria-label="Toggle navigation">
       <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
       <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -102,7 +96,8 @@
       <article class="prose">
         <h1 class="page-title">Installation</h1>
 <p>You may install this library as a development dependency with Composer:</p>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">sh</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-sh torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #D6DEEB;">composer </span><span style="color: #ECC48D;">require</span><span style="color: #D6DEEB;"> </span><span style="color: #82AAFF;">--dev</span><span style="color: #D6DEEB;"> </span><span style="color: #ECC48D;">jasonmccreary/double</span></div></code></pre></div>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">sh</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-sh">composer require --dev jasonmccreary/double
+</code></pre></div>
 <h2 id="requirements">Requirements</h2>
 <p>This library needs PHP 8.3 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner. The core library doesn't know or care what's running your tests.</p>
 <h2 id="test-suite-integration">Test Suite Integration</h2>
@@ -113,7 +108,17 @@
 </ul>
 <p>None of this requires configuration. It's detected the moment your tests run. The full details live in <a href="/test-suite-integration">Test Suite Integration</a>. If you're using another test runner, or none at all, everything still works the same way; you just call <code>$double-&gt;verify()</code> yourself, as shown in <a href="/verification">Verification</a>.</p>
 <h2 id="confirming-it-works">Confirming It Works</h2>
-<div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #D3423E;">&lt;?php</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\</span><span style="color: #FFCB8B;">Double</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #C792EA;">require</span><span style="color: #D6DEEB;"> </span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">vendor/autoload.php</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$double</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">Double</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">for</span><span style="color: #D6DEEB;">(</span><span style="color: #C5E478;">Countable</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$double</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">count</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">3</span><span style="color: #D6DEEB;">);</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #C5E478;">var_dump</span><span style="color: #D6DEEB;">($</span><span style="color: #BEC5D4;">double</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">count</span><span style="color: #D6DEEB;">()); </span><span style="color: #637777;">//</span><span style="color: #637777;"> int(3)</span></div></code></pre></div>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php">&lt;?php
+
+use JMac\Testing\Double;
+
+require 'vendor/autoload.php';
+
+$double = Double::for(Countable::class);
+$double-&gt;allows('count')-&gt;returns(3);
+
+var_dump($double-&gt;count()); // int(3)
+</code></pre></div>
 <p>If that prints <code>int(3)</code>, you're ready to go. Head over to <a href="/creating-doubles">Creating Doubles</a> to see what a real one looks like.</p>
 
       </article>
@@ -139,8 +144,6 @@
     <span class="footer-spacer">jasonmccreary/test-double</span>
   </div>
 </footer>
-<script>window.__ALGOLIA__ = { appId: "T3KLDPZVAB", apiKey: "6b7aeb53848746a6dbf5aeec73613683", indexName: "Test Double" };</script>
-<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js" defer></script>
 
 <script src="/assets/site.js" defer></script>
 </body>
