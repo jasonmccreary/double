@@ -1,0 +1,64 @@
+name: Rebuild Docs
+
+# Reference docs (everything except docs/blog/**) describe released
+# behavior, so they're only rebuilt when a version tag is cut — never ahead
+# of what's actually on Packagist. Blog posts aren't reference material, so
+# they get their own trigger and can publish independent of a release.
+#
+# docs/build/** is committed straight to master (no PR) since Cloudflare
+# Pages deploys on any push to that path — this workflow's commit IS the
+# deploy trigger.
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches: [ master ]
+    paths:
+      - 'docs/blog/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    name: Rebuild docs/build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Install docs dependencies
+        working-directory: docs
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Build docs
+        working-directory: docs
+        env:
+          TORCHLIGHT_TOKEN: ${{ secrets.TORCHLIGHT_TOKEN }}
+          ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
+          ALGOLIA_SEARCH_API_KEY: ${{ secrets.ALGOLIA_SEARCH_API_KEY }}
+          ALGOLIA_INDEX_NAME: ${{ secrets.ALGOLIA_INDEX_NAME }}
+        run: composer build
+
+      - name: Commit rebuilt docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/build
+          if git diff --cached --quiet; then
+            echo "docs/build already up to date"
+            exit 0
+          fi
+          git commit -m "Rebuild docs for ${GITHUB_REF_NAME}"
+          git push origin HEAD:master

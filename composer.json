@@ -16,6 +16,12 @@
             "email": "jason@pureconcepts.net"
         }
     ],
+    "homepage": "https://testdoublephp.com",
+    "support": {
+        "docs": "https://testdoublephp.com",
+        "issues": "https://github.com/jasonmccreary/double/issues",
+        "source": "https://github.com/jasonmccreary/double"
+    },
     "require": {
         "php": "^8.3"
     },

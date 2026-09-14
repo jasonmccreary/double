@@ -1,7 +1,18 @@
 * text=auto eol=lf
 
 /.github export-ignore
-/docs export-ignore
+/docs/*.md export-ignore
+/docs/.gitignore export-ignore
+/docs/bin export-ignore
+/docs/blog export-ignore
+/docs/composer.json export-ignore
+/docs/router.php export-ignore
+/docs/templates export-ignore
+/docs/build/*.html export-ignore
+/docs/build/assets export-ignore
+/docs/build/blog export-ignore
+/docs/build/robots.txt export-ignore
+/docs/build/sitemap.xml export-ignore
 /tests export-ignore
 /.gitattributes export-ignore
 /.gitignore export-ignore

@@ -881,9 +881,29 @@ TXT;
 file_put_contents($siteDir.'/llms.txt', $llmsTxt);
 echo "wrote llms.txt\n";
 
+// llms-full.txt is a separate, agent-facing artifact from the human site: it
+// may skip chapters or lines that only make sense to a person reading the
+// docs for the first time. These lists never touch the source .md files or
+// the rendered HTML — humans still get the full chapter either way.
+$llmsFullSkipChapters = ['10-contributing'];
+$llmsFullSkipLines = [
+    '01-introduction' => [
+        "Before digging into each goal, we believe code speaks louder than words. So let's start with an example of using Double:",
+    ],
+];
+
 $llmsFullSections = [];
-foreach ([...$chapters, ...$posts] as $item) {
+foreach ($chapters as $item) {
+    if (in_array($item['basename'], $llmsFullSkipChapters, true)) {
+        continue;
+    }
+
     $markdown = trim(file_get_contents($item['file']));
+    foreach ($llmsFullSkipLines[$item['basename']] ?? [] as $line) {
+        $markdown = str_replace($line, '', $markdown);
+        $markdown = trim(preg_replace('/\n{3,}/', "\n\n", $markdown));
+    }
+
     $pageUrl = rtrim($siteUrl, '/').clean_url($item['htmlFile']);
     $llmsFullSections[] = "<!-- {$pageUrl} -->\n\n{$markdown}";
 }
