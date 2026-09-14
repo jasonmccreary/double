@@ -17,6 +17,7 @@
 
 ## Blog
 
+- [What about method-level `passthru`?](https://testdoublephp.com/blog/what-about-method-level-passthru): Mockery lets one stubbed expectation run the real method. Double doesn't, and the reason isn't a missing feature — it's what that need is usually actually asking for.
 - [Why doesn't Double mock magic methods?](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods): __call() has no fixed shape to check a stub against. Two real examples show what to double instead — and one case where the answer isn't Double at all.
 - [What about "unnamed mocks"?](https://testdoublephp.com/blog/what-about-unnamed-mocks): Why Double doesn't offer an equivalent to Mockery::mock() and what to reach for instead.
 - [What does a good failure message look like?](https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like): A close read of a real Double failure message, piece by piece.

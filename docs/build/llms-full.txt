@@ -168,10 +168,10 @@ Every double is given a label, derived from its class or interface name. `BookRe
 
 ## Reserved Method Names
 
-Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that seven method names are reserved on every double:
+Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that eight method names are reserved on every double:
 
 ```
-expects, allows, strict, passthru, received, unused, verify
+instance, expects, allows, strict, passthru, received, unused, verify
 ```
 
 If the class or interface you're doubling declares a real method with one of these names, `Double::for()` throws right away, naming the exact method:
@@ -210,6 +210,8 @@ $service = new PolicyChecker($gate->instance());
 ```
 
 `strict()`, `passthru()`, `received()`, `unused()`, and `verify()` all work exactly as they do on any other double, called on the wrapper the same way `expects()` is above.
+
+`instance()` works on an ordinary double too — it just hands back `$this`, since an ordinary double already is the target-shaped instance. That means `->instance()` is always safe to call, whether or not `Double::for()` actually needed `override` for a given target.
 
 `override: true` only changes anything when there's actually a collision to route around. Passed against a class with none, it's a no-op — `for()` returns the exact same double it always would. It also only supports a single target; combined with more than one target passed to `for()`, it's rejected.
 
@@ -406,6 +408,8 @@ $repository->find(1); // $second again
 ```
 
 This is one expectation with a queue attached, not several competing expectations, so it composes cleanly with everything else on this page.
+
+> **Note:** Registering the same call twice to get a different answer each time — instead of one `returns()` with several values — is ambiguous, since matching order (see below) means the most-recently-registered one wins first, handing back values in the reverse of what was written. `verify()` rejects this shape and points at the fix.
 
 ## Counting Calls with `times()`
 
@@ -1123,6 +1127,21 @@ Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy 
 
 Mockery orders calls per-mock by default, with `globally()` available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.
 
+## Repeating a Call to Get a Sequence of Answers
+
+A common Mockery habit is registering the same call twice to get a different answer each time:
+
+```php
+$repo->shouldReceive('find')->once()->andReturn($first);
+$repo->shouldReceive('find')->once()->andReturn($second);
+```
+
+The direct conversion of this — two separate `expects('find')->with(...)->returns(...)` calls — doesn't carry over the same way. Matching is most-recently-registered first (see [Matching Order](04-expectations.md#matching-order)), so this hands back `$second` on the first call and `$first` on the second: the reverse of what was written. `verify()` catches this shape and throws, pointing at the fix — combine both into one expectation, with the values in the order you want them:
+
+```php
+$repo->expects('find')->times(2)->returns($first, $second);
+```
+
 ## A Few Things That Didn't Carry Over
 
 A couple of Mockery features aren't available here, by design:
@@ -1179,6 +1198,46 @@ Every exception's wording lives in one place: its `*Fields` trait in `src/Except
 2. **Update the golden fixture(s)** in `tests/fixtures/exceptions/*.txt`. `GoldenFileTestCase::assertMatchesGolden()` does an exact string comparison against that file's contents, so a wording change will fail every test asserting against the old text until the corresponding `.txt` file is updated to match. There is no `--update-snapshots` flag; edit the fixture by hand (or regenerate it by printing the exception's new `getMessage()` and pasting it in).
 3. **Run the golden-file suite** that covers it: `tests/Exceptions/ExceptionMessagesTest.php`, `CallDescriptionMessagesTest.php`, or `ValidationMessagesTest.php`, depending on which exception you touched. Confirm the new fixture is exactly right.
 4. **Check `tests/Integrations/PHPUnit/PHPUnitExceptionsTest.php`** if the exception has a PHPUnit sibling: it asserts parity between the two, so it should pass without changes once step 1 is done (both read from the same trait), but it's the place a divergence would show up.
+
+---
+
+<!-- https://testdoublephp.com/blog/what-about-method-level-passthru -->
+
+---
+title: What about method-level `passthru`?
+description: Mockery lets one stubbed expectation run the real method. Double doesn't, and the reason isn't a missing feature — it's what that need is usually actually asking for.
+published: 2026-09-14
+---
+
+# What about method-level `passthru`?
+
+```php
+$mock->shouldReceive('log')->passthru();
+```
+
+Mockery's `passthru()` — the actual feature Double's own `passthru()` borrowed its name from — is a per-expectation verb, not a whole-mock mode. It means: this one stubbed call still counts as received, but instead of returning a canned value, run the real method and return whatever that produces. Double has nothing that reads this way, and it's worth explaining why, because the answer isn't "we haven't gotten to it yet."
+
+## The shape this actually wants
+
+Every double already generates a real, callable body for every method on the class it doubles — that's what makes whole-double [passthru mode](../03-creating-doubles.md#passthru) work at all: unstubbed calls run for real, on the double itself. So a method-level equivalent would be almost free to build — `allows('log')->passthru()` could just call that same real body that already exists internally. The capability isn't the obstacle. The question is whether it's solving a real problem.
+
+Mockery's per-expectation `passthru()` answers a specific shape of need: "this double is mostly fake — safe defaults, explicit expectations — but for this one call, run the real thing instead." Double already covers the *opposite* shape cleanly: mostly real, with the few methods you care about faked out. If you want `log()` to genuinely run while everything else on the same double is fake, why would you reach for a fake-by-default double at all? Flip it: start from `passthru()`, and stub the handful of methods you actually want to intercept. Everything you don't stub already runs for real — that's the whole mode.
+
+## Why it's not quite a free inversion, and why that's the tell
+
+It's tempting to treat these as pure duals — De Morgan's for test doubles: "mostly real except X" and "mostly fake except X" should be interchangeable framings of the same set. They're not quite, and the gap is instructive. Passthru's default for anything unconfigured is "run real"; Loose's default is "safe value." Going from "fake by default, real by exception" to "real by default, fake by exception" isn't symmetric effort — if you actually wanted a mostly-fake double with one real exception, achieving it via whole-double passthru means defensively stubbing away *every other* method so they don't also start running real code. Miss one, and it silently executes for real instead of returning a safe default.
+
+That asymmetry is the tell. A genuine need for "isolate this real call from an otherwise fully-faked object" is a need to spot-check that a stub hasn't drifted from the real implementation it's standing in for — checking the fake against the real from inside the same test, rather than trusting that the real method already has its own coverage elsewhere. That's the same shape of problem [the AWS SDK and Redis examples](why-doesnt-double-mock-magic-methods.md) ran into from the other direction: reaching for a narrower, more honest seam produces a stronger test than papering over the gap with more mocking machinery. There, the fix was doubling what a method actually delegates to, or using the real library's own fake transport, instead of asking Double to stub something it couldn't verify existed. Here, the fix is the same instinct pointed the other way: if a method's real behavior matters enough that a test needs to observe it running for real, that's a sign that method deserves its own real, direct test — not a one-off exception carved into an otherwise-fake double for one test to lean on.
+
+## What to reach for instead
+
+`resolves()` already covers the rare case where you genuinely have a real object on hand and want one call to run against it:
+
+```php
+$repository->allows('calculateTax')->resolves(fn (...$args) => $realGateway->calculateTax(...$args));
+```
+
+This is arguably more honest than Mockery's version, too — it doesn't hide which real object is running behind a bare `passthru()`, it names it. Beyond that, if you're finding yourself wanting a whole class to be "fake except this one call" often enough to miss the shorthand, that's usually the moment to flip the double to `passthru()` instead and name the few things you actually want to fake — which was the answer this whole page started with.
 
 ---
 
