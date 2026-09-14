@@ -37,7 +37,7 @@ $repository->received('recordView')->with($book);
 
 ## Documentation
 
-Full docs — creating doubles, modes (Loose/Strict/Passthru), argument matching, verification, failure messages, PHPUnit integration, and contributing — live at [testdoublephp.com](https://testdoublephp.com/). An LLM-friendly index is at [llms.txt](https://testdoublephp.com/llms.txt), and the full reference docs ship with this package at `vendor/jasonmccreary/double/docs/build/llms-full.txt` for agents without web access.
+Full documentation covering creating doubles, modes (Loose/Strict/Passthru), crafing expectations, argument matching, and more is at [testdoublephp.com](https://testdoublephp.com/). An LLM-friendly index is at [llms.txt](https://testdoublephp.com/llms.txt), and a full reference ships with this package at `vendor/jasonmccreary/double/docs/build/llms-full.txt`.
 
 ## Contributing
 
