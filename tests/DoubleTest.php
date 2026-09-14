@@ -366,27 +366,44 @@ final class DoubleTest extends TestCase
         $this->assertSame($default, $double->find(456));
     }
 
-    public function test_a_generic_catch_all_no_longer_starves_an_earlier_specific_expectation_once_exhausted(): void
+    public function test_specific_expectation_wins_even_when_registered_before_the_generic_catch_all(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
         $specific = new Book('Specific');
+        $catchAll = new Book('CatchAll');
 
         $double->expects('find')->with(1)->returns($specific);
-        $double->expects('find'); // unconstrained catch-all, registered last
+        $double->expects('find')->returns($catchAll); // unconstrained catch-all, registered last
 
-        // First call: the last-registered, unconstrained expectation still
-        // has room, so it wins, same as before this fix.
-        $double->find(1);
-
-        // Second call: the catch-all's own times() budget (default: exactly
-        // once) is already spent, so matching now falls through to the
-        // earlier, still-unconsumed with(1) expectation instead of
-        // re-selecting the exhausted catch-all and throwing
-        // expectationCallLimitExceeded() for a call it was never meant to
-        // serve.
+        // Matching tries every specific candidate before any generic one,
+        // regardless of registration order (see MethodExpectation::isSpecific()),
+        // so the with(1) expectation wins call 1 even though the catch-all
+        // was registered more recently.
         $this->assertSame($specific, $double->find(1));
 
+        // Once the specific expectation's own times() budget (default:
+        // exactly once) is spent, matching falls through to the generic
+        // tier instead of re-selecting the exhausted specific one.
+        $this->assertSame($catchAll, $double->find(1));
+
         $double->verify();
+    }
+
+    public function test_a_with_call_made_up_entirely_of_argument_any_counts_as_generic(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $specific = new Book('Specific');
+        $catchAll = new Book('CatchAll');
+
+        // Argument::any() alone constrains nothing, so this with() call is
+        // just a more verbose spelling of no with() at all — it belongs in
+        // the generic tier, not the specific one, and so still loses to a
+        // genuinely narrower expectation registered before it.
+        $double->expects('find')->with(1)->returns($specific);
+        $double->expects('find')->with(Argument::any())->returns($catchAll);
+
+        $this->assertSame($specific, $double->find(1));
+        $this->assertSame($catchAll, $double->find(2));
     }
 
     public function test_stacking_separate_expectations_for_the_same_method_and_args_is_rejected_as_ambiguous(): void
@@ -590,6 +607,46 @@ final class DoubleTest extends TestCase
         $double->save(new Book('Dune'));
 
         $double->verify();
+    }
+
+    public function test_ordered_expectations_of_different_specificity_can_still_satisfy_in_declared_order(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        // Declared specific-then-generic, which is also the order tiered
+        // matching would pick between them anyway — the two mechanisms
+        // agree here, so ordered() sees exactly the sequence it expects.
+        $double->expects('find')->with(1)->returns(null)->ordered();
+        $double->expects('save')->returns(true)->ordered();
+
+        $double->find(1);
+        $double->save(new Book('Dune'));
+
+        $double->verify();
+    }
+
+    public function test_a_generic_ordered_expectation_matched_after_its_specific_sibling_is_still_out_of_order(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        // Two ordered() expectations on the same method: a generic one
+        // declared first (slot 0), a specific one declared second (slot 1).
+        // Tiered matching always tries the specific candidate first, so
+        // find(1) is served by slot 1 before slot 0 is ever touched — a
+        // developer relying on ordered() to mean "in the sequence I wrote
+        // them" gets a real out-of-order failure on the very next call that
+        // only the generic one can serve, even though nothing about their
+        // own calls looks out of sequence. ordered() and the specific/generic
+        // tiering are two independent mechanisms that can disagree; mixing
+        // them on the same method is on the caller to reason about.
+        $double->expects('find')->returns(null)->ordered();
+        $double->expects('find')->with(1)->returns(null)->ordered();
+
+        $double->find(1); // served by the specific expectation, slot 1
+
+        $this->expectException(PHPUnitOutOfOrderCallException::class);
+
+        $double->find(2); // only the generic expectation, slot 0, can serve this
     }
 
     public function test_sequential_returns_hold_at_the_last_value_on_further_calls(): void

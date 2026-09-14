@@ -71,14 +71,18 @@ One overloaded verb covers every count you'd want, rather than a separate word f
 
 ## Matching Order
 
-When more than one expectation could match a call, write your setup top to bottom and the last one that applies wins:
+When more than one expectation could match a call, the **more specific one wins, regardless of which was declared first**. An expectation is specific if its `with()` pins down at least one argument to something narrower than "anything" (a bare `with(Argument::any())` doesn't count — it's the same as no `with()` at all). Between two equally specific expectations for the same call, the more recently declared one wins.
 
 ```php
-$repository->allows('find')->returns(null);              // a default, declared first
-$repository->allows('find')->with(123)->returns($book);  // a specific override, declared second
+$repository->allows('find')->returns(null);              // a default
+$repository->allows('find')->with(123)->returns($book);  // a specific override
 ```
 
-This mirrors how you'd naturally write the setup: state a broad default, then layer specific overrides underneath it.
+`find(123)` gets `$book` and `find(456)` gets `null` no matter which of these two lines you write first. Still, write a broad default before its specific overrides — it reads the way it behaves, and it's the convention the rest of this library's examples follow.
+
+Once a specific expectation's own `times()` budget is spent, matching falls back to the generic ones instead of throwing for a call it was never meant to serve.
+
+Two expectations don't get ranked against each other for how narrow they are — `with(123)` and `with(Argument::type('int'))` are both just "specific," and between the two of them, ordinary declaration order applies.
 
 ## Keeping Calls in Order
 
