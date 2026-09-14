@@ -417,6 +417,17 @@ final class MethodExpectation
         return $this->maximumCalls;
     }
 
+    /**
+     * False when this expectation's own budget is unbounded (allows()'s
+     * default) — the signal DoubleState::ambiguousExpectations() uses to
+     * tell a genuine "unconstrained fallback" apart from two expectations
+     * that were each meant to be fully consumed.
+     */
+    public function hasFiniteCallLimit(): bool
+    {
+        return $this->maximumCalls !== self::UNBOUNDED;
+    }
+
     public function isSatisfied(): bool
     {
         return $this->timesMatched >= $this->minimumCalls;

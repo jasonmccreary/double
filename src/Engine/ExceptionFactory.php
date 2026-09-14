@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace JMac\Testing\Engine;
 
 use JMac\Testing\CheckEvent;
+use JMac\Testing\Diagnostics\AmbiguousExpectation;
 use JMac\Testing\Diagnostics\ArgumentComparison;
 use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Diagnostics\UnsatisfiedExpectation;
 use JMac\Testing\Double;
+use JMac\Testing\Exceptions\AmbiguousExpectationException;
 use JMac\Testing\Exceptions\ExpectationCallLimitExceededException;
 use JMac\Testing\Exceptions\ExpectationCallMismatchException;
 use JMac\Testing\Exceptions\FabricationLimitExceededException;
@@ -17,6 +19,7 @@ use JMac\Testing\Exceptions\UnexpectedCallException;
 use JMac\Testing\Exceptions\UnsatisfiedExpectationException;
 use JMac\Testing\Exceptions\UnsatisfiedReceivedAssertionException;
 use JMac\Testing\Exceptions\UnusedAssertionException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitAmbiguousExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
@@ -151,6 +154,24 @@ final class ExceptionFactory
             $exception = new PHPUnitUnsatisfiedExpectationException($label, $expectations, $fabricated);
         } else {
             $exception = new UnsatisfiedExpectationException($label, $expectations, $fabricated);
+        }
+
+        Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
+
+        return $exception;
+    }
+
+    /**
+     * @param  list<AmbiguousExpectation>  $ambiguities
+     */
+    public static function ambiguousExpectations(string $label, array $ambiguities, bool $fabricated): Diagnostic&\Throwable
+    {
+        if (self::phpUnitIsAvailable()) {
+            PhpUnitIntegration::registerPass();
+
+            $exception = new PHPUnitAmbiguousExpectationException($label, $ambiguities, $fabricated);
+        } else {
+            $exception = new AmbiguousExpectationException($label, $ambiguities, $fabricated);
         }
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));

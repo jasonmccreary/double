@@ -55,6 +55,8 @@ $repository->find(1); // $second again
 
 This is one expectation with a queue attached, not several competing expectations, so it composes cleanly with everything else on this page.
 
+> **Note:** Registering the same call twice to get a different answer each time — instead of one `returns()` with several values — is ambiguous, since matching order (see below) means the most-recently-registered one wins first, handing back values in the reverse of what was written. `verify()` rejects this shape and points at the fix.
+
 ## Counting Calls with `times()`
 
 ```php

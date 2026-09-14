@@ -128,6 +128,21 @@ Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy 
 
 Mockery orders calls per-mock by default, with `globally()` available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.
 
+## Repeating a Call to Get a Sequence of Answers
+
+A common Mockery habit is registering the same call twice to get a different answer each time:
+
+```php
+$repo->shouldReceive('find')->once()->andReturn($first);
+$repo->shouldReceive('find')->once()->andReturn($second);
+```
+
+The direct conversion of this — two separate `expects('find')->with(...)->returns(...)` calls — doesn't carry over the same way. Matching is most-recently-registered first (see [Matching Order](04-expectations.md#matching-order)), so this hands back `$second` on the first call and `$first` on the second: the reverse of what was written. `verify()` catches this shape and throws, pointing at the fix — combine both into one expectation, with the values in the order you want them:
+
+```php
+$repo->expects('find')->times(2)->returns($first, $second);
+```
+
 ## A Few Things That Didn't Carry Over
 
 A couple of Mockery features aren't available here, by design:
