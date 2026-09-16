@@ -245,8 +245,8 @@ final class ClassGenerator
     private function assertNoAbstractPropertyHooks(array $targets, array $reflections): void
     {
         // ReflectionProperty::isAbstract() doesn't exist before PHP 8.4 (this
-        // library's floor is 8.3) — load-bearing, not defensive dead code: on
-        // 8.3 a property can't be abstract at all yet.
+        // library's floor is 8.2) — load-bearing, not defensive dead code: on
+        // 8.2/8.3 a property can't be abstract at all yet.
         if (! method_exists(\ReflectionProperty::class, 'isAbstract')) {
             return;
         }

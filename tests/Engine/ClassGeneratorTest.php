@@ -295,7 +295,7 @@ final class ClassGeneratorTest extends TestCase
      * #[RequiresPhp] rather than an unconditional test: property-hook syntax
      * (`{ get; }`) is a parser-level PHP 8.4+ feature, not just a runtime
      * API — the fixture file would be a hard parse error if this library's
-     * 8.3 floor ever tried to load it. Since PHP only parses a file when
+     * 8.2 floor ever tried to load it. Since PHP only parses a file when
      * it's actually require()'d, and autoloading is lazy, skipping this
      * test on <8.4 means the fixture is never touched there at all.
      */
