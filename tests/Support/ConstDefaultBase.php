@@ -13,7 +13,7 @@ namespace JMac\Testing\Tests\Support;
  */
 class ConstDefaultBase extends ConstDefaultGrandparent
 {
-    public const int SELF_MODE = 1;
+    public const SELF_MODE = 1;
 
     public function withSelfConstant(int $mode = self::SELF_MODE): int
     {
