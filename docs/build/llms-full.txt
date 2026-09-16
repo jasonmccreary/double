@@ -87,7 +87,7 @@ composer require --dev jasonmccreary/double
 
 ## Requirements
 
-This library needs PHP 8.3 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner. The core library doesn't know or care what's running your tests.
+This library needs PHP 8.2 or newer, and nothing else. There's no required dependency on PHPUnit or any other test runner. The core library doesn't know or care what's running your tests.
 
 ## Test Suite Integration
 
