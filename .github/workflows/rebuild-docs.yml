@@ -1,9 +1,12 @@
-name: Rebuild Docs
+name: Prepare Release
 
 # Reference docs (everything except docs/blog/**) describe released
-# behavior, so they're only rebuilt when a version tag is cut — never ahead
-# of what's actually on Packagist. Blog posts aren't reference material, so
-# they get their own trigger and can publish independent of a release.
+# behavior, so they're only rebuilt as part of cutting a release — never
+# ahead of what's actually on Packagist. Run this workflow manually with the
+# version to release: it rebuilds docs/build, commits it, and only then tags
+# that commit, so the tagged code ships with docs (including llms-full.txt)
+# that match it. Blog posts aren't reference material, so they get their own
+# trigger and can publish independent of a release.
 #
 # docs/build/** is committed straight to master (no PR) since Cloudflare
 # Pages deploys on any push to that path — this workflow's commit IS the
@@ -11,12 +14,15 @@ name: Rebuild Docs
 
 on:
   push:
-    tags:
-      - 'v*'
     branches: [ master ]
     paths:
       - 'docs/blog/**'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.11.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -27,10 +33,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate version
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT: ${{ inputs.version }}
+        run: |
+          VERSION="${INPUT#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must look like 1.2.3, got '$INPUT'"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "TAG=v$VERSION" >> "$GITHUB_ENV"
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then
+            echo "::error::Releases must be cut from master, not $GITHUB_REF"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Ensure tag does not exist
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists"
+            exit 1
+          fi
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -53,12 +86,25 @@ jobs:
 
       - name: Commit rebuilt docs
         run: |
+          LABEL="${TAG:-$GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/build
           if git diff --cached --quiet; then
             echo "docs/build already up to date"
-            exit 0
+          else
+            git commit -m "Rebuild docs for ${LABEL}"
+            git push origin HEAD:master
           fi
-          git commit -m "Rebuild docs for ${GITHUB_REF_NAME}"
-          git push origin HEAD:master
+
+      - name: Tag release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git tag "$TAG"
+          git push origin "refs/tags/$TAG"
+
+          {
+            echo "### Tagged \`$TAG\`"
+            echo
+            echo "[Create the GitHub Release](https://github.com/${GITHUB_REPOSITORY}/releases/new?tag=${TAG}&title=${VERSION})"
+          } >> "$GITHUB_STEP_SUMMARY"
