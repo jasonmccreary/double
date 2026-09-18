@@ -952,6 +952,8 @@ $checkCount = Double::verifyAll(); // after the test finishes
 
 `enableAutoVerify()` resets and starts collecting every double created (and every `received()` assertion made) from that point on. `verifyAll()` checks everything collected since the matching `enableAutoVerify()`, then turns auto-verification back off.
 
+If the test already failed, call `Double::verifyAll(testFailed: true)` instead. It skips unmet expectations, which would only be misleading secondary failures, but still reports repeated identical expectations, since consuming those last-to-first is a likely cause of the failure.
+
 Outside PHPUnit, nothing tells a runner one of these checks actually happened — [Passing Checks Count as Assertions](#passing-checks-count-as-assertions) above is PHPUnit-only. `verifyAll()`'s return value is the framework-agnostic version of that same signal: how many doubles and `received()` assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.
 
 That pairing assumes one test runs straight through from enable to verify. A runner that interleaves tests in one process — fibers or coroutines sharing a process, for instance — needs to pause one test's in-flight state during a context switch so a sibling test resuming next doesn't sweep its doubles into the wrong `verifyAll()`. `Double::pauseAutoVerify()` lifts the live state out into an opaque `AutoVerifySnapshot` and resets the live state to off/empty; `Double::resumeAutoVerify()` installs a previously paused snapshot back as the live state:
