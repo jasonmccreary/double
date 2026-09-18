@@ -48,8 +48,11 @@ trait VerifiesDoubles
         // report a second, unrelated-looking "unmet expectation" failure on top
         // of the real one.
         if (! $this->status()->isSuccess()) {
-            // The next test's #[Before] resets $pending/$pendingReceived
-            // unconditionally, so nothing here needs to drain them.
+            // Ambiguous expectations are the exception: they're checked
+            // statically, so they can't be a misleading side effect, and
+            // their reversed matching may well be why the test failed.
+            Double::verifyAll(testFailed: true);
+
             return;
         }
 
