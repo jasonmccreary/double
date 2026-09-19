@@ -4,3 +4,5 @@ The following similar call was made to `event`:
   message:
     - 'this text does not match what was actually logged'
     + 'found usages of renamed pagination methods'
+
+(`-` expected / `+` actual)

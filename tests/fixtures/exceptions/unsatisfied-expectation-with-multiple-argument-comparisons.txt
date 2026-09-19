@@ -9,3 +9,5 @@ The following similar call was made to `move`:
     + 6
   status: 'y'
   owner: 'z'
+
+(`-` expected / `+` actual)

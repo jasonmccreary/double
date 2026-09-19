@@ -4,3 +4,5 @@ The following similar call was made to `bar`:
   value:
     - 'baz'
     + 'Baz'
+
+(`-` expected / `+` actual)

@@ -4,3 +4,5 @@ The following similar call was made to `render`:
   query:
     - '…aaaaaaaaaaaabazaaaaaaaaaaaa…'
     + '…aaaaaaaaaaaaBAZaaaaaaaaaaaa…'
+
+(`-` expected / `+` actual)

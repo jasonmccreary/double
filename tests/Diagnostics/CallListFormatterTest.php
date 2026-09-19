@@ -95,7 +95,7 @@ final class CallListFormatterTest extends TestCase
     public function test_render_comparison_block_insets_a_diff_entrys_lines_under_its_label(): void
     {
         $this->assertSame(
-            "Intro:\n  id:\n    - 42\n    + 43\n",
+            "Intro:\n  id:\n    - 42\n    + 43\n\n(`-` expected / `+` actual)\n",
             CallListFormatter::renderComparisonBlock('Intro:', [
                 new ArgumentComparison(label: 'id', differs: true, text: "- 42\n+ 43"),
             ]),
@@ -110,7 +110,7 @@ final class CallListFormatterTest extends TestCase
     public function test_render_comparison_block_mixes_context_and_diff_entries(): void
     {
         $this->assertSame(
-            "Intro:\n  name:\n    - 'baz'\n    + 'Baz'\n  status: 'y'\n",
+            "Intro:\n  name:\n    - 'baz'\n    + 'Baz'\n  status: 'y'\n\n(`-` expected / `+` actual)\n",
             CallListFormatter::renderComparisonBlock('Intro:', [
                 new ArgumentComparison(label: 'name', differs: true, text: "- 'baz'\n+ 'Baz'"),
                 new ArgumentComparison(label: 'status', differs: false, text: "'y'"),
@@ -126,7 +126,7 @@ final class CallListFormatterTest extends TestCase
     public function test_render_comparison_block_indents_every_line_of_a_multi_line_diff(): void
     {
         $this->assertSame(
-            "Intro:\n  body:\n      ...\n    -   line two\n    +   LINE TWO\n      ...\n",
+            "Intro:\n  body:\n      ...\n    -   line two\n    +   LINE TWO\n      ...\n\n(`-` expected / `+` actual)\n",
             CallListFormatter::renderComparisonBlock('Intro:', [
                 new ArgumentComparison(label: 'body', differs: true, text: "  ...\n-   line two\n+   LINE TWO\n  ..."),
             ]),

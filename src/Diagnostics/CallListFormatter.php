@@ -9,6 +9,10 @@ namespace JMac\Testing\Diagnostics;
  */
 final class CallListFormatter
 {
+    // A footnote, not part of the diff — a reminder of which side is which
+    // for a reader who knows the "- / +" convention but not its direction.
+    private const DIFF_LEGEND = '(`-` expected / `+` actual)';
+
     // Uncapped, a method called many times legitimately (e.g. once per loop
     // iteration) turns a one-line diagnostic into a wall of text.
     private const CAP = 3;
@@ -107,7 +111,9 @@ final class CallListFormatter
 
         // Trailing "\n" is deliberate — a new paragraph, not a continuation
         // of the sentence before it. See DoubleException::appendFabricatedNote().
-        return sprintf("%s\n%s\n", $intro, implode("\n", $lines));
+        $anyDiffers = array_filter($comparisons, static fn (ArgumentComparison $comparison): bool => $comparison->differs) !== [];
+
+        return sprintf("%s\n%s\n%s", $intro, implode("\n", $lines), $anyDiffers ? "\n".self::DIFF_LEGEND."\n" : '');
     }
 
     private static function indent(string $text, string $prefix): string

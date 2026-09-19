@@ -4,3 +4,5 @@ The following similar call was made to `find`:
   id:
     - 123
     + 456
+
+(`-` expected / `+` actual)
