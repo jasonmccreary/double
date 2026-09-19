@@ -6,7 +6,9 @@ name: Prepare Release
 # version to release: it rebuilds docs/build, commits it, and only then tags
 # that commit, so the tagged code ships with docs (including llms-full.txt)
 # that match it. Blog posts aren't reference material, so they get their own
-# trigger and can publish independent of a release.
+# trigger and can publish independent of a release: on push, only
+# docs/build/blog and sitemap.xml are committed, so unreleased reference
+# changes stay out. llms*.txt catch up at the next release.
 #
 # docs/build/** is committed straight to master (no PR) since Cloudflare
 # Pages deploys on any push to that path — this workflow's commit IS the
@@ -89,7 +91,11 @@ jobs:
           LABEL="${TAG:-$GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/build
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            git add docs/build/blog docs/build/sitemap.xml
+          else
+            git add docs/build
+          fi
           if git diff --cached --quiet; then
             echo "docs/build already up to date"
           else
