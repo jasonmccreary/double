@@ -24,3 +24,4 @@
 - [How is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery): A reply to a question from r/PHP on what actually improves once you move from Mockery to Double.
 - [Why not `hasReceived()` or `assertReceived()`?](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived): Why Double settled on received() instead of a has- or assert-prefixed verb, and why that was a deliberate trade-off.
 - [Why is it called "Double"?](https://testdoublephp.com/blog/why-is-it-called-double): "Double" borrows its name from "test double," the generic term for any stand-in used in place of a real dependency in a test.
+- [A PHP Mockery alternative](https://testdoublephp.com/blog/php-mockery-alternative): Double is a PHP test double library and Mockery alternative that keeps the syntax you know while improving your developer experience.

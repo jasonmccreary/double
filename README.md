@@ -35,9 +35,13 @@ $service->lookup(123);
 $repository->received('recordView')->with($book);
 ```
 
+## Migrating from Mockery
+
+Double is a [Mockery alternative](https://testdoublephp.com/blog/php-mockery-alternative) that keeps the syntax you know while improving your developer experience. Review the documentation for a complete guide on [migrating from Mockery](https://testdoublephp.com/migrating-from-mockery).
+
 ## Documentation
 
-Full documentation covering creating doubles, modes (Loose/Strict/Passthru), crafing expectations, argument matching, and more is at [testdoublephp.com](https://testdoublephp.com/). An LLM-friendly index is at [llms.txt](https://testdoublephp.com/llms.txt), and a full reference ships with this package at `vendor/jasonmccreary/double/docs/build/llms-full.txt`.
+Full documentation covering creating doubles, modes (Loose/Strict/Passthru), crafting expectations, argument matching, and more is at [testdoublephp.com](https://testdoublephp.com/). An LLM-friendly index is at [llms.txt](https://testdoublephp.com/llms.txt), and a full reference ships with this package at `vendor/jasonmccreary/double/docs/build/llms-full.txt`.
 
 ## Contributing
 

@@ -2,31 +2,31 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://testdoublephp.com/</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-08-05</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/installation</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-16</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/creating-doubles</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-13</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/expectations</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-14</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/argument-matching</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-11</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/verification</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-08-12</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/failure-messages</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/test-suite-integration</loc>
@@ -34,11 +34,11 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/migrating-from-mockery</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-14</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/contributing</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-08-05</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/what-about-method-level-passthru</loc>
@@ -54,19 +54,23 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/what-does-a-good-failure-message-look-like</loc>
-    <lastmod>2026-08-24</lastmod>
+    <lastmod>2026-08-27</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/how-is-double-better-than-mockery</loc>
-    <lastmod>2026-08-19</lastmod>
+    <lastmod>2026-08-26</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived</loc>
-    <lastmod>2026-08-12</lastmod>
+    <lastmod>2026-08-26</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/why-is-it-called-double</loc>
-    <lastmod>2026-08-05</lastmod>
+    <lastmod>2026-09-08</lastmod>
+  </url>
+  <url>
+    <loc>https://testdoublephp.com/blog/php-mockery-alternative</loc>
+    <lastmod>2026-09-19</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog</loc>

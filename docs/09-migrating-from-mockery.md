@@ -9,7 +9,7 @@ You may [automate the conversion from Mockery to Double](https://laravelshift.co
 | Mockery | This Library |
 |---|---|
 | `Mockery::mock(Foo::class)` | `Double::for(Foo::class)` |
-| `Mockery::spy(Foo::class)` | `Double::for(Foo::class)`. Spy-style checking is `received()`, available on every double (see [below](#theres-no-separate-spy)) |
+| `Mockery::spy(Foo::class)` | `Double::for(Foo::class)`. Spy-style checking is `received()`, available on every double (see [below](#no-mockeryspy-just-doublefor)) |
 | `Mockery::mock()->shouldIgnoreMissing()` | `Double::for(Foo::class)`. This is simply the default; see [Modes](03-creating-doubles.md#modes) |
 | `Mockery::mock(Foo::class, [$args])->shouldDeferMissing()` | `Double::for(Foo::class)->passthru($realInstance)` |
 | `Mockery::mock(Foo::class)->makePartial()` | `Double::for(Foo::class)->passthru()`. See [below](#modes-not-mock-kinds) |
@@ -20,7 +20,7 @@ You may [automate the conversion from Mockery to Double](https://laravelshift.co
 | `shouldReceive('foo')->andReturnUsing($fn)` | `allows('foo')->resolves($fn)` |
 | `shouldHaveReceived('foo')` | `received('foo')` |
 | `shouldNotHaveReceived('foo')` | `received('foo')->never()` |
-| `shouldNotHaveBeenCalled()` | `unused()`. See [the trap below](#theres-no-separate-spy) |
+| `shouldNotHaveBeenCalled()` | `unused()`. See [the trap below](#no-mockeryspy-just-doublefor) |
 | `once()` / `twice()` | `times(1)` / `times(2)` |
 | `atLeast()->times($n)` | `times(minimum: $n)` |
 | `atMost()->times($n)` | `times(maximum: $n)` |
@@ -118,7 +118,21 @@ Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's on
   - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the double builds its own real state via the target's constructor.
   - Either way, an unstubbed method runs its real code *on the double itself*, so a self-call it makes internally to another method of the same object can also hit a configured stub — see [Passthru](03-creating-doubles.md#passthru) for why that matters and what it costs.
 
-### There's No Separate "Spy"
+### No `Mockery::spy()`, Just `Double::for()`
+
+A Mockery spy checks calls after the fact. Here, every double can do that:
+
+```php
+// Mockery
+$repository = Mockery::spy(BookRepository::class);
+$service->lookup(123);
+$repository->shouldHaveReceived('find')->with(123);
+
+// Double
+$repository = Double::for(BookRepository::class);
+$service->lookup(123);
+$repository->received('find')->with(123);
+```
 
 In Mockery, `spy()` is its own constructor. Here, `received()` (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a "spy" up front; you reach for `received()` whenever you want to check after the fact, on the same double you'd otherwise configure with `expects()`/`allows()`. See [Verification](06-verification.md), and [Why not `hasReceived()` or `assertReceived()`?](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived) for why the verb has no prefix.
 

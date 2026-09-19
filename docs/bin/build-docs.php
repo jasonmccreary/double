@@ -397,6 +397,11 @@ foreach ($postFiles as $file) {
         exit(1);
     }
 
+    // Scheduled posts stay out of the build until their publish date.
+    if ((string) $frontmatter['published'] > date('Y-m-d')) {
+        continue;
+    }
+
     $posts[] = [
         'file' => $file,
         'basename' => basename($file, '.md'),
@@ -839,10 +844,21 @@ Sitemap: {$siteUrl}/sitemap.xml
 TXT);
 echo "wrote robots.txt\n";
 
+/**
+ * A file's last commit date, since a CI checkout resets every mtime.
+ * Falls back to the mtime for files git doesn't know about yet.
+ */
+function last_modified_date(string $file): string
+{
+    $date = trim((string) shell_exec('git log -1 --format=%cs -- '.escapeshellarg($file).' 2>/dev/null'));
+
+    return $date !== '' ? $date : date('Y-m-d', filemtime($file));
+}
+
 $sitemapUrls = '';
 foreach ([...$chapters, ...$posts, $blogIndex] as $item) {
     $pageUrl = rtrim($siteUrl, '/').clean_url($item['htmlFile']);
-    $lastmod = $item['published'] ?? date('Y-m-d', filemtime($item['file']));
+    $lastmod = isset($item['file']) ? last_modified_date($item['file']) : $item['published'];
     $sitemapUrls .= "  <url>\n    <loc>{$pageUrl}</loc>\n    <lastmod>{$lastmod}</lastmod>\n  </url>\n";
 }
 $sitemapXml = <<<XML

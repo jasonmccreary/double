@@ -68,3 +68,4 @@ The codebase is split into a handful of small modules, each with one responsibil
 - [Installation](02-installation.md) — get it into your project.
 - [Creating Doubles](03-creating-doubles.md) — make your first double and choose how it behaves.
 - [Expectations](04-expectations.md) — the verbs you'll reach for in nearly every test.
+- [Migrating from Mockery](09-migrating-from-mockery.md) — every Mockery method mapped to its Double equivalent.
