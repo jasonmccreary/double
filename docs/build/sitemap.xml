@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://testdoublephp.com/</loc>
-    <lastmod>2026-08-05</lastmod>
+    <lastmod>2026-09-19</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/installation</loc>
@@ -34,7 +34,7 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/migrating-from-mockery</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-19</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/contributing</loc>
@@ -42,7 +42,7 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/what-about-method-level-passthru</loc>
-    <lastmod>2026-09-14</lastmod>
+    <lastmod>2026-09-19</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods</loc>
