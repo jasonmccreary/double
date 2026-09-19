@@ -1,16 +1,16 @@
 # Migrating from Mockery
 
-Most of what you already know from Mockery carries over directly. This page provides a full mapping of the methods and concepts from Mockery to their Double equivalent. For the reasoning behind the differences, see [How is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery)
+Most of what you already know from Mockery carries over directly. This page provides a full mapping of the methods and concepts from Mockery to their Double equivalent. For the reasoning behind the differences, see [how is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery)
 
 You may [automate the conversion from Mockery to Double](https://laravelshift.com/mockery-test-double-converter) for free with Shift.
 
-## Quick Reference
+## Quick reference
 
 | Mockery | This Library |
 |---|---|
 | `Mockery::mock(Foo::class)` | `Double::for(Foo::class)` |
 | `Mockery::spy(Foo::class)` | `Double::for(Foo::class)`. Spy-style checking is `received()`, available on every double (see [below](#no-mockeryspy-just-doublefor)) |
-| `Mockery::mock()->shouldIgnoreMissing()` | `Double::for(Foo::class)`. This is simply the default; see [Modes](03-creating-doubles.md#modes) |
+| `Mockery::mock()->shouldIgnoreMissing()` | `Double::for(Foo::class)`. This is simply the default; see [modes](03-creating-doubles.md#modes) |
 | `Mockery::mock(Foo::class, [$args])->shouldDeferMissing()` | `Double::for(Foo::class)->passthru($realInstance)` |
 | `Mockery::mock(Foo::class)->makePartial()` | `Double::for(Foo::class)->passthru()`. See [below](#modes-not-mock-kinds) |
 | `shouldReceive('foo')->once()->andReturn($x)` | `expects('foo')->returns($x)`. Exactly-once is `expects()`'s default |
@@ -28,9 +28,9 @@ You may [automate the conversion from Mockery to Double](https://laravelshift.co
 | `ordered()` | `ordered()` |
 | `globally()` | not available. Ordering applies per double; see [below](#ordering) |
 | `byDefault()` | not available. See [below](#a-few-things-that-didnt-carry-over) |
-| `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [Test Suite Integration](08-test-suite-integration.md) |
+| `Mockery::close()` | `$double->verify()`, or `use VerifiesDoubles;`. See [test suite integration](08-test-suite-integration.md) |
 
-### A Bare `Mockery::mock()` Doesn't Carry Over
+### A bare `Mockery::mock()` doesn't carry over
 
 `Mockery::mock()` with no class argument creates an object that responds to anything you configure on it, regardless of type. It was common to reuse one of these for two unrelated roles — for example, one bare mock standing in as both a `LockProvider` and the `Lock` it returns from itself:
 
@@ -47,11 +47,11 @@ $lock->expects('lock')->returns($acquiredLock);
 $acquiredLock->expects('get')->returns(true);
 ```
 
-This is more setup than the bare mock needed, but it also matches the real type contract — Mockery's version only worked because it didn't check. See [What about "unnamed mocks"?](https://testdoublephp.com/blog/what-about-unnamed-mocks) for the fuller case against a bare, untyped mock.
+This is more setup than the bare mock needed, but it also matches the real type contract — Mockery's version only worked because it didn't check. Read [what about "unnamed mocks"](https://testdoublephp.com/blog/what-about-unnamed-mocks) for the fuller case against a bare, untyped mock.
 
-### Laravel's `Gate` (and Anything Else With a Real `allows()`, `expects()`, etc.)
+### Laravel's `Gate` (and anything else with a real `allows()`, `expects()`, etc.)
 
-Laravel's `Gate` contract declares a real `allows()` method — the same name as Double's own `allows()` verb (see [Reserved Method Names](03-creating-doubles.md#reserved-method-names)). `Double::for(Gate::class)` throws rather than doubling it; `override: true` is the fix, covered fully in [Overriding a Reserved Name Collision](03-creating-doubles.md#overriding-a-reserved-name-collision):
+Laravel's `Gate` contract declares a real `allows()` method — the same name as Double's own `allows()` verb (see [reserved method names](03-creating-doubles.md#reserved-method-names)). `Double::for(Gate::class)` throws rather than doubling it; `override: true` is the fix, covered fully in [overriding a reserved name collision](03-creating-doubles.md#overriding-a-reserved-name-collision):
 
 ```php
 $gate = Double::for(Gate::class, override: true);
@@ -62,11 +62,11 @@ Gate::swap($gate->instance());
 
 That's `Gate::swap($gate->instance())`, not `Gate::swap($gate)` — `$gate` here is the wrapper `override: true` hands back, not something `Gate`-shaped itself. And regardless of whether a given facade needed `override` to get a double at all: once you've `swap()`'d one in, configure it directly (`$gate->expects(...)`, as above) rather than calling `Gate::expects(...)`/`Gate::shouldReceive(...)` afterward — Laravel's own `Facade::isMock()` check doesn't recognize a Double, so those static passthroughs quietly build and swap in a brand-new, unrelated Mockery mock instead of reaching the one you already configured.
 
-### Stubbing Methods Behind `__call()`
+### Stubbing methods behind `__call()`
 
-Mockery would stub any method name on a mock, whether or not the real class declared it. Double requires a method to be reflectable on the double's target, so this doesn't carry over as-is. It mostly comes up with classes whose public API is entirely `__call()`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [Why doesn't Double mock magic methods?](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for two real examples of what to double instead — and one case where the fix isn't a Double concern at all.
+Mockery would stub any method name on a mock, whether or not the real class declared it. Double requires a method to be reflectable on the double's target, so this doesn't carry over as-is. It mostly comes up with classes whose public API is entirely `__call()`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for two real examples of what to double instead — and one case where the fix isn't a Double concern at all.
 
-## Argument Matchers
+## Argument matchers
 
 | Mockery | This Library |
 |---|---|
@@ -78,14 +78,14 @@ Mockery would stub any method name on a mock, whether or not the real class decl
 | `Mockery::anyOf($a, $b)` | `Argument::any($a, $b)` |
 | `Mockery::notAnyOf($a, $b)` | `Argument::not()->any($a, $b)` |
 | `Mockery::not($value)` | `Argument::not($value)` |
-| `Mockery::contains(...)` / `hasKey(...)` / `hasValue(...)` | `Argument::contains(...)`. See [Searching a Collection](05-argument-matching.md#searching-a-collection) |
+| `Mockery::contains(...)` / `hasKey(...)` / `hasValue(...)` | `Argument::contains(...)`. See [searching a collection](05-argument-matching.md#searching-a-collection) |
 | `Mockery::mustBe($value)` / `isEqual($value)` | a plain value passed to `with()`, already the default |
 | `Mockery::isSame($value)` | `Argument::same($value)` |
 | `Mockery::ducktype(...)` | not available. See [below](#a-few-things-that-didnt-carry-over) |
 | `andAnyOtherArgs()` | `Argument::remaining()` |
-| `withNoArgs()` | `Argument::none()`, or `with()` with nothing passed. See [No Arguments at All](05-argument-matching.md#no-arguments-at-all) |
+| `withNoArgs()` | `Argument::none()`, or `with()` with nothing passed. See [no arguments at all](05-argument-matching.md#no-arguments-at-all) |
 
-### `withArgs(closure)` and Arity
+### `withArgs(closure)` and arity
 
 Mockery's `withArgs(function ($a) { ... })` only ever receives as many arguments as the closure declares — a single-parameter closure silently ignores any further actual arguments. `with()` here expects one matcher per actual argument; a converted `Argument::satisfies($closure)` covering only the first parameter fails against a call with more arguments than that, rather than being treated as "don't care" about the rest:
 
@@ -97,28 +97,28 @@ $connector->expects('connectToCluster')->with(
 );
 ```
 
-`Argument::remaining()` (see [Trailing Arguments](05-argument-matching.md#trailing-arguments)) is the explicit equivalent of Mockery's implicit "closure took fewer params than the call had arguments" behavior.
+`Argument::remaining()` (see [trailing arguments](05-argument-matching.md#trailing-arguments)) is the explicit equivalent of Mockery's implicit "closure took fewer params than the call had arguments" behavior.
 
-If the closure's logic genuinely spans several arguments together — not just "ignore the rest," but a check that needs two or more real values at once — `Argument::all()` (see [Custom Logic Across Every Argument](05-argument-matching.md#custom-logic-across-every-argument)) is the direct equivalent of `withArgs(closure)` itself: it hands the predicate the whole real argument list, the same way Mockery always did.
+If the closure's logic genuinely spans several arguments together — not just "ignore the rest," but a check that needs two or more real values at once — `Argument::all()` (see [custom logic across every argument](05-argument-matching.md#custom-logic-across-every-argument)) is the direct equivalent of `withArgs(closure)` itself: it hands the predicate the whole real argument list, the same way Mockery always did.
 
-### Comparison Is Strict, Not Loose
+### Comparison is strict, not loose
 
 A plain value passed to `with()`/`returns()` is compared with `===`-like strictness. Mockery's default comparison is loose `==`, which for an object argument checked against a string triggers `__toString()` coercion — a `Carbon` instance and a date string can compare equal under Mockery even though they're different types. Double never does this coercion; the two are simply unequal.
 
 Converting a suite from Mockery can surface real, previously-silent bugs this way: an expectation that "passed" for years under `==` may legitimately fail under Double because it was never actually checking what it looked like it was checking. If that happens, look at what's actually being compared before assuming the conversion introduced the problem — a `->with()` value that reads as a string may need `Argument::satisfies()` with an explicit cast if the real call genuinely passes an object.
 
-## Modes, Not Mock Kinds
+## Modes, not mock kinds
 
-Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in [Creating Doubles](03-creating-doubles.md):
+Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in [creating doubles](03-creating-doubles.md):
 
 - Mockery's plain `mock()`, once you call `shouldIgnoreMissing()`, behaves like **Loose** mode here, which is simply the default, nothing to opt into.
 - A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).
 - `shouldDeferMissing()` and `makePartial()` both map to **Passthru** mode (`->passthru()`) — Mockery splits these into two constructor calls, Double doesn't need to: it's the same mode either way, just with or without an argument.
   - `shouldDeferMissing()`, which takes real constructor arguments (or, in Mockery terms, is typically paired with `Mockery::mock(Foo::class, [$args])`), maps to `->passthru($realInstance)` — you build the real object however you need to (with real dependencies, a container, whatever), and hand it in directly. This is actually more flexible than Mockery here, since you're not limited to constructor arguments — you can hand in any already-built object.
   - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the double builds its own real state via the target's constructor.
-  - Either way, an unstubbed method runs its real code *on the double itself*, so a self-call it makes internally to another method of the same object can also hit a configured stub — see [Passthru](03-creating-doubles.md#passthru) for why that matters and what it costs.
+  - Either way, an unstubbed method runs its real code *on the double itself*, so a self-call it makes internally to another method of the same object can also hit a configured stub — see [passthru](03-creating-doubles.md#passthru) for why that matters and what it costs.
 
-### No `Mockery::spy()`, Just `Double::for()`
+### No `Mockery::spy()`, just `Double::for()`
 
 A Mockery spy checks calls after the fact. Here, every double can do that:
 
@@ -134,7 +134,7 @@ $service->lookup(123);
 $repository->received('find')->with(123);
 ```
 
-In Mockery, `spy()` is its own constructor. Here, `received()` (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a "spy" up front; you reach for `received()` whenever you want to check after the fact, on the same double you'd otherwise configure with `expects()`/`allows()`. See [Verification](06-verification.md), and [Why not `hasReceived()` or `assertReceived()`?](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived) for why the verb has no prefix.
+In Mockery, `spy()` is its own constructor. Here, `received()` (checking whether something was actually called) is available on every double, regardless of how it was created or which mode it's in. You don't choose a "spy" up front; you reach for `received()` whenever you want to check after the fact, on the same double you'd otherwise configure with `expects()`/`allows()`. See [verification](06-verification.md), and [why not `hasReceived()` or `assertReceived()`](https://testdoublephp.com/blog/why-not-hasreceived-or-assertreceived) for why the verb has no prefix.
 
 Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy received no calls," but Mockery only checks whether the mock was invoked as a callable. It says nothing about calls to its methods, which is what most people actually mean and expect it to check. That's the trap `unused()` exists to close: it asserts the double received zero calls to any method, which is almost certainly what you meant in the first place.
 
@@ -142,7 +142,7 @@ Watch out for `shouldNotHaveBeenCalled()` specifically: it reads like "this spy 
 
 Mockery orders calls per-mock by default, with `globally()` available for a single sequence shared across every mock in a test. This library keeps the per-double default and doesn't offer a global equivalent. If you find yourself needing a sequence that spans multiple doubles, it's worth pausing to consider whether the test is asserting more about call order than the behavior actually requires.
 
-## Repeating a Call to Get a Sequence of Answers
+## Repeating a call to get a sequence of answers
 
 A common Mockery habit is registering the same call twice to get a different answer each time:
 
@@ -151,17 +151,17 @@ $repo->shouldReceive('find')->once()->andReturn($first);
 $repo->shouldReceive('find')->once()->andReturn($second);
 ```
 
-The direct conversion of this — two separate `expects('find')->with(...)->returns(...)` calls — doesn't carry over the same way. Two expectations with the same `with(...)` are equally specific, so between them matching falls back to most-recently-registered first (see [Matching Order](04-expectations.md#matching-order)), and this hands back `$second` on the first call and `$first` on the second: the reverse of what was written. `verify()` catches this shape and throws, pointing at the fix — combine both into one expectation, with the values in the order you want them:
+The direct conversion of this — two separate `expects('find')->with(...)->returns(...)` calls — doesn't carry over the same way. Two expectations with the same `with(...)` are equally specific, so between them matching falls back to most-recently-registered first (see [matching order](04-expectations.md#matching-order)), and this hands back `$second` on the first call and `$first` on the second: the reverse of what was written. `verify()` catches this shape and throws, pointing at the fix — combine both into one expectation, with the values in the order you want them:
 
 ```php
 $repo->expects('find')->times(2)->returns($first, $second);
 ```
 
-## A Few Things That Didn't Carry Over
+## A few things that didn't carry over
 
 A couple of Mockery features aren't available here, by design:
 
-- **Aliases.** If you're used to `shouldReceive()`, `andReturn()`, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See [One Clean API](01-introduction.md#one-clean-api).
+- **Aliases.** If you're used to `shouldReceive()`, `andReturn()`, or other alternate spellings for the same concept, those don't exist here. Each concept has exactly one verb. See [one clean API](01-introduction.md#one-clean-api).
 - **`ducktype()`.** Matching "anything with these methods" isn't included. `Argument::satisfies()` covers the same need without a dedicated verb.
-- **Static method mocking** (Mockery's `alias:` mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See [Static Methods](04-expectations.md#static-methods).
-- **`byDefault()`.** Marking an expectation as a fallback that a more specific one can override. This carries over directly: register a plain fallback (`allows()` with no `with()`, or with only `Argument::any()`) and a specific override for the same method, in either order — a specific `with()` always wins over a generic one regardless of which was declared first (see [Matching Order](04-expectations.md#matching-order)), falling back to the generic one once the specific one's own `times()` budget is exhausted. What doesn't carry over is Mockery's eviction behavior: a `byDefault()` expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at `verify()`.
+- **Static method mocking** (Mockery's `alias:` mocks). Mockery's own documentation already treats this as a last resort, and this library doesn't attempt to improve on it. See [static methods](04-expectations.md#static-methods).
+- **`byDefault()`.** Marking an expectation as a fallback that a more specific one can override. This carries over directly: register a plain fallback (`allows()` with no `with()`, or with only `Argument::any()`) and a specific override for the same method, in either order — a specific `with()` always wins over a generic one regardless of which was declared first (see [matching order](04-expectations.md#matching-order)), falling back to the generic one once the specific one's own `times()` budget is exhausted. What doesn't carry over is Mockery's eviction behavior: a `byDefault()` expectation with its own call-count requirement has that requirement silently dropped once any other expectation exists for the method, even if that other expectation never actually matches a call. Here, every registered expectation's minimum stays in force and is checked at `verify()`.

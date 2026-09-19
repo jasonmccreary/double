@@ -14,13 +14,13 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Test Suite Integration · Double</title>
+<title>Test suite integration · Double</title>
 <meta name="description" content="Nothing in this library requires PHPUnit. But if it&#039;s installed in your project, three things improve automatically — and since Pest tests run on real…">
 
 <link rel="canonical" href="https://testdoublephp.com/test-suite-integration">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Double">
-<meta property="og:title" content="Test Suite Integration · Double">
+<meta property="og:title" content="Test suite integration · Double">
 <meta property="og:description" content="Nothing in this library requires PHPUnit. But if it&#039;s installed in your project, three things improve automatically — and since Pest tests run on real…">
 <meta property="og:url" content="https://testdoublephp.com/test-suite-integration">
 <meta property="og:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
@@ -28,12 +28,12 @@
 <meta property="og:image:height" content="630">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Test Suite Integration · Double">
+<meta name="twitter:title" content="Test suite integration · Double">
 <meta name="twitter:description" content="Nothing in this library requires PHPUnit. But if it&#039;s installed in your project, three things improve automatically — and since Pest tests run on real…">
 <meta name="twitter:image" content="https://testdoublephp.com/assets/images/test-double-php-fe819572.png">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="icon" type="image/svg+xml" href="/assets/images/double-favicon.svg">
-<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"Test Suite Integration","description":"Nothing in this library requires PHPUnit. But if it's installed in your project, three things improve automatically — and since Pest tests run on real…","url":"https:\/\/testdoublephp.com\/test-suite-integration","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"Test Suite Integration","item":"https:\/\/testdoublephp.com\/test-suite-integration"}]}]</script>
+<script type="application/ld+json">[{"@context":"https:\/\/schema.org","@type":"TechArticle","headline":"Test suite integration","description":"Nothing in this library requires PHPUnit. But if it's installed in your project, three things improve automatically — and since Pest tests run on real…","url":"https:\/\/testdoublephp.com\/test-suite-integration","image":"https:\/\/testdoublephp.com\/assets\/images\/test-double-php-fe819572.png","isPartOf":{"@type":"WebSite","name":"Double","url":"https:\/\/testdoublephp.com\/"}},{"@context":"https:\/\/schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":"https:\/\/testdoublephp.com\/"},{"@type":"ListItem","position":2,"name":"Test suite integration","item":"https:\/\/testdoublephp.com\/test-suite-integration"}]}]</script>
 </head>
 <body class="antialiased">
 <input type="checkbox" id="nav-toggle" class="nav-toggle">
@@ -77,12 +77,12 @@
       <ol class="chapter-list" role="list">
         <li><a href="/">Introduction</a></li>
         <li><a href="/installation">Installation</a></li>
-        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/creating-doubles">Creating doubles</a></li>
         <li><a href="/expectations">Expectations</a></li>
-        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/argument-matching">Argument matching</a></li>
         <li><a href="/verification">Verification</a></li>
-        <li><a href="/failure-messages">Failure Messages</a></li>
-        <li><a href="/test-suite-integration" aria-current="page">Test Suite Integration</a></li>
+        <li><a href="/failure-messages">Failure messages</a></li>
+        <li><a href="/test-suite-integration" aria-current="page">Test suite integration</a></li>
         <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
         <li><a href="/contributing">Contributing</a></li>
       </ol>
@@ -100,49 +100,49 @@
   <main class="content">
     <div class="content-inner">
       <article class="prose">
-        <h1 class="page-title">Test Suite Integration</h1>
+        <h1 class="page-title">Test suite integration</h1>
 <p>Nothing in this library requires PHPUnit. But if it's installed in your project, three things improve automatically — and since Pest tests run on real <code>PHPUnit\Framework\TestCase</code> instances under the hood, all three apply the same way whether you're on PHPUnit or Pest.</p>
-<h2 id="failures-read-as-failures">Failures Read as Failures</h2>
+<h2 id="failures-read-as-failures">Failures read as failures</h2>
 <p>PHPUnit only reports a thrown exception as a <strong>failure</strong> (attributed cleanly to the assertion that didn't hold) if it extends PHPUnit's own <code>AssertionFailedError</code>. Anything else is reported as an <strong>error</strong> instead. An unmatched call or an unmet expectation is very much the former, so when PHPUnit is present, this library's exceptions are automatically the failure-flavored version. There's nothing to configure. It's detected the moment your tests run, and it works the same way with both PHPUnit 11 and 12.</p>
 <p>Setup mistakes remain <strong>errors</strong>, which is correct: a <code>final</code> class you tried to double, or a reserved method name collision, tell you the test can't run as written, not that an assertion about your code's behavior failed.</p>
-<h2 id="passing-checks-count-as-assertions">Passing Checks Count as Assertions</h2>
+<h2 id="passing-checks-count-as-assertions">Passing checks count as assertions</h2>
 <p>PHPUnit flags a test &quot;risky&quot; when it runs to completion without ever touching its assertion counter, usually a sign the test forgot to check anything. A test whose only check is <code>$double-&gt;received(...)</code>, <code>$double-&gt;unused()</code>, or a satisfied <code>expects()</code>/<code>allows()</code> verified via <code>verify()</code> (or the <code>VerifiesDoubles</code> trait below) is a real, meaningful check, but without this integration PHPUnit would have no way to know that: nothing in this library ever touched PHPUnit's own assertion API.</p>
 <p>When PHPUnit is present, a passing verification registers a genuine PHPUnit assertion behind the scenes, so tests like these are never flagged as risky. Nothing to configure. This is on by default, and a failing check throws exactly as before.</p>
-<h2 id="automatic-verification">Automatic Verification</h2>
-<p><code>JMac\Testing\Integrations\PHPUnit\VerifiesDoubles</code> is a trait you mix into your test suite to stop calling <code>-&gt;verify()</code> yourself. Unlike the two checks above, this one needs a deliberate step to enable — it hooks in via PHPUnit's <code>#[Before]</code>/<code>#[After]</code> attributes, so it only works on a suite built on <code>PHPUnit\Framework\TestCase</code>, which covers both PHPUnit and Pest, just wired in differently for each. See <a href="#framework-integration">Framework Integration</a> below for the setup.</p>
+<h2 id="automatic-verification">Automatic verification</h2>
+<p><code>JMac\Testing\Integrations\PHPUnit\VerifiesDoubles</code> is a trait you mix into your test suite to stop calling <code>-&gt;verify()</code> yourself. Unlike the two checks above, this one needs a deliberate step to enable — it hooks in via PHPUnit's <code>#[Before]</code>/<code>#[After]</code> attributes, so it only works on a suite built on <code>PHPUnit\Framework\TestCase</code>, which covers both PHPUnit and Pest, just wired in differently for each. See <a href="#framework-integration">framework integration</a> below for the setup.</p>
 <p>Without it (or a manual <code>verify()</code>), <code>expects()</code>'s call-count promise is never checked — a call that's expected but never made passes silently, same as <code>allows()</code>.</p>
-<p>Once enabled, every double created during a test (and every <code>received()</code> assertion made on one) is checked automatically once that test finishes. <code>$double-&gt;verify()</code> still works everywhere, including here — adding the trait doesn't change what <code>verify()</code> does, it just gives you a way to stop calling it yourself. If you're on a different test runner, or don't want the trait, calling <code>verify()</code> explicitly, as shown in <a href="/verification">Verification</a>, is the only thing you need.</p>
-<h2 id="driving-auto-verification-from-a-custom-runner">Driving Auto-Verification From a Custom Runner</h2>
+<p>Once enabled, every double created during a test (and every <code>received()</code> assertion made on one) is checked automatically once that test finishes. <code>$double-&gt;verify()</code> still works everywhere, including here — adding the trait doesn't change what <code>verify()</code> does, it just gives you a way to stop calling it yourself. If you're on a different test runner, or don't want the trait, calling <code>verify()</code> explicitly, as shown in <a href="/verification">verification</a>, is the only thing you need.</p>
+<h2 id="driving-auto-verification-from-a-custom-runner">Driving auto-verification from a custom runner</h2>
 <p><code>VerifiesDoubles</code> is built entirely on public API, so a runner other than PHPUnit/Pest can get the same &quot;enable before, verify after&quot; behavior without the trait:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #FFCB8B;">Double</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">enableAutoVerify</span><span style="color: #D6DEEB;">(); </span><span style="color: #637777;">//</span><span style="color: #637777;"> before the test runs</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> ...the test runs, creating doubles and received() assertions...</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$checkCount</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">Double</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">verifyAll</span><span style="color: #D6DEEB;">(); </span><span style="color: #637777;">//</span><span style="color: #637777;"> after the test finishes</span></div></code></pre></div>
 <p><code>enableAutoVerify()</code> resets and starts collecting every double created (and every <code>received()</code> assertion made) from that point on. <code>verifyAll()</code> checks everything collected since the matching <code>enableAutoVerify()</code>, then turns auto-verification back off.</p>
 <p>If the test already failed, call <code>Double::verifyAll(testFailed: true)</code> instead. It skips unmet expectations, which would only be misleading secondary failures, but still reports repeated identical expectations, since consuming those last-to-first is a likely cause of the failure.</p>
-<p>Outside PHPUnit, nothing tells a runner one of these checks actually happened — <a href="#passing-checks-count-as-assertions">Passing Checks Count as Assertions</a> above is PHPUnit-only. <code>verifyAll()</code>'s return value is the framework-agnostic version of that same signal: how many doubles and <code>received()</code> assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.</p>
+<p>Outside PHPUnit, nothing tells a runner one of these checks actually happened — <a href="#passing-checks-count-as-assertions">passing checks count as assertions</a> above is PHPUnit-only. <code>verifyAll()</code>'s return value is the framework-agnostic version of that same signal: how many doubles and <code>received()</code> assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.</p>
 <p>That pairing assumes one test runs straight through from enable to verify. A runner that interleaves tests in one process — fibers or coroutines sharing a process, for instance — needs to pause one test's in-flight state during a context switch so a sibling test resuming next doesn't sweep its doubles into the wrong <code>verifyAll()</code>. <code>Double::pauseAutoVerify()</code> lifts the live state out into an opaque <code>AutoVerifySnapshot</code> and resets the live state to off/empty; <code>Double::resumeAutoVerify()</code> installs a previously paused snapshot back as the live state:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$parked</span><span style="color: #D6DEEB;">[</span><span style="color: #BEC5D4;">$fiberId</span><span style="color: #D6DEEB;">] </span><span style="color: #C792EA;">=</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">Double</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">pauseAutoVerify</span><span style="color: #D6DEEB;">(); </span><span style="color: #637777;">//</span><span style="color: #637777;"> test suspends</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #637777;">//</span><span style="color: #637777;"> ...a sibling test runs in the meantime...</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #FFCB8B;">Double</span><span style="color: #7FDBCA;">::</span><span style="color: #82AAFF;">resumeAutoVerify</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$parked</span><span style="color: #D6DEEB;">[</span><span style="color: #BEC5D4;">$fiberId</span><span style="color: #D6DEEB;">]); </span><span style="color: #637777;">//</span><span style="color: #637777;"> test resumes</span></div></code></pre></div>
 <p><code>resumeAutoVerify()</code> overwrites the live state rather than merging into it, so always pair it with a <code>pauseAutoVerify()</code> of whatever's currently live if that state still needs checking.</p>
-<h2 id="framework-integration">Framework Integration</h2>
+<h2 id="framework-integration">Framework integration</h2>
 <p>Wiring the <code>VerifiesDoubles</code> trait in looks a little different depending on your framework:</p>
-<h3 id="phpunit-integration">PHPUnit Integration</h3>
+<h3 id="phpunit-integration">PHPUnit integration</h3>
 <p>Add the trait to your base test case:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\Integrations\PHPUnit\</span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #C792EA;">abstract</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">TestCase</span><span style="color: #D6DEEB;"> </span><span style="color: #C792EA;">extends</span><span style="color: #D6DEEB;"> \PHPUnit\Framework\</span><span style="color: #C5E478;">TestCase</span></div><div class='line'><span style="color: #D6DEEB;">{</span></div><div class='line'><span style="color: #D6DEEB;">    </span><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #D6DEEB;">;</span></div><div class='line'><span style="color: #D6DEEB;">}</span></div></code></pre></div>
-<h3 id="pest-integration">Pest Integration</h3>
+<h3 id="pest-integration">Pest integration</h3>
 <p>Pest doesn't use a base test case in the traditional sense, so mix the trait in with <code>uses()</code> instead, typically in <code>tests/Pest.php</code>:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #C792EA;">use</span><span style="color: #D6DEEB;"> JMac\Testing\Integrations\PHPUnit\</span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #D6DEEB;">;</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #82AAFF;">uses</span><span style="color: #D6DEEB;">(</span><span style="color: #FFCB8B;">VerifiesDoubles</span><span style="color: #7FDBCA;">::</span><span style="color: #C792EA;">class</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">in</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">Feature</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">, </span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">Unit</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">);</span></div></code></pre></div>
 <p>Scope the <code>in()</code> call to whichever directories your doubles live in — the whole <code>tests/</code> directory works too if you want it everywhere.</p>
 
       </article>
-      <nav class="pager" aria-label="Chapter navigation"><a href="/failure-messages" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Failure Messages</span></a><a href="/migrating-from-mockery" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Migrating from Mockery</span></a></nav>
+      <nav class="pager" aria-label="Chapter navigation"><a href="/failure-messages" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Failure messages</span></a><a href="/migrating-from-mockery" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Migrating from Mockery</span></a></nav>
     </div>
   </main>
   <aside class="toc">
     <p class="toc-label">On this page</p>
     <ol role="list">
-        <li><a href="#failures-read-as-failures">Failures Read as Failures</a></li>
-        <li><a href="#passing-checks-count-as-assertions">Passing Checks Count as Assertions</a></li>
-        <li><a href="#automatic-verification">Automatic Verification</a></li>
-        <li><a href="#driving-auto-verification-from-a-custom-runner">Driving Auto-Verification From a Custom Runner</a></li>
-        <li><a href="#framework-integration">Framework Integration</a></li>
+        <li><a href="#failures-read-as-failures">Failures read as failures</a></li>
+        <li><a href="#passing-checks-count-as-assertions">Passing checks count as assertions</a></li>
+        <li><a href="#automatic-verification">Automatic verification</a></li>
+        <li><a href="#driving-auto-verification-from-a-custom-runner">Driving auto-verification from a custom runner</a></li>
+        <li><a href="#framework-integration">Framework integration</a></li>
 
     </ol>
   </aside>

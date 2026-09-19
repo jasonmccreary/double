@@ -1,10 +1,10 @@
-# Failure Messages
+# Failure messages
 
 A failing test is a message to whoever's looking at it next. This library aims for every one of its messages to name the double, name the call, and point at what to do about it.
 
 Here's what you'll actually see when things go wrong.
 
-## An Expectation Wasn't Met
+## An expectation wasn't met
 
 The most common cause isn't a call that never happened. It's a call that happened with a slightly different value than expected: a typo, a stale variable, a case-sensitivity slip. `verify()` doesn't just report that an expectation went unmet. If that method was called with something else, it shows you exactly what:
 
@@ -62,7 +62,7 @@ A multi-line string (a JSON body, a rendered template, a SQL statement) diffs li
       ...
 ```
 
-## A Call Wasn't Configured
+## A call wasn't configured
 
 In [Strict mode](03-creating-doubles.md#strict), a call that doesn't match a configured expectation fails the moment it happens:
 
@@ -95,9 +95,9 @@ The following similar call was made to `bar`:
     + 'Baz'
 ```
 
-This same diff also appears for a `received($method)->with(...)` assertion (see [Verification](06-verification.md)) that fails on argument mismatch — the same fact, checked against the past instead of the future.
+This same diff also appears for a `received($method)->with(...)` assertion (see [verification](06-verification.md)) that fails on argument mismatch — the same fact, checked against the past instead of the future.
 
-### Method Name Suggestions
+### Method name suggestions
 
 A typo'd method name is caught the moment you configure it:
 
@@ -112,7 +112,7 @@ does not exist. Did you mean `save`?
 
 The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
 
-## A Call Didn't Match an `expects()`
+## A call didn't match an `expects()`
 
 `expects()` raises the bar for its own method, regardless of the double's mode. In [Loose mode](03-creating-doubles.md#loose-the-default) — the default — a call to a method you never mentioned falls back to a safe default. But once you've written `expects()` for a method, a call to it that doesn't match any of its configured expectations fails immediately, the same way it would in Strict mode:
 
@@ -171,7 +171,7 @@ This double has 2 expectations configured for `find`, but none
 match this call: `find(123)`, `find(789)`
 ```
 
-## A Call Happened Too Many Times
+## A call happened too many times
 
 If a call matches an expectation but would push it past its configured maximum, that call fails immediately:
 
@@ -180,7 +180,7 @@ Double `foo` received 4 calls to `bar(1)`, but your expectation
 only allowed 3 calls.
 ```
 
-## A Call Happened Out of Order
+## A call happened out of order
 
 For expectations marked [`ordered()`](04-expectations.md#keeping-calls-in-order), a call that arrives too early fails immediately, naming both methods involved:
 
@@ -189,17 +189,17 @@ Double `Connection` received `open()` out of order. Using `ordered`,
 this was expected to be called before `close()` was called.
 ```
 
-## Setup Mistakes
+## Setup mistakes
 
 A handful of failures are about the test's setup rather than the double misbehaving mid-test, and these are caught the moment you make the mistake:
 
-- Doubling a class that doesn't exist, or that's `final` (see [What Can't Be Doubled](03-creating-doubles.md#what-cant-be-doubled)).
-- A method name that collides with the library's own control verbs (see [Reserved Method Names](03-creating-doubles.md#reserved-method-names)).
+- Doubling a class that doesn't exist, or that's `final` (see [what can't be doubled](03-creating-doubles.md#what-cant-be-doubled)).
+- A method name that collides with the library's own control verbs (see [reserved method names](03-creating-doubles.md#reserved-method-names)).
 - Setting a double's mode twice.
-- Configuring a static method with `expects()`/`allows()`/`received()` (see [Static Methods](04-expectations.md#static-methods)).
+- Configuring a static method with `expects()`/`allows()`/`received()` (see [static methods](04-expectations.md#static-methods)).
 - Calling `->passthru()` with no argument when there's nothing to auto-instantiate.
 
-## Fabricated Doubles
+## Fabricated doubles
 
 [Loose mode](03-creating-doubles.md#loose-the-default) sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:
 

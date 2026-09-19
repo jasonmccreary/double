@@ -16,13 +16,13 @@ $service->lookup(123);
 $repository->received('recordView')->with($book);
 ```
 
-If you're looking for a Mockery alternative in PHP, Double is one. It's a mocking library, and the syntax above is familiar on purpose. Double isn't trying to replace how you test. It keeps the grammar you already know and improves the parts that got in the way.
+If you're looking for a Mockery alternative in PHP, it's [Double](https://testdoublephp.com). Double is a modern PHP test double library. Its syntax is familiar on purpose. It isn't trying to change how you test, only your experience when you do.
 
-Mockery has been the de facto PHP mocking library for the last decade, so it's baked into a lot of projects. That doesn't mean it's the best choice. For a long time it was simply the only one. Double was built around a few frustrations that kept coming up while using it. It's still pre-1.0, so expect the API to be small and the docs to be honest about what's missing.
+Mockery has been the de facto PHP mocking library for the last decade, so it's baked into a lot of projects. For a long time it was simply the only choice, which isn't the same as being the best one. Mockery has long-standing papercuts most developers eventually hit, from dense exceptions to nuanced methods. Double addresses those.
 
 ## Failures you can read
 
-This was the main reason Double exists. When a Mockery expectation fails, you get a mangled class name and not much else. Double's failure messages name the double, the call, and what was called instead, so the next step is usually obvious.
+This is the main reason Double exists. When a Mockery expectation fails, you get a mangled class name and not much else. Double's failure messages name the double, the call, and what was called instead, so the next step is usually obvious.
 
 ## One verb per idea
 
@@ -36,6 +36,6 @@ The internals are small and well-bounded. Adding a matcher or improving a failur
 
 ## Other options
 
-Mockery isn't the only alternative to consider. PHPUnit's built-in mocks need no extra dependency. Prophecy and Phake both take a different approach to the API. Double sits closest to Mockery, so moving over is mostly a matter of renaming methods.
+Mockery isn't the only alternative to consider. PHPUnit offers built-in mocks. Prophecy and Phake offer different APIs. Double sits closest to Mockery.
 
 The [Migrating from Mockery](../09-migrating-from-mockery.md) guide maps each Mockery method to its Double equivalent, including [what happens to Mockery spies](../09-migrating-from-mockery.md#no-mockeryspy-just-doublefor). You can also [convert your tests automatically](https://laravelshift.com/mockery-test-double-converter) with Shift. For the longer argument, see [How is Double better than Mockery?](https://testdoublephp.com/blog/how-is-double-better-than-mockery)

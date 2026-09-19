@@ -77,12 +77,12 @@
       <ol class="chapter-list" role="list">
         <li><a href="/" aria-current="page">Introduction</a></li>
         <li><a href="/installation">Installation</a></li>
-        <li><a href="/creating-doubles">Creating Doubles</a></li>
+        <li><a href="/creating-doubles">Creating doubles</a></li>
         <li><a href="/expectations">Expectations</a></li>
-        <li><a href="/argument-matching">Argument Matching</a></li>
+        <li><a href="/argument-matching">Argument matching</a></li>
         <li><a href="/verification">Verification</a></li>
-        <li><a href="/failure-messages">Failure Messages</a></li>
-        <li><a href="/test-suite-integration">Test Suite Integration</a></li>
+        <li><a href="/failure-messages">Failure messages</a></li>
+        <li><a href="/test-suite-integration">Test suite integration</a></li>
         <li><a href="/migrating-from-mockery">Migrating from Mockery</a></li>
         <li><a href="/contributing">Contributing</a></li>
       </ol>
@@ -115,7 +115,7 @@
 <h2 id="zero-learning-curve">Zero learning curve</h2>
 <p>Testing already has a barrier to entry. Double does not want to add to that. So there's nothing to decide or learn before getting started. <code>Double::for()</code> creates a <strong>loose</strong> double by default — which returns a sensible, type-safe value.</p>
 <p>As you set expectations for your double, it automatically adjusts its behavior. You may, of course, set <a href="/creating-doubles#strict">strict</a> or <a href="/creating-doubles#passthru">passthru</a> mode if needed. But Double does not require deciding between a mock, a spy, or a partial ahead of time.</p>
-<h2 id="failures-for-humans">Failures for humans</h2>
+<h2 id="failures-for-humans-and-agents">Failures for humans (and agents)</h2>
 <p>Double ensures its failures are immediately actionable. First, by actually failing the test. Under PHPUnit, an unmet expectation doesn't just throw — it fails the test the same way a built-in assertion would.</p>
 <p>Second, by ensuring the failure messages are as helpful as possible. Each one names the double, the expected call, and why it failed. Most even suggest what to do next. Here's an example:</p>
 <div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `foo` expected `find('baz')` to be called exactly 1 time, but it was never called.
@@ -128,7 +128,7 @@ The following calls to `find` were made during this test: `find('Baz')`
 <div class="code-block"><div class="code-block-header"><span class="code-lang">php</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code class="language-php torchlight"><!-- Syntax highlighted by torchlight.dev --><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">expects</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">123</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);   </span><span style="color: #637777;">//</span><span style="color: #637777;"> called exactly once</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">returns</span><span style="color: #D6DEEB;">(</span><span style="color: #82AAFF;">true</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> called any number of times</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">allows</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">find</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #F78C6C;">999</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">throws</span><span style="color: #D6DEEB;">(</span><span style="color: #7FDBCA;">new</span><span style="color: #D6DEEB;"> </span><span style="color: #FFCB8B;">NotFoundException</span><span style="color: #D6DEEB;">());</span></div><div class='line'>&nbsp;</div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">save</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);</span></div><div class='line'><span style="color: #BEC5D4;">$repository</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">received</span><span style="color: #D6DEEB;">(</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #ECC48D;">save</span><span style="color: #D9F5DD;">&#39;</span><span style="color: #D6DEEB;">)</span><span style="color: #7FDBCA;">-&gt;</span><span style="color: #82AAFF;">with</span><span style="color: #D6DEEB;">(</span><span style="color: #BEC5D4;">$book</span><span style="color: #D6DEEB;">);                </span><span style="color: #637777;">//</span><span style="color: #637777;"> check it after the fact</span></div></code></pre></div>
 <h2 id="ready-for-contribution">Ready for contribution</h2>
 <p>The codebase is split into a handful of small modules, each with one responsibility. If you want to add an <a href="/argument-matching">argument matcher</a>, start in <code>src/Matching/</code>. If you want to tweak an exception message, start in the relevant <code>*Fields</code> trait in <code>src/Exceptions/</code>. You don't need to untangle the entire codebase to make your contribution.</p>
-<h2 id="where-to-next">Where to Next</h2>
+<h2 id="where-to-next">Where to next</h2>
 <ul>
 <li><a href="/installation">Installation</a> — get it into your project.</li>
 <li><a href="/creating-doubles">Creating Doubles</a> — make your first double and choose how it behaves.</li>
@@ -144,10 +144,10 @@ The following calls to `find` were made during this test: `find('Baz')`
     <p class="toc-label">On this page</p>
     <ol role="list">
         <li><a href="#zero-learning-curve">Zero learning curve</a></li>
-        <li><a href="#failures-for-humans">Failures for humans</a></li>
+        <li><a href="#failures-for-humans-and-agents">Failures for humans (and agents)</a></li>
         <li><a href="#one-clean-api">One clean API</a></li>
         <li><a href="#ready-for-contribution">Ready for contribution</a></li>
-        <li><a href="#where-to-next">Where to Next</a></li>
+        <li><a href="#where-to-next">Where to next</a></li>
 
     </ol>
   </aside>

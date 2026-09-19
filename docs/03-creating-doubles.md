@@ -1,4 +1,4 @@
-# Creating Doubles
+# Creating doubles
 
 You may create a double for any class or interface using `Double::for()`:
 
@@ -14,9 +14,9 @@ This returns a real object. It satisfies `instanceof BookRepository`, it passes 
 $service = new CatalogService($repository);
 ```
 
-Nothing about the double is configured yet. See [Expectations](04-expectations.md) for that. This page covers the double itself: how to create one, what it's called in failure messages, and how it behaves before you've told it anything.
+Nothing about the double is configured yet. See [expectations](04-expectations.md) for that. This page covers the double itself: how to create one, what it's called in failure messages, and how it behaves before you've told it anything.
 
-## Doubling More Than One Thing at Once
+## Doubling more than one thing at once
 
 Sometimes the code you're testing needs a single object that satisfies more than one contract. A logger that's also flushable, for example. You may pass more than one target to `for()` to get one double implementing all of them:
 
@@ -29,7 +29,7 @@ $logger instanceof FlushableInterface; // true
 
 Every target after the first must be an interface, the same rule PHP applies to intersection types, since a class may only extend one parent.
 
-## Wrapping a Real Instance
+## Wrapping a real instance
 
 If you already have a real object in hand (built by a factory, resolved from a container, or otherwise), you may pass the instance itself to `for()` instead of a class name:
 
@@ -37,13 +37,13 @@ If you already have a real object in hand (built by a factory, resolved from a c
 $double = Double::for($realBook)->passthru();
 ```
 
-`Double::for($realBook)` doubles `$realBook`'s class and remembers the instance, so a later `->passthru()` call knows what to delegate to without you needing to repeat yourself (`Double::for(Book::class)->passthru($realBook)` would work just as well). More on what `passthru()` does in [Modes](#modes) below.
+`Double::for($realBook)` doubles `$realBook`'s class and remembers the instance, so a later `->passthru()` call knows what to delegate to without you needing to repeat yourself (`Double::for(Book::class)->passthru($realBook)` would work just as well). More on what `passthru()` does in [modes](#modes) below.
 
 ## Labels
 
-Every double is given a label, derived from its class or interface name. `BookRepository::class` becomes `"BookRepository"`. This label appears in every failure message the double produces (see [Failure Messages](07-failure-messages.md)), so you always know which double is involved without hunting through generated class names.
+Every double is given a label, derived from its class or interface name. `BookRepository::class` becomes `"BookRepository"`. This label appears in every failure message the double produces (see [failure messages](07-failure-messages.md)), so you always know which double is involved without hunting through generated class names.
 
-## Reserved Method Names
+## Reserved method names
 
 Configuration lives directly on the double itself, which is what makes `$repository->expects(...)` possible without a separate builder object. The trade-off is that eight method names are reserved on every double:
 
@@ -66,7 +66,7 @@ Double::for(AuthorizerInterface::class);
 
 This does come up in practice. `allows()` is part of Laravel's own `Gate` contract, for instance. It's worth knowing about early, rather than discovering it as a confusing test failure later.
 
-### Overriding a Reserved Name Collision
+### Overriding a reserved name collision
 
 Passing `override: true` lets you double it anyway:
 
@@ -92,18 +92,18 @@ $service = new PolicyChecker($gate->instance());
 
 `override: true` only changes anything when there's actually a collision to route around. Passed against a class with none, it's a no-op — `for()` returns the exact same double it always would. It also only supports a single target; combined with more than one target passed to `for()`, it's rejected.
 
-## What Can't Be Doubled
+## What can't be doubled
 
 A couple of things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
 
 - **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
 
-Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [Expectations](04-expectations.md#static-methods).
+Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
-Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [Magic Methods](04-expectations.md#magic-methods).
+Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [magic methods](04-expectations.md#magic-methods).
 
-### Doubling a Final Class
+### Doubling a final class
 
 `Double::bypassFinals()` lifts the `final`-class restriction for the rest of the process:
 
@@ -119,7 +119,7 @@ It works by rewriting `final class` out of a target's source the first time PHP 
 
 It's global for the process (there's no way to know in advance which classes a later `Double::for()` call will name) and it's narrow in what it touches: only `final` immediately before `class`. A final *method* on an otherwise non-final class is left alone — the double simply inherits that method's real implementation unoverridden, same as it always has.
 
-### Readonly Classes
+### Readonly classes
 
 Unlike `final`, a `readonly` class needs no opt-in — it doubles the same as any other class:
 
@@ -138,7 +138,7 @@ PHP requires every subclass of a readonly class to be readonly itself, so the ge
 
 Every double has exactly one mode, chosen either when you create it or on the very next call, and it stays that way afterward. Mode answers one question: **what happens when a call doesn't match anything you've configured?** It never changes what `expects()`/`allows()` mean. Those work the same way in every mode.
 
-### Loose (the Default)
+### Loose (the default)
 
 ```php
 $repository = Double::for(BookRepository::class);
@@ -175,7 +175,7 @@ you'll need to configure it explicitly. For example:
 
 Loose mode doesn't stop you from configuring specific calls. You may freely mix "stub these calls" with "fall back to a safe default for everything else."
 
-One exception: once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails, in every mode — `expects()` is a promise about that specific method, not just about the double overall, so Loose mode's safe default only ever covers methods you never mentioned at all. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still falls back to a safe default. See [A Call Didn't Match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
+One exception: once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails, in every mode — `expects()` is a promise about that specific method, not just about the double overall, so Loose mode's safe default only ever covers methods you never mentioned at all. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still falls back to a safe default. See [a call didn't match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
 
 ### Strict
 
@@ -199,7 +199,7 @@ $logger->info('hello');   // runs Logger::info() for real, on the double itself
 $logger->error('uh oh');  // still recorded, so received('error') works
 ```
 
-Unconfigured calls run for real. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or ran for real, so `received()` (see [Verification](06-verification.md)) works the same as it does in any other mode.
+Unconfigured calls run for real. Anything you have configured still intercepts as usual, and every call is still recorded, whether it was intercepted or ran for real, so `received()` (see [verification](06-verification.md)) works the same as it does in any other mode.
 
 `passthru($realLogger)` doesn't keep `$realLogger` around and forward calls to it — it copies `$realLogger`'s state onto the double once, right then, and from that point on the double *is* the real object, running its actual code directly on itself. That's not just an implementation detail: it's what makes an unstubbed method's own internal calls to other methods on `$this` reach your stubs too, the same way overriding a method in an ordinary subclass would. If `Logger::info()` internally called `$this->format($message)`, and you'd configured `format()`, that stub would fire — even though nothing called `format()` directly from your test.
 
@@ -207,7 +207,7 @@ One consequence of copying state up front rather than continuing to reach into `
 
 `$realLogger` must be `Logger` or a subclass of it — the same rule as any real type hint. A subclass is accepted, but only `Logger`'s own methods ever run, never the subclass's overrides: passthru runs the *doubled* class's real code, not whatever class the instance you handed in actually is. Anything unrelated to `Logger` is rejected outright, since there'd be nothing for `Logger`'s own methods to run against.
 
-One exception, easy to miss because Passthru's whole premise is "real behavior unless overridden": once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails — the same rule [Loose mode](#loose-the-default) follows, and for the same reason: `expects()` is a promise about that specific method, not just about the double overall, so it doesn't relax for Passthru's fallback any more than it does for Loose's. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still runs for real, same as a method with nothing configured for it at all. If you meant "override this one call, leave the rest real," reach for `allows()` — `expects()` is for asserting a method is called with exactly the arguments you named. See [A Call Didn't Match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
+One exception, easy to miss because Passthru's whole premise is "real behavior unless overridden": once a method has `expects()` registered, a call to it that doesn't match any of its configured expectations always fails — the same rule [Loose mode](#loose-the-default) follows, and for the same reason: `expects()` is a promise about that specific method, not just about the double overall, so it doesn't relax for Passthru's fallback any more than it does for Loose's. `allows()` doesn't raise this bar; a mismatched call to an `allows()`-only method still runs for real, same as a method with nothing configured for it at all. If you meant "override this one call, leave the rest real," reach for `allows()` — `expects()` is for asserting a method is called with exactly the arguments you named. See [a call didn't match an `expects()`](07-failure-messages.md#a-call-didnt-match-an-expects) for what that failure looks like.
 
 Calling `->passthru()` with no argument never runs the real constructor at all — there's nothing to copy from, so the double just keeps the uninitialized state it already has. A real method that goes on to touch a property the constructor would have set throws PHP's own clear "must not be accessed before initialization" error at that point; nothing about passthru itself needs to guess or fail early on your behalf.
 
@@ -223,4 +223,4 @@ existing instance instead. For example: `->passthru($existingInstance)`.
 
 Passthru only applies to classes, since an interface has no real implementation to run.
 
-If you only want one specific call to run for real, rather than the whole double, `resolves()` is the better fit. See [Expectations](04-expectations.md).
+If you only want one specific call to run for real, rather than the whole double, `resolves()` is the better fit. See [expectations](04-expectations.md).

@@ -31,7 +31,7 @@ Testing already has a barrier to entry. Double does not want to add to that. So 
 
 As you set expectations for your double, it automatically adjusts its behavior. You may, of course, set [strict](03-creating-doubles.md#strict) or [passthru](03-creating-doubles.md#passthru) mode if needed. But Double does not require deciding between a mock, a spy, or a partial ahead of time.
 
-## Failures for humans
+## Failures for humans (and agents)
 
 Double ensures its failures are immediately actionable. First, by actually failing the test. Under PHPUnit, an unmet expectation doesn't just throw — it fails the test the same way a built-in assertion would.
 
@@ -63,7 +63,7 @@ $repository->received('save')->with($book);                // check it after the
 
 The codebase is split into a handful of small modules, each with one responsibility. If you want to add an [argument matcher](05-argument-matching.md), start in `src/Matching/`. If you want to tweak an exception message, start in the relevant `*Fields` trait in `src/Exceptions/`. You don't need to untangle the entire codebase to make your contribution.
 
-## Where to Next
+## Where to next
 
 - [Installation](02-installation.md) — get it into your project.
 - [Creating Doubles](03-creating-doubles.md) — make your first double and choose how it behaves.

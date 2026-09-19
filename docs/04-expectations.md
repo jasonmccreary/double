@@ -19,15 +19,15 @@ $repository->allows('save');   // may be called any number of times, including z
 
 You may reach for `expects()` when the call is the point of the test (the thing you're actually asserting happened), and `allows()` for setup that just needs to respond to a call, without the count being part of what you're testing.
 
-## Constraining Arguments with `with()`
+## Constraining arguments with `with()`
 
 ```php
 $repository->allows('find')->with(123)->returns($book);
 ```
 
-Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly against the actual argument. See [Argument Matching](05-argument-matching.md) for exactly how that comparison works, and for matchers to reach for when an exact value is too strict.
+Leave `with()` off and the expectation matches a call to that method with any arguments. A plain value passed to `with()` is compared directly against the actual argument. See [argument matching](05-argument-matching.md) for exactly how that comparison works, and for matchers to reach for when an exact value is too strict.
 
-## Deciding What Happens
+## Deciding what happens
 
 ```php
 $repository->allows('find')->with(123)->returns($book);
@@ -41,7 +41,7 @@ $repository->allows('calculateTax')->resolves(fn (...$args) => $realGateway->cal
 
 If you leave all three off, a matched call falls back to the same safe default that [Loose mode](03-creating-doubles.md#loose-the-default) uses for an unmatched one, so an expectation without an explicit return doesn't hand back a bare `null` that turns into a `TypeError` further down.
 
-## Sequential Returns
+## Sequential returns
 
 You may pass more than one value to `returns()` (or `throws()`), and each call receives the next value in the list, holding at the last one once the list runs out:
 
@@ -57,7 +57,7 @@ This is one expectation with a queue attached, not several competing expectation
 
 > **Note:** Registering the same call twice to get a different answer each time — instead of one `returns()` with several values — is ambiguous, since matching order (see below) means the most-recently-registered one wins first, handing back values in the reverse of what was written. `verify()` rejects this shape and points at the fix.
 
-## Counting Calls with `times()`
+## Counting calls with `times()`
 
 ```php
 $repository->expects('save')->times(3);                 // exactly 3
@@ -69,7 +69,7 @@ $repository->allows('save')->never();                    // shorthand for times(
 
 One overloaded verb covers every count you'd want, rather than a separate word for each shape. `never()` remains as its own method because it reads more naturally than the equivalent `times()` call for that common case.
 
-## Matching Order
+## Matching order
 
 When more than one expectation could match a call, the **more specific one wins, regardless of which was declared first**. An expectation is specific if its `with()` pins down at least one argument to something narrower than "anything" (a bare `with(Argument::any())` doesn't count — it's the same as no `with()` at all). Between two equally specific expectations for the same call, the more recently declared one wins.
 
@@ -84,7 +84,7 @@ Once a specific expectation's own `times()` budget is spent, matching falls back
 
 Two expectations don't get ranked against each other for how narrow they are — `with(123)` and `with(Argument::type('int'))` are both just "specific," and between the two of them, ordinary declaration order applies.
 
-## Keeping Calls in Order
+## Keeping calls in order
 
 Most tests don't need to care what order unrelated calls happen in. But sometimes order is genuinely part of the contract: you can't `commit()` before `beginTransaction()`. For that, mark the relevant expectations `ordered()`:
 
@@ -96,7 +96,7 @@ $connection->expects('close')->ordered();
 
 Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
 
-## Static Methods
+## Static methods
 
 `expects()`, `allows()`, and `received()` only work with instance methods. There's no instance for a double to intercept a static call through. Configuring one is rejected up front, with a clear reason, rather than silently doing nothing:
 
@@ -106,7 +106,7 @@ $repository->expects('findAll'); // findAll() is `public static function`
 // it's a static method. Static methods can't be doubled.
 ```
 
-## Magic Methods
+## Magic methods
 
 Most magic methods can't be doubled, and configuring one is rejected up front:
 
@@ -129,4 +129,4 @@ Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__cal
 
 `__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from.
 
-This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [Why doesn't Double mock magic methods?](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
+This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
