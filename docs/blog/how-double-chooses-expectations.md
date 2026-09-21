@@ -1,38 +1,57 @@
 ---
-title: How does Double choose which expectation wins?
-description: A default and a specific override used to be ordered by which line came first. That changed — and closed off a mistake the old rule made easy to write.
+title: How Double chooses which expectation wins
+description: A detailed review of how Double improves the developer experience by adjusting its logic for choosing which expectation wins.
 published: 2026-09-21
 ---
 
-# How does Double choose which expectation wins?
+# How Double chooses which expectation wins
+
+By default, Double reviews expectations in last in, first out (LIFO) order. That means if the last expectation you wrote can match, it wins.
+
+That worked as expected when you wrote your default expectation before your specific expectation.
 
 ```php
 $repository->allows('find')->returns(null);              // a default
 $repository->allows('find')->with(123)->returns($book);  // a specific override
 ```
 
-That used to work only in this order. Matching was most-recently-registered first, so the specific override had to come *after* the default or it never got reached. Now it doesn't matter which line comes first — and along the way, Double closed off a mistake the old rule made easy to write.
+But if you wrote your default last, Double would choose it.
+
+```php
+$repository->allows('find')->with(123)->returns($book);
+$repository->allows('find')->returns(null);
+
+$repository->find(123);    // null
+```
+
+That's technically correct based on LIFO. Starting with `0.9.0`, both examples above return `$book`.
 
 ## Specific beats recent
+Specificity decides first now, order second. An expectation counts as specific if `with()` sets the arguments. There are a few caveats. First, a bare `with()` or `with(Argument::any())` doesn't count as specific. Second, specific expectations aren't ranked against each other. So `with(123)` and `with(Argument::type('int'))` are both just specific. Double falls back to LIFO.
 
-`with()` narrows an expectation to a particular call. A bare `allows('find')->returns(null)` matches any call to `find`; adding `with(123)` matches only `find(123)`. Order used to be the only thing deciding which one won, so the two lines above only behaved the way they read if the broad case happened to come first.
+With specificity beating LIFO, you may write your expectations however you like and they will be chosen in a natural way.
 
-Specificity decides first now, order second. An expectation counts as specific if `with()` pins at least one argument down to something narrower than "anything" — a bare `with(Argument::any())` doesn't count, since it matches exactly as much as no `with()` at all. `find(123)` gets `$book` and `find(456)` gets `null`, no matter which line was written first. Two specific expectations aren't ranked against each other for how narrow they are, though — `with(123)` and `with(Argument::type('int'))` are both just "specific," and plain most-recent-first order settles it between them.
+```php
+$repository->allows('find')->returns(null);
+$repository->allows('find')->with(123)->returns($first);
+$repository->allows('find')->with(456)->returns($second);
 
-This is what finally makes Mockery's `byDefault()` translate directly instead of needing a note about registration order. Register a plain fallback and a `with()`-qualified override, in either order — the specific one wins, and falls back to the generic one once its own `times()` budget runs out.
+$repository->find(456);    // $second
+$repository->find(123);    // $first
+$repository->find(789);    // null
+```
 
-## The trap the old rule made easy
-
-Some setups look like they should produce a sequence of answers but don't:
+## One more edge case
+While choosing the specific expectation first is a more natural developer experience, there is one small edge case. Consider two specific expectations written out fully:
 
 ```php
 $repo->expects('find')->with(123)->returns($first);
 $repo->expects('find')->with(123)->returns($second);
 ```
 
-Same method, identical `with()` — so these two are tied, and matching still falls back to most-recently-registered first between them. The first call to `find(123)` gets `$second`; the second gets `$first`. Backwards from how it reads. It's a natural habit to carry over from Mockery, where registering the same call twice with `once()` is exactly how you'd queue up answers in order.
+Same method, identical `with()` means same specificity. Double falls back to LIFO to decide. That means the first call to `find(123)` gets `$second`. Technically correct with LIFO, but maybe not what you expect. Or maybe it was.
 
-Double doesn't try to guess this was a mistake and quietly reorder it for you — that's worse than refusing to run. `verify()` recognizes two or more expectations on the same method, with identical argument matching and finite call counts, as ambiguous, and throws with the fix inline:
+Double can't apply a reordering rule here. At least not with certainty. But it can point you to a shorter way to write this that removes the ambiguity. `verify()` recognizes two or more expectations on the same method, with identical argument matching and finite call counts, as ambiguous, and throws an exception with the fix inline:
 
 ```
 Double `UserRepository` has `find(123)` registered 2 times. This looks like an
@@ -42,10 +61,10 @@ them into one expectation instead.
 For example: `find(...)->times(2)->returns(...)`.
 ```
 
-The fix is what the message says: one expectation, one `times()`, values in the order you want them back.
+The fix is in the message: write one expectation, using `times()`, and return the values in the order you want them back.
 
 ```php
 $repo->expects('find')->with(123)->times(2)->returns($first, $second);
 ```
 
-Both changes are covered in [Matching Order](../04-expectations.md#matching-order), and the Mockery version of the trap above — plus the `byDefault()` translation it unblocks — is in [Migrating from Mockery](../09-migrating-from-mockery.md#repeating-a-call-to-get-a-sequence-of-answers).
+These two refinements in the decision tree emphasize Double's focus on the developer experience. Choosing expectations based on specificity first is more natural. Just like CSS rules. And addressing the edge case with a clear error message and a single API align with two of Double's goals. Both changes are covered in [Matching Order](../04-expectations.md#matching-order).
