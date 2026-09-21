@@ -17,6 +17,7 @@
 
 ## Blog
 
+- [How does Double choose which expectation wins?](https://testdoublephp.com/blog/how-double-chooses-expectations): A default and a specific override used to be ordered by which line came first. That changed — and closed off a mistake the old rule made easy to write.
 - [What about method-level `passthru`?](https://testdoublephp.com/blog/what-about-method-level-passthru): Mockery lets one stubbed expectation run the real method. Double doesn't, and the reason isn't a missing feature — it's what that need is usually actually asking for.
 - [Why doesn't Double mock magic methods?](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods): __call() has no fixed shape to check a stub against. Two real examples show what to double instead — and one case where the answer isn't Double at all.
 - [What about "unnamed mocks"?](https://testdoublephp.com/blog/what-about-unnamed-mocks): Why Double doesn't offer an equivalent to Mockery::mock() and what to reach for instead.
