@@ -107,6 +107,8 @@ A plain value passed to `with()`/`returns()` is compared with `===`-like strictn
 
 Converting a suite from Mockery can surface real, previously-silent bugs this way: an expectation that "passed" for years under `==` may legitimately fail under Double because it was never actually checking what it looked like it was checking. If that happens, look at what's actually being compared before assuming the conversion introduced the problem — a `->with()` value that reads as a string may need `Argument::satisfies()` with an explicit cast if the real call genuinely passes an object.
 
+A call that doesn't match an `allows()->with()` returns a safe default (often `null`) in [Loose mode](03-creating-doubles.md#loose-the-default), whereas Mockery throws. For example, PHP coerces `1` passed to a `string` parameter into `'1'`, which doesn't match `with(1)`. If the arguments matter, use `expects()`, which [fails immediately](07-failure-messages.md#a-call-didnt-match-an-expects) with an argument diff.
+
 ## Modes, not mock kinds
 
 Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's one kind of thing (a double), and the equivalent choice is a mode you add on top of it, covered fully in [creating doubles](03-creating-doubles.md):
