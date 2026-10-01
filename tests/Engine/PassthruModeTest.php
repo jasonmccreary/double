@@ -12,6 +12,7 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ClonesItselfDuringCall;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\ExtendedGreeter;
+use JMac\Testing\Tests\Support\InheritedReadonlyGreeter;
 use JMac\Testing\Tests\Support\InstantiableLogger;
 use JMac\Testing\Tests\Support\LoggerInterface;
 use JMac\Testing\Tests\Support\RealLogger;
@@ -225,6 +226,18 @@ final class PassthruModeTest extends TestCase
     public function test_passthru_accepts_a_subclass_instance_but_only_runs_the_doubled_classs_own_methods(): void
     {
         $double = Double::for(StatefulGreeter::class)->passthru(new ExtendedGreeter('Ada'));
+
+        $this->assertSame('Hello, Ada!', $double->greet());
+    }
+
+    /**
+     * Before PHP 8.4 a readonly property can only be initialized from its
+     * declaring class's scope, so copying one the doubled class merely
+     * inherits threw "Cannot initialize readonly property".
+     */
+    public function test_passthru_copies_a_readonly_property_inherited_from_a_parent_class(): void
+    {
+        $double = Double::for(InheritedReadonlyGreeter::class)->passthru(new InheritedReadonlyGreeter('Ada'));
 
         $this->assertSame('Hello, Ada!', $double->greet());
     }
