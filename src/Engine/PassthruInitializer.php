@@ -71,6 +71,13 @@ final class PassthruInitializer
      * uninitialized typed property has nothing to read, and $double is
      * already in that same uninitialized state for anything it doesn't
      * receive here.
+     *
+     * Each property is re-reflected against its declaring class before the
+     * write: before PHP 8.4, a readonly property can only be initialized
+     * from the scope of the class that declares it, and a ReflectionProperty
+     * reached through a subclass writes from that subclass's scope — so an
+     * inherited readonly property threw "Cannot initialize readonly
+     * property" whenever $target wasn't the class declaring it.
      */
     public static function copyState(object $double, object $realInstance, string $target): void
     {
@@ -83,6 +90,7 @@ final class PassthruInitializer
                 continue;
             }
 
+            $property = new \ReflectionProperty($property->getDeclaringClass()->getName(), $property->getName());
             $property->setValue($double, $property->getValue($realInstance));
         }
     }
