@@ -48,11 +48,9 @@ class InvalidDoubleTargetException extends DoubleException
     }
 
     /**
-     * A static method has no instance to dispatch through, so
-     * ClassGenerator never overrides one. Harmless for a concrete class
-     * (real implementation just runs, inherited as-is); fatal for an
-     * abstract one — caught here instead of surfacing as an uncatchable
-     * eval()-time error.
+     * Only for intersection targets declaring $method static on one and
+     * instance on another — an abstract static method on its own is stubbed
+     * by ClassGenerator, not rejected.
      */
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {
@@ -62,9 +60,16 @@ class InvalidDoubleTargetException extends DoubleException
         ));
     }
 
+    public static function isEnumInterface(string $target): self
+    {
+        return new self($target, 'only an enum can implement `UnitEnum` or `BackedEnum`');
+    }
+
     /**
-     * Same failure shape as hasAbstractStaticMethod() above, for magic
-     * methods (anything starting with "__") instead of static ones.
+     * A magic method outside ClassGenerator::DOUBLEABLE_MAGIC_METHODS is
+     * never overridden, so an abstract one would leave the generated class
+     * incomplete — caught here instead of surfacing as an uncatchable
+     * eval()-time error.
      */
     public static function hasAbstractMagicMethod(string $target, string $method): self
     {

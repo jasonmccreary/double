@@ -352,6 +352,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('invalid-double-target-has-abstract-static-method', $exception->getMessage());
     }
 
+    public function test_renders_invalid_double_target_is_enum_interface(): void
+    {
+        $exception = InvalidDoubleTargetException::isEnumInterface('BackedEnum');
+
+        $this->assertMatchesGolden('invalid-double-target-is-enum-interface', $exception->getMessage());
+    }
+
     public function test_renders_invalid_double_target_has_abstract_magic_method(): void
     {
         $exception = InvalidDoubleTargetException::hasAbstractMagicMethod('MagicMethodInterface', '__call');
@@ -376,6 +383,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new StaticMethodException('HasStaticMethod', 'make');
 
         $this->assertMatchesGolden('static-method', $exception->getMessage());
+    }
+
+    public function test_renders_static_method_called(): void
+    {
+        $exception = new StaticMethodException('StaticMethodInterface', 'make', called: true);
+
+        $this->assertMatchesGolden('static-method-called', $exception->getMessage());
     }
 
     public function test_renders_magic_method(): void

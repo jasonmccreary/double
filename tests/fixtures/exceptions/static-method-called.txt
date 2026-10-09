@@ -1,0 +1,2 @@
+
+Can't call `make` on a double for `StaticMethodInterface` since it's an abstract static method. Static methods can't be doubled.

@@ -99,7 +99,7 @@ A couple of things are rejected when you call `for()`, with a clear reason, rath
 - **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
 
-Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
+Static methods are a related, separate case: you may create a double for a class or interface that has one, even an abstract one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
 Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [magic methods](04-expectations.md#magic-methods).
 

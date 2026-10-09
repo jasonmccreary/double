@@ -34,6 +34,7 @@ use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -1040,6 +1041,19 @@ final class DoubleTest extends TestCase
         $this->expectExceptionMessage('static method');
 
         $double->expects('make');
+    }
+
+    public function test_doubles_an_interface_with_an_abstract_static_method(): void
+    {
+        $double = Double::for(StaticMethodInterface::class);
+        $double->allows('greet')->returns('Hello');
+
+        $this->assertSame('Hello', $double->greet());
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t configure `make`');
+
+        $double->allows('make');
     }
 
     /**

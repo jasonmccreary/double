@@ -1,0 +1,2 @@
+
+Can't create a double for `BackedEnum` since only an enum can implement `UnitEnum` or `BackedEnum`.
