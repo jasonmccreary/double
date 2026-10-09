@@ -28,9 +28,10 @@ final class ClassGenerator
      * ClassGenerator and configurable via Double::expects()/allows().
      *
      * __set_state isn't listed despite having a fixed signature — it's
-     * always static, so it's already excluded by the static-method check
-     * everywhere this list is consulted, making a magic-method carve-out for
-     * it moot.
+     * always static, and a static method is never overridden or
+     * configurable, so a carve-out for it would only matter to
+     * assertNoAbstractMagicMethods(), which rejects an abstract one rather
+     * than letting it get a throwing stub.
      */
     public const DOUBLEABLE_MAGIC_METHODS = ['__invoke', '__toString', '__serialize', '__unserialize', '__clone'];
 

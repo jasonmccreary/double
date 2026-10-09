@@ -94,10 +94,12 @@ $service = new PolicyChecker($gate->instance());
 
 ## What can't be doubled
 
-A couple of things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
+A few things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
 
 - **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
+- **`UnitEnum`, `BackedEnum`, or an interface extending them.** PHP lets only an enum implement these. Use a real enum case instead.
+- **Multiple interfaces where one declares a method static and another declares it as an instance method.** No class can implement both.
 
 Static methods are a related, separate case: you may create a double for a class or interface that has one, even an abstract one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
