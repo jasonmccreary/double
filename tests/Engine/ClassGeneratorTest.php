@@ -11,6 +11,7 @@ use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Tests\Support\AbstractStaticMethodClass;
+use JMac\Testing\Tests\Support\AbstractStaticTraitClass;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
 use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
@@ -24,6 +25,7 @@ use JMac\Testing\Tests\Support\ConstDefaultBase;
 use JMac\Testing\Tests\Support\ConstDefaultChild;
 use JMac\Testing\Tests\Support\ConstDefaultGrandparent;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
+use JMac\Testing\Tests\Support\EnumExtendingInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
@@ -49,7 +51,10 @@ use JMac\Testing\Tests\Support\SecondStaticMethodInterface;
 use JMac\Testing\Tests\Support\SelfTypedParamBase;
 use JMac\Testing\Tests\Support\SelfTypedParamChild;
 use JMac\Testing\Tests\Support\SelfTypedParamGrandparent;
+use JMac\Testing\Tests\Support\SelfTypedStaticMethodInterface;
 use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\StaticExpectsCollisionInterface;
+use JMac\Testing\Tests\Support\StaticFactoryClass;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
@@ -249,6 +254,46 @@ final class ClassGeneratorTest extends TestCase
         $generated::shared(1, 2);
     }
 
+    public function test_stubs_an_abstract_static_method_declared_by_a_trait(): void
+    {
+        $generated = (new ClassGenerator)->generate(AbstractStaticTraitClass::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `make`');
+
+        $generated::make();
+    }
+
+    public function test_stubs_an_abstract_static_method_with_self_typed_params_and_a_self_constant_default(): void
+    {
+        $double = Double::for(SelfTypedStaticMethodInterface::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `compare`');
+
+        $double::compare($double, $double);
+    }
+
+    public function test_stub_throws_when_reached_through_static_from_a_concrete_static_method(): void
+    {
+        $generated = (new ClassGenerator)->generate(StaticFactoryClass::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `make`');
+
+        $generated::create();
+    }
+
+    public function test_stub_throws_when_reached_through_static_from_a_passthru_instance_method(): void
+    {
+        $double = Double::for(StaticFactoryClass::class)->passthru();
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `make`');
+
+        $double->fresh();
+    }
+
     public function test_rejects_a_method_static_on_one_intersection_target_and_instance_on_another(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
@@ -268,6 +313,14 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage('only an enum can implement');
 
         (new ClassGenerator)->generate(\BackedEnum::class);
+    }
+
+    public function test_rejects_an_interface_extending_an_enum_interface(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('only an enum can implement');
+
+        (new ClassGenerator)->generate(EnumExtendingInterface::class);
     }
 
     public function test_rejects_fabricating_an_enum_interface_return(): void
@@ -451,6 +504,7 @@ final class ClassGeneratorTest extends TestCase
         // PHP would otherwise reject as an uncatchable fatal. Same shape as
         // Illuminate\Support\LazyCollection's own protected passthru().
         yield 'protected passthru()' => [ProtectedPassthruCollision::class, 'passthru'];
+        yield 'static expects()' => [StaticExpectsCollisionInterface::class, 'expects'];
     }
 
     #[DataProvider('reservedNameFixtures')]
@@ -479,6 +533,16 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertTrue(is_a($generated, $target, true));
         $this->assertFalse(is_a($generated, DoubleInterface::class, true));
+    }
+
+    public function test_override_stubs_a_reserved_name_abstract_static_method(): void
+    {
+        $double = Double::for(StaticExpectsCollisionInterface::class, override: true);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `expects`');
+
+        $double->instance()::expects();
     }
 
     public function test_override_has_no_effect_on_a_target_with_no_reserved_name_collision(): void
