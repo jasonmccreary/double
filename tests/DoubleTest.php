@@ -8,6 +8,7 @@ use JMac\Testing\CheckEvent;
 use JMac\Testing\Double;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Engine\ReceivedAssertion;
+use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
@@ -29,9 +30,11 @@ use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasAbstractStaticMethod;
 use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
+use JMac\Testing\Tests\Support\ImplementsStaticMethodInterface;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
@@ -1054,6 +1057,22 @@ final class DoubleTest extends TestCase
         $this->expectExceptionMessage('Can\'t configure `make`');
 
         $double->allows('make');
+    }
+
+    public function test_rejects_an_abstract_class_declaring_an_abstract_static_method(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('static method (`make`)');
+
+        Double::for(HasAbstractStaticMethod::class);
+    }
+
+    public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('static method (`make`)');
+
+        Double::for(ImplementsStaticMethodInterface::class);
     }
 
     /**
