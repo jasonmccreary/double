@@ -240,7 +240,7 @@ final class ClassGeneratorTest extends TestCase
     public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('abstract static method (`make`)');
 
         (new ClassGenerator)->generate(ImplementsStaticMethodInterface::class);
     }
@@ -248,7 +248,7 @@ final class ClassGeneratorTest extends TestCase
     public function test_rejects_a_class_declaring_an_abstract_static_method(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('abstract static method (`make`)');
 
         (new ClassGenerator)->generate(HasAbstractStaticMethod::class);
     }
@@ -278,7 +278,7 @@ final class ClassGeneratorTest extends TestCase
     public function test_rejects_a_method_static_on_one_intersection_target_and_instance_on_another(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('as both a static and an instance method');
 
         (new ClassGenerator)->generateForIntersection([InstanceMethodInterface::class, StaticMethodInterface::class]);
     }

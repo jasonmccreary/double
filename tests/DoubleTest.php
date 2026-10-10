@@ -1062,7 +1062,7 @@ final class DoubleTest extends TestCase
     public function test_rejects_an_abstract_class_declaring_an_abstract_static_method(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('abstract static method (`make`)');
 
         Double::for(HasAbstractStaticMethod::class);
     }
@@ -1070,7 +1070,7 @@ final class DoubleTest extends TestCase
     public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('abstract static method (`make`)');
 
         Double::for(ImplementsStaticMethodInterface::class);
     }

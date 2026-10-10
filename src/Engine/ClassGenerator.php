@@ -254,7 +254,7 @@ final class ClassGenerator
 
         foreach ($this->abstractStaticMethods($reflections) as $method) {
             if (in_array($method->getName(), $instanceMethods, true)) {
-                throw InvalidDoubleTargetException::hasAbstractStaticMethod(implode('&', $targets), $method->getName());
+                throw InvalidDoubleTargetException::hasStaticInstanceClash(implode('&', $targets), $method->getName());
             }
         }
     }

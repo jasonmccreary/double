@@ -347,9 +347,16 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
 
     public function test_renders_invalid_double_target_has_abstract_static_method(): void
     {
-        $exception = InvalidDoubleTargetException::hasAbstractStaticMethod('StaticMethodInterface', 'make');
+        $exception = InvalidDoubleTargetException::hasAbstractStaticMethod('HasAbstractStaticMethod', 'make');
 
         $this->assertMatchesGolden('invalid-double-target-has-abstract-static-method', $exception->getMessage());
+    }
+
+    public function test_renders_invalid_double_target_has_static_instance_clash(): void
+    {
+        $exception = InvalidDoubleTargetException::hasStaticInstanceClash('StaticMethodInterface&InstanceMethodInterface', 'make');
+
+        $this->assertMatchesGolden('invalid-double-target-has-static-instance-clash', $exception->getMessage());
     }
 
     public function test_renders_invalid_double_target_is_enum_interface(): void

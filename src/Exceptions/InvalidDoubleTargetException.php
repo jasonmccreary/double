@@ -48,15 +48,26 @@ class InvalidDoubleTargetException extends DoubleException
     }
 
     /**
-     * For an abstract static method a class declares itself, or one that an
-     * intersection declares static on one target and instance on another.
-     * An interface's abstract static method on its own is stubbed by
-     * ClassGenerator, not rejected.
+     * A class with an unimplemented static method, declared by the class
+     * itself or inherited from an interface. An interface's own abstract
+     * static method is stubbed by ClassGenerator, not rejected.
      */
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {
         return new self($target, sprintf(
-            'it declares a static method (`%s`). Static methods can\'t be doubled',
+            'it has an abstract static method (`%s`). Double a concrete subclass that implements it instead',
+            $method,
+        ));
+    }
+
+    /**
+     * Intersection targets that declare the same method static on one and
+     * as an instance method on another — no class can implement both.
+     */
+    public static function hasStaticInstanceClash(string $target, string $method): self
+    {
+        return new self($target, sprintf(
+            'it declares `%s` as both a static and an instance method. No class can implement both',
             $method,
         ));
     }

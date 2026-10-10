@@ -1,0 +1,2 @@
+
+Can't create a double for `StaticMethodInterface&InstanceMethodInterface` since it declares `make` as both a static and an instance method. No class can implement both.
