@@ -214,8 +214,9 @@ final class ClassGenerator
      * Only an interface's abstract static methods get a stub
      * (buildStaticStub()): an interface static factory is a contract the
      * double has to satisfy, while stubbing a class's own is static mocking,
-     * which Double doesn't attempt. A class that implements an interface
-     * without its static still passes — the method stays interface-declared.
+     * which Double doesn't attempt. An abstract class that leaves an
+     * interface's static unimplemented is rejected the same as one declaring
+     * its own.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
@@ -223,8 +224,12 @@ final class ClassGenerator
     private function assertNoClassAbstractStaticMethods(array $targets, array $reflections): void
     {
         foreach ($reflections as $reflection) {
+            if ($reflection->isInterface()) {
+                continue;
+            }
+
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if ($method->isStatic() && $method->isAbstract() && ! $method->getDeclaringClass()->isInterface()) {
+                if ($method->isStatic() && $method->isAbstract()) {
                     throw InvalidDoubleTargetException::hasAbstractStaticMethod(implode('&', $targets), $method->getName());
                 }
             }
@@ -439,9 +444,9 @@ final class ClassGenerator
     /**
      * Abstract static methods across every target, keyed by name like
      * overridableMethods() — the generated `final class` must implement each
-     * one to compile, even though none can be configured. Every one is
-     * interface-declared: assertNoClassAbstractStaticMethods() rejects the
-     * rest first.
+     * one to compile, even though none can be configured. Every one comes
+     * from an interface target: assertNoClassAbstractStaticMethods() rejects
+     * the rest first.
      *
      * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>

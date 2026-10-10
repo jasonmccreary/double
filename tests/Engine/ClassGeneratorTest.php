@@ -237,18 +237,12 @@ final class ClassGeneratorTest extends TestCase
         $generated::abort();
     }
 
-    /**
-     * The static is still declared by the interface, so the abstract class
-     * leaving it unimplemented doesn't make it a class-declared one.
-     */
-    public function test_stubs_an_interface_static_method_an_abstract_class_leaves_unimplemented(): void
+    public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
     {
-        $generated = (new ClassGenerator)->generate(ImplementsStaticMethodInterface::class);
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('static method (`make`)');
 
-        $this->expectException(StaticMethodException::class);
-        $this->expectExceptionMessage('Can\'t call `make`');
-
-        $generated::make();
+        (new ClassGenerator)->generate(ImplementsStaticMethodInterface::class);
     }
 
     public function test_rejects_a_class_declaring_an_abstract_static_method(): void

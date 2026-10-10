@@ -100,7 +100,7 @@ A few things are rejected when you call `for()`, with a clear reason, rather tha
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
 - **`UnitEnum`, `BackedEnum`, or an interface extending them.** PHP lets only an enum implement these. Use a real enum case instead.
 - **Multiple interfaces where one declares a method static and another declares it as an instance method.** No class can implement both.
-- **A class that declares its own `abstract static` method.** Double doesn't stub static methods on classes. Write a small concrete subclass that implements the static method, then double that instead.
+- **A class with an unimplemented `abstract static` method**, declared by the class or by an interface it implements. Double doesn't stub static methods on classes. Write a small concrete subclass that implements the static method, then double that instead.
 
 Static methods are a related, separate case: you may create a double for a class that has one, or an interface that declares one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
