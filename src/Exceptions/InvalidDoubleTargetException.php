@@ -48,9 +48,10 @@ class InvalidDoubleTargetException extends DoubleException
     }
 
     /**
-     * Only for intersection targets declaring $method static on one and
-     * instance on another — an abstract static method on its own is stubbed
-     * by ClassGenerator, not rejected.
+     * For an abstract static method a class declares itself, or one that an
+     * intersection declares static on one target and instance on another.
+     * An interface's abstract static method on its own is stubbed by
+     * ClassGenerator, not rejected.
      */
     public static function hasAbstractStaticMethod(string $target, string $method): self
     {

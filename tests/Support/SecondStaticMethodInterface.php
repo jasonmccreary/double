@@ -9,4 +9,6 @@ interface SecondStaticMethodInterface
     public static function make(): string;
 
     public static function &shared(int ...$ids): array;
+
+    public static function abort(): never;
 }

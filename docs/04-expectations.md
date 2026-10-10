@@ -106,7 +106,7 @@ $repository->expects('findAll'); // findAll() is `public static function`
 // it's a static method. Static methods can't be doubled.
 ```
 
-An interface or abstract class with an abstract static method can still be doubled. A concrete static method runs its real code when called. An abstract one has no code to run, so calling it on the double throws:
+A concrete static method runs its real code when called. An interface that declares a static method can still be doubled, but that method has no code to run, so calling it on the double throws:
 
 ```php
 $span = Double::for(SpanInterface::class); // declares `public static function fromContext()`
