@@ -185,7 +185,7 @@ final class ClassGenerator
 
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                $declared[] = $method->getName();
+                $declared[] = strtolower($method->getName());
             }
         }
 
@@ -248,12 +248,12 @@ final class ClassGenerator
     private function assertNoStaticInstanceClash(array $targets, array $reflections): void
     {
         $instanceMethods = array_map(
-            static fn (\ReflectionMethod $method): string => $method->getName(),
+            static fn (\ReflectionMethod $method): string => strtolower($method->getName()),
             $this->overridableMethods($reflections),
         );
 
         foreach ($this->abstractStaticMethods($reflections) as $method) {
-            if (in_array($method->getName(), $instanceMethods, true)) {
+            if (in_array(strtolower($method->getName()), $instanceMethods, true)) {
                 throw InvalidDoubleTargetException::hasStaticInstanceClash(implode('&', $targets), $method->getName());
             }
         }
@@ -404,7 +404,8 @@ final class ClassGenerator
     }
 
     /**
-     * Merges overridable methods across every target, keyed by name — the
+     * Merges overridable methods across every target, keyed by lowercased
+     * name, as PHP treats method names case-insensitively — the
      * first reflection to declare a given method wins.
      *
      * @param  list<\ReflectionClass>  $reflections
@@ -416,7 +417,7 @@ final class ClassGenerator
 
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if (isset($methods[$method->getName()])) {
+                if (isset($methods[strtolower($method->getName())])) {
                     continue;
                 }
 
@@ -434,7 +435,7 @@ final class ClassGenerator
                     continue;
                 }
 
-                $methods[$method->getName()] = $method;
+                $methods[strtolower($method->getName())] = $method;
             }
         }
 
@@ -457,8 +458,8 @@ final class ClassGenerator
 
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if ($method->isStatic() && $method->isAbstract() && ! isset($methods[$method->getName()])) {
-                    $methods[$method->getName()] = $method;
+                if ($method->isStatic() && $method->isAbstract() && ! isset($methods[strtolower($method->getName())])) {
+                    $methods[strtolower($method->getName())] = $method;
                 }
             }
         }
