@@ -220,7 +220,7 @@ final class DoubleState
     {
         return array_values(array_filter(
             $this->expectations,
-            static fn (MethodExpectation $expectation): bool => $expectation->method() === $method,
+            static fn (MethodExpectation $expectation): bool => strcasecmp($expectation->method(), $method) === 0,
         ));
     }
 
@@ -236,7 +236,7 @@ final class DoubleState
     {
         return array_values(array_map(
             static fn (array $call): array => $call['arguments'],
-            array_filter($this->calls, static fn (array $call): bool => $call['method'] === $method),
+            array_filter($this->calls, static fn (array $call): bool => strcasecmp($call['method'], $method) === 0),
         ));
     }
 
@@ -280,7 +280,7 @@ final class DoubleState
         $bySignature = [];
 
         foreach ($this->expectations as $expectation) {
-            $key = $expectation->method()."\0".$expectation->describeArguments();
+            $key = strtolower($expectation->method())."\0".$expectation->describeArguments();
             $bySignature[$key]['method'] ??= $expectation->method();
             $bySignature[$key]['arguments'] ??= $expectation->describeArguments();
             $bySignature[$key]['members'][] = $expectation;

@@ -38,6 +38,7 @@ use JMac\Testing\Tests\Support\InstanceCollisionInterface;
 use JMac\Testing\Tests\Support\InstanceMethodInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\InvokableInterface;
+use JMac\Testing\Tests\Support\LowercaseGreetInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
 use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\NewInInitializerParamInterface;
@@ -59,6 +60,9 @@ use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\UnionTypeInterface;
 use JMac\Testing\Tests\Support\UnusedCollisionInterface;
+use JMac\Testing\Tests\Support\UppercaseExpectsInterface;
+use JMac\Testing\Tests\Support\UppercaseGreetInterface;
+use JMac\Testing\Tests\Support\UppercaseMakeInterface;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use JMac\Testing\Tests\Support\VerifyCollisionInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -281,6 +285,34 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage('as both a static and an instance method');
 
         (new ClassGenerator)->generateForIntersection([InstanceMethodInterface::class, StaticMethodInterface::class]);
+    }
+
+    public function test_merges_intersection_targets_declaring_the_same_method_in_different_case(): void
+    {
+        $generated = (new ClassGenerator)->generateForIntersection([LowercaseGreetInterface::class, UppercaseGreetInterface::class]);
+
+        $this->assertTrue(is_subclass_of($generated, LowercaseGreetInterface::class));
+        $this->assertTrue(is_subclass_of($generated, UppercaseGreetInterface::class));
+
+        $double = Double::for(LowercaseGreetInterface::class, UppercaseGreetInterface::class);
+        $double->expects('GREET')->returns('hi');
+
+        $this->assertSame('hi', $double->greet());
+    }
+
+    public function test_rejects_a_static_and_instance_method_differing_only_in_case(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('as both a static and an instance method');
+
+        (new ClassGenerator)->generateForIntersection([UppercaseMakeInterface::class, StaticMethodInterface::class]);
+    }
+
+    public function test_rejects_a_reserved_control_method_name_in_different_case(): void
+    {
+        $this->expectException(ReservedNameCollisionException::class);
+
+        (new ClassGenerator)->generate(UppercaseExpectsInterface::class);
     }
 
     /**
