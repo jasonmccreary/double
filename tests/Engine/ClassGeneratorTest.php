@@ -9,26 +9,33 @@ use JMac\Testing\DoubleInterface;
 use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
 use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
+use JMac\Testing\Tests\Support\BackedEnumReturnInterface;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ByRefParamInterface;
+use JMac\Testing\Tests\Support\CallStaticInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\ConstDefaultBase;
 use JMac\Testing\Tests\Support\ConstDefaultChild;
 use JMac\Testing\Tests\Support\ConstDefaultGrandparent;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
+use JMac\Testing\Tests\Support\EnumExtendingInterface;
 use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
+use JMac\Testing\Tests\Support\HasAbstractStaticMethod;
 use JMac\Testing\Tests\Support\HasHookedProperty;
 use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\HookedPropertyInterface;
+use JMac\Testing\Tests\Support\ImplementsStaticMethodInterface;
 use JMac\Testing\Tests\Support\InstanceCollisionInterface;
+use JMac\Testing\Tests\Support\InstanceMethodInterface;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\InvokableInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
@@ -40,10 +47,13 @@ use JMac\Testing\Tests\Support\ProtectedPassthruCollision;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
 use JMac\Testing\Tests\Support\RefReturnInterface;
+use JMac\Testing\Tests\Support\SecondStaticMethodInterface;
 use JMac\Testing\Tests\Support\SelfTypedParamBase;
 use JMac\Testing\Tests\Support\SelfTypedParamChild;
 use JMac\Testing\Tests\Support\SelfTypedParamGrandparent;
+use JMac\Testing\Tests\Support\SelfTypedStaticMethodInterface;
 use JMac\Testing\Tests\Support\Sized;
+use JMac\Testing\Tests\Support\StaticExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\StrictCollisionInterface;
 use JMac\Testing\Tests\Support\Suit;
@@ -198,18 +208,122 @@ final class ClassGeneratorTest extends TestCase
     }
 
     /**
-     * Regression check: an interface's methods are all implicitly abstract,
-     * including static ones — before assertNoAbstractStaticMethods()
-     * existed, this crashed with an uncatchable PHP fatal error out of the
-     * eval()'d source ("must therefore be declared abstract or implement
-     * the remaining methods") instead of the library's own exception.
+     * An interface's static methods are implicitly abstract, so the
+     * generated class needs a body for each one just to compile. The stub
+     * throws: a static call has no double to configure it on.
      */
-    public function test_rejects_a_target_with_an_abstract_static_method(): void
+    public function test_stubs_an_abstract_static_method_on_an_interface(): void
+    {
+        $generated = (new ClassGenerator)->generate(StaticMethodInterface::class);
+
+        $this->assertTrue(is_subclass_of($generated, StaticMethodInterface::class));
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `make` on a double for `JMac\Testing\Tests\Support\StaticMethodInterface`');
+
+        $generated::make();
+    }
+
+    /**
+     * `never` rejects any `return` in the stub's body.
+     */
+    public function test_stubs_a_never_returning_abstract_static_method(): void
+    {
+        $generated = (new ClassGenerator)->generate(SecondStaticMethodInterface::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `abort`');
+
+        $generated::abort();
+    }
+
+    public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
     {
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('static method (`make`)');
+        $this->expectExceptionMessage('abstract static method (`make`)');
 
-        (new ClassGenerator)->generate(StaticMethodInterface::class);
+        (new ClassGenerator)->generate(ImplementsStaticMethodInterface::class);
+    }
+
+    public function test_rejects_a_class_declaring_an_abstract_static_method(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('abstract static method (`make`)');
+
+        (new ClassGenerator)->generate(HasAbstractStaticMethod::class);
+    }
+
+    public function test_stubs_an_abstract_static_method_shared_across_intersection_targets_once(): void
+    {
+        $generated = (new ClassGenerator)->generateForIntersection([StaticMethodInterface::class, SecondStaticMethodInterface::class]);
+
+        $this->assertTrue(is_subclass_of($generated, SecondStaticMethodInterface::class));
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('`shared` on a double for `JMac\Testing\Tests\Support\StaticMethodInterface&JMac\Testing\Tests\Support\SecondStaticMethodInterface`');
+
+        $generated::shared(1, 2);
+    }
+
+    public function test_stubs_an_abstract_static_method_with_self_typed_params_and_a_self_constant_default(): void
+    {
+        $double = Double::for(SelfTypedStaticMethodInterface::class);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `compare`');
+
+        $double::compare($double, $double);
+    }
+
+    public function test_rejects_a_method_static_on_one_intersection_target_and_instance_on_another(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('as both a static and an instance method');
+
+        (new ClassGenerator)->generateForIntersection([InstanceMethodInterface::class, StaticMethodInterface::class]);
+    }
+
+    /**
+     * Its abstract statics (`cases`, `from`) would otherwise be stubbed, and
+     * PHP refuses any non-enum class implementing it with an uncatchable
+     * fatal error.
+     */
+    public function test_rejects_an_enum_interface(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('only an enum can implement');
+
+        (new ClassGenerator)->generate(\BackedEnum::class);
+    }
+
+    public function test_rejects_an_interface_extending_an_enum_interface(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('only an enum can implement');
+
+        (new ClassGenerator)->generate(EnumExtendingInterface::class);
+    }
+
+    public function test_rejects_fabricating_an_enum_interface_return(): void
+    {
+        $double = Double::for(BackedEnumReturnInterface::class);
+        $double->allows('suit');
+
+        $this->expectException(InvalidDoubleTargetException::class);
+
+        $double->suit();
+    }
+
+    /**
+     * A stub would name `__callStatic` in its exception, not the method the
+     * caller actually called.
+     */
+    public function test_rejects_an_abstract_static_magic_method(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('magic method (`__callStatic`)');
+
+        (new ClassGenerator)->generate(CallStaticInterface::class);
     }
 
     /**
@@ -228,12 +342,12 @@ final class ClassGeneratorTest extends TestCase
     /**
      * Regression check: an interface's __call() is abstract like any
      * other method it declares — before assertNoAbstractMagicMethods()
-     * existed, this crashed with the identical uncatchable PHP fatal error
-     * as the abstract-static-method case above ("must therefore be declared
-     * abstract or implement the remaining methods"), just for a magic
-     * method instead of a static one. __call is a dynamic-dispatch magic
-     * method (see ClassGenerator::DOUBLEABLE_MAGIC_METHODS), so it stays
-     * rejected — unlike __invoke below.
+     * existed, this crashed with an uncatchable PHP fatal error out of the
+     * eval()'d source ("must therefore be declared abstract or implement
+     * the remaining methods") instead of the library's own exception.
+     * __call is a dynamic-dispatch magic method (see
+     * ClassGenerator::DOUBLEABLE_MAGIC_METHODS), so it stays rejected —
+     * unlike __invoke below.
      */
     public function test_rejects_a_target_with_an_abstract_magic_method(): void
     {
@@ -288,7 +402,7 @@ final class ClassGeneratorTest extends TestCase
      * unimplemented hook internally almost like a synthetic abstract method
      * for this purpose, confirmed directly: the crash names it
      * `HookedPropertyInterface::$displayName::get`. Same failure category as
-     * the abstract-static/abstract-magic-method crashes above, for a third,
+     * the abstract-magic-method crash above, for a second,
      * unrelated reason a member ends up excluded from overriding —
      * ClassGenerator never reasons about properties at all.
      *
@@ -371,6 +485,7 @@ final class ClassGeneratorTest extends TestCase
         // PHP would otherwise reject as an uncatchable fatal. Same shape as
         // Illuminate\Support\LazyCollection's own protected passthru().
         yield 'protected passthru()' => [ProtectedPassthruCollision::class, 'passthru'];
+        yield 'static expects()' => [StaticExpectsCollisionInterface::class, 'expects'];
     }
 
     #[DataProvider('reservedNameFixtures')]
@@ -399,6 +514,16 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertTrue(is_a($generated, $target, true));
         $this->assertFalse(is_a($generated, DoubleInterface::class, true));
+    }
+
+    public function test_override_stubs_a_reserved_name_abstract_static_method(): void
+    {
+        $double = Double::for(StaticExpectsCollisionInterface::class, override: true);
+
+        $this->expectException(StaticMethodException::class);
+        $this->expectExceptionMessage('Can\'t call `expects`');
+
+        $double->instance()::expects();
     }
 
     public function test_override_has_no_effect_on_a_target_with_no_reserved_name_collision(): void
@@ -606,8 +731,8 @@ final class ClassGeneratorTest extends TestCase
      * "&", doubling a target with a by-reference-returning method
      * (`function &foo()`) crashed with an uncatchable PHP fatal error
      * ("Declaration ... must be compatible with & ...") — the identical
-     * failure category as the abstract-static/abstract-magic-method
-     * crashes elsewhere in this file, for a third, unrelated reason a
+     * failure category as the abstract-magic-method and
+     * hooked-property crashes elsewhere in this file, for a third, unrelated reason a
      * signature can mismatch.
      */
     public function test_reconstructs_a_by_reference_return_signature_exactly(): void

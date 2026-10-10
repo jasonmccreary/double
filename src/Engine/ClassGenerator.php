@@ -7,6 +7,7 @@ namespace JMac\Testing\Engine;
 use JMac\Testing\DoubleInterface;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
+use JMac\Testing\Exceptions\StaticMethodException;
 
 /**
  * @internal
@@ -27,9 +28,10 @@ final class ClassGenerator
      * ClassGenerator and configurable via Double::expects()/allows().
      *
      * __set_state isn't listed despite having a fixed signature — it's
-     * always static, so it's already excluded by the static-method check
-     * everywhere this list is consulted, making a magic-method carve-out for
-     * it moot.
+     * always static, and a static method is never overridden or
+     * configurable, so a carve-out for it would only matter to
+     * assertNoAbstractMagicMethods(), which rejects an abstract one rather
+     * than letting it get a throwing stub.
      */
     public const DOUBLEABLE_MAGIC_METHODS = ['__invoke', '__toString', '__serialize', '__unserialize', '__clone'];
 
@@ -132,8 +134,10 @@ final class ClassGenerator
             throw ReservedNameCollisionException::forCollisions(implode('&', $targets), $collisions);
         }
 
-        $this->assertNoAbstractStaticMethods($targets, $reflections);
+        $this->assertNotEnumInterface($targets, $reflections);
+        $this->assertNoClassAbstractStaticMethods($targets, $reflections);
         $this->assertNoAbstractMagicMethods($targets, $reflections);
+        $this->assertNoStaticInstanceClash($targets, $reflections);
         $this->assertNoAbstractPropertyHooks($targets, $reflections);
 
         $className = $this->generateClassName($reflections);
@@ -189,18 +193,41 @@ final class ClassGenerator
     }
 
     /**
-     * A concrete static method is inherited unoverridden (harmless — real
-     * code, just not interceptable). An abstract one would leave the
-     * generated `final class` not actually implementing it — caught here,
-     * before eval(), instead of surfacing as an uncatchable fatal error
-     * from inside the eval()'d source.
+     * PHP lets only an enum implement UnitEnum (and BackedEnum, which
+     * extends it), so the generated class would be an uncatchable eval()-time
+     * fatal error. A fabricated double for a `\BackedEnum` return type lands
+     * here too, since SafeDefaultResolver sees an interface, not an enum.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
      */
-    private function assertNoAbstractStaticMethods(array $targets, array $reflections): void
+    private function assertNotEnumInterface(array $targets, array $reflections): void
     {
         foreach ($reflections as $reflection) {
+            if ($reflection->getName() === \UnitEnum::class || $reflection->isSubclassOf(\UnitEnum::class)) {
+                throw InvalidDoubleTargetException::isEnumInterface(implode('&', $targets));
+            }
+        }
+    }
+
+    /**
+     * Only an interface's abstract static methods get a stub
+     * (buildStaticStub()): an interface static factory is a contract the
+     * double has to satisfy, while stubbing a class's own is static mocking,
+     * which Double doesn't attempt. An abstract class that leaves an
+     * interface's static unimplemented is rejected the same as one declaring
+     * its own.
+     *
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoClassAbstractStaticMethods(array $targets, array $reflections): void
+    {
+        foreach ($reflections as $reflection) {
+            if ($reflection->isInterface()) {
+                continue;
+            }
+
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
                 if ($method->isStatic() && $method->isAbstract()) {
                     throw InvalidDoubleTargetException::hasAbstractStaticMethod(implode('&', $targets), $method->getName());
@@ -210,12 +237,36 @@ final class ClassGenerator
     }
 
     /**
-     * Same failure shape as assertNoAbstractStaticMethods() above, for magic
-     * methods (anything starting with "__") instead of static ones — except
-     * DOUBLEABLE_MAGIC_METHODS, which overridableMethods() does override, so
-     * an abstract one there is exactly as fine as any other abstract public
-     * method. Runs after the static check, so something both static and
-     * magic (__callStatic, in practice) is already caught there first.
+     * Intersection targets that declare the same method name as static on
+     * one and instance on the other: no class can implement both, and the
+     * generated one would redeclare the method — an uncatchable eval()-time
+     * fatal error instead of this exception.
+     *
+     * @param  list<string>  $targets
+     * @param  list<\ReflectionClass>  $reflections
+     */
+    private function assertNoStaticInstanceClash(array $targets, array $reflections): void
+    {
+        $instanceMethods = array_map(
+            static fn (\ReflectionMethod $method): string => $method->getName(),
+            $this->overridableMethods($reflections),
+        );
+
+        foreach ($this->abstractStaticMethods($reflections) as $method) {
+            if (in_array($method->getName(), $instanceMethods, true)) {
+                throw InvalidDoubleTargetException::hasStaticInstanceClash(implode('&', $targets), $method->getName());
+            }
+        }
+    }
+
+    /**
+     * An abstract magic method (anything starting with "__") would leave the
+     * generated `final class` not implementing it — caught here, before
+     * eval(), instead of surfacing as an uncatchable fatal error from inside
+     * the eval()'d source. DOUBLEABLE_MAGIC_METHODS are exempt, since
+     * overridableMethods() does override them. Static ones (__callStatic, in
+     * practice) are rejected too rather than stubbed: the stub would report
+     * `__callStatic` instead of the method the caller actually called.
      *
      * @param  list<string>  $targets
      * @param  list<\ReflectionClass>  $reflections
@@ -310,6 +361,15 @@ final class ClassGenerator
 
         $methods = implode("\n", array_map($this->buildMethod(...), $overridable));
 
+        $stubs = array_map(
+            fn (\ReflectionMethod $method): string => $this->buildStaticStub($method, implode('&', $targets)),
+            $this->abstractStaticMethods($reflections),
+        );
+
+        if ($stubs !== []) {
+            $methods .= "\n".implode("\n", $stubs);
+        }
+
         // Inline passthru (see DoubleControlMethods::passthru()) needs a way to
         // run a method's real, inherited body directly on the double itself —
         // `parent::{$method}(...)` only compiles inside a class that actually
@@ -363,7 +423,8 @@ final class ClassGenerator
                 // Static excluded: ProxyBehavior::intercept() takes $this and
                 // dispatches through it, and a static call has no $this to give it.
                 // A concrete static method is just inherited unoverridden; an
-                // abstract one is already caught by assertNoAbstractStaticMethods().
+                // interface's abstract one gets a throwing stub from
+                // buildStaticStub(), and a class's own is rejected up front.
                 if ($method->isFinal()
                     || $method->isStatic()
                     || $method->isConstructor()
@@ -378,6 +439,48 @@ final class ClassGenerator
         }
 
         return array_values($methods);
+    }
+
+    /**
+     * Abstract static methods across every target, keyed by name like
+     * overridableMethods() — the generated `final class` must implement each
+     * one to compile, even though none can be configured. Every one comes
+     * from an interface target: assertNoClassAbstractStaticMethods() rejects
+     * the rest first.
+     *
+     * @param  list<\ReflectionClass>  $reflections
+     * @return list<\ReflectionMethod>
+     */
+    private function abstractStaticMethods(array $reflections): array
+    {
+        $methods = [];
+
+        foreach ($reflections as $reflection) {
+            foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
+                if ($method->isStatic() && $method->isAbstract() && ! isset($methods[$method->getName()])) {
+                    $methods[$method->getName()] = $method;
+                }
+            }
+        }
+
+        return array_values($methods);
+    }
+
+    /**
+     * A plain `throw` statement rather than buildMethodFromCall()'s
+     * `return <expr>;` — a `never` return type rejects any `return` at
+     * compile time.
+     */
+    private function buildStaticStub(\ReflectionMethod $method, string $target): string
+    {
+        $body = sprintf(
+            'throw new \\%s(%s, %s, called: true);',
+            StaticMethodException::class,
+            var_export($target, true),
+            var_export($method->getName(), true),
+        );
+
+        return $this->buildMethodFromBody($method, $method->getName(), $body, 'public static');
     }
 
     private function buildMethod(\ReflectionMethod $method): string
@@ -428,11 +531,30 @@ final class ClassGenerator
     }
 
     /**
-     * Shared signature-building for buildMethod() and buildRealMethod() —
-     * both need the exact same parameters and return type, and differ only
-     * in $overrideName, $visibility, and what expression $call evaluates.
+     * Shared body-building for buildMethod() and buildRealMethod() — they
+     * differ only in $overrideName, $visibility, and what expression $call
+     * evaluates.
      */
     private function buildMethodFromCall(\ReflectionMethod $method, string $overrideName, string $call, string $visibility): string
+    {
+        // Once declared by-reference, `return $call;` directly fails — "Only
+        // variable references should be returned by reference," since the
+        // call's result isn't itself a reference — so assigning to a local
+        // variable first is what makes the by-ref return actually silent.
+        $body = match (true) {
+            $method->returnsReference() => sprintf("\$__td_result = %s;\n\n        return \$__td_result;", $call),
+            $this->returnTypeString($method) === 'void' => sprintf('%s;', $call),
+            default => sprintf('return %s;', $call),
+        };
+
+        return $this->buildMethodFromBody($method, $overrideName, $body, $visibility);
+    }
+
+    /**
+     * Shared signature-building: every generated method needs the exact
+     * same parameters and return type as the method it stands in for.
+     */
+    private function buildMethodFromBody(\ReflectionMethod $method, string $overrideName, string $body, string $modifiers): string
     {
         $declaringClass = $method->getDeclaringClass();
 
@@ -441,6 +563,27 @@ final class ClassGenerator
             $method->getParameters(),
         ));
 
+        $returnTypeString = $this->returnTypeString($method);
+        $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
+
+        // A by-reference-returning method (`function &foo()`) requires the
+        // override to declare the same leading "&", or PHP rejects it as
+        // incompatible at eval() time.
+        $reference = $method->returnsReference() ? '&' : '';
+
+        return sprintf(
+            "    %s function %s%s(%s)%s\n    {\n        %s\n    }\n",
+            $modifiers,
+            $reference,
+            $overrideName,
+            $parameters,
+            $returnDeclaration,
+            $body,
+        );
+    }
+
+    private function returnTypeString(\ReflectionMethod $method): ?string
+    {
         // getReturnType() is null for a method whose only declared return type is
         // "tentative" — the mechanism built-in interfaces like ArrayAccess and
         // Countable use while a return type is still being phased in as enforced.
@@ -448,32 +591,8 @@ final class ClassGenerator
         // built with no return type at all, which PHP flags as a deprecated
         // incompatibility against the interface's tentative one.
         $returnType = $method->getReturnType() ?? ($method->hasTentativeReturnType() ? $method->getTentativeReturnType() : null);
-        $returnTypeString = $returnType !== null ? $this->stringifyType($returnType, $declaringClass) : null;
-        $returnDeclaration = $returnTypeString !== null ? ': '.$returnTypeString : '';
-        $isVoid = $returnTypeString === 'void';
 
-        // A by-reference-returning method (`function &foo()`) requires the override to
-        // declare the same leading "&", or PHP rejects it as incompatible at eval()
-        // time. Once declared by-reference, `return $call;` directly also fails —
-        // "Only variable references should be returned by reference," since
-        // the call's result isn't itself a reference — so assigning to a local
-        // variable first is what makes the by-ref return actually silent.
-        $reference = $method->returnsReference() ? '&' : '';
-        $body = match (true) {
-            $reference !== '' => sprintf("\$__td_result = %s;\n\n        return \$__td_result;", $call),
-            $isVoid => sprintf('%s;', $call),
-            default => sprintf('return %s;', $call),
-        };
-
-        return sprintf(
-            "    %s function %s%s(%s)%s\n    {\n        %s\n    }\n",
-            $visibility,
-            $reference,
-            $overrideName,
-            $parameters,
-            $returnDeclaration,
-            $body,
-        );
+        return $returnType !== null ? $this->stringifyType($returnType, $method->getDeclaringClass()) : null;
     }
 
     private function buildParameter(\ReflectionParameter $parameter, \ReflectionClass $declaringClass): string
