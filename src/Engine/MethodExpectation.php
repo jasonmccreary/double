@@ -488,6 +488,33 @@ final class MethodExpectation
     }
 
     /**
+     * Whether both expectations provably match the same calls: matchers of
+     * the same class whose properties are strictly identical. Scalars compare
+     * by value, objects only by identity, so equal-but-distinct objects are
+     * treated as different rather than risk a false ambiguity.
+     */
+    public function hasSameArgumentsAs(self $other): bool
+    {
+        if ($this->argumentConstraints === null || $other->argumentConstraints === null) {
+            return $this->argumentConstraints === $other->argumentConstraints;
+        }
+
+        if (count($this->argumentConstraints) !== count($other->argumentConstraints)) {
+            return false;
+        }
+
+        foreach ($this->argumentConstraints as $index => $matcher) {
+            $theirs = $other->argumentConstraints[$index];
+
+            if ($matcher::class !== $theirs::class || (array) $matcher !== (array) $theirs) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Whether this expectation pins down at least one argument to something
      * narrower than "anything" — the signal ProxyBehavior::findMatch() uses
      * to try every specific candidate before falling back to generic ones,
