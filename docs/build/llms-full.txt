@@ -216,12 +216,15 @@ $service = new PolicyChecker($gate->instance());
 
 ## What can't be doubled
 
-A couple of things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
+A few things are rejected when you call `for()`, with a clear reason, rather than failing in a confusing way later:
 
 - **A `final` class.** There's nothing for the double to extend — unless you opt into `Double::bypassFinals()`, covered next.
 - **A class or interface that doesn't exist.** Usually a typo, or a missing `use`.
+- **`UnitEnum`, `BackedEnum`, or an interface extending them.** PHP lets only an enum implement these. Use a real enum case instead.
+- **Multiple interfaces where one declares a method static and another declares it as an instance method.** No class can implement both.
+- **A class with an unimplemented `abstract static` method**, declared by the class or by an interface it implements. Double doesn't stub static methods on classes. Write a small concrete subclass that implements the static method, then double that instead.
 
-Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
+Static methods are a related, separate case: you may create a double for a class that has one, or an interface that declares one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
 Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [magic methods](04-expectations.md#magic-methods).
 
@@ -408,7 +411,7 @@ $repository->find(1); // $second again
 
 This is one expectation with a queue attached, not several competing expectations, so it composes cleanly with everything else on this page.
 
-> **Note:** Registering the same call twice to get a different answer each time — instead of one `returns()` with several values — is ambiguous, since matching order (see below) means the most-recently-registered one wins first, handing back values in the reverse of what was written. `verify()` rejects this shape and points at the fix.
+> **Note:** Registering the same call twice to get a different answer each time — instead of one `returns()` with several values — is ambiguous, since matching order (see below) means the most-recently-registered one wins first, handing back values in the reverse of what was written. `verify()` rejects this shape and points at the fix. Only identical arguments count as the same call: the same scalars, arrays of them, or the same object instance. Equal but separate objects aren't flagged.
 
 ## Counting calls with `times()`
 
@@ -457,6 +460,15 @@ Calling `write()` before `open()` throws immediately, naming both methods involv
 $repository->expects('findAll'); // findAll() is `public static function`
 // Can't configure `findAll` on a double for `BookRepository` since
 // it's a static method. Static methods can't be doubled.
+```
+
+A concrete static method runs its real code when called. An interface that declares a static method can still be doubled, but that method has no code to run, so calling it on the double throws:
+
+```php
+$span = Double::for(SpanInterface::class); // declares `public static function fromContext()`
+$span::fromContext($context);
+// Can't call `fromContext` on a double for `SpanInterface` since
+// it's an abstract static method. Static methods can't be doubled.
 ```
 
 ## Magic methods
@@ -953,7 +965,7 @@ $checkCount = Double::verifyAll(); // after the test finishes
 
 `enableAutoVerify()` resets and starts collecting every double created (and every `received()` assertion made) from that point on. `verifyAll()` checks everything collected since the matching `enableAutoVerify()`, then turns auto-verification back off.
 
-If the test already failed, call `Double::verifyAll(testFailed: true)` instead. It skips unmet expectations, which would only be misleading secondary failures, but still reports repeated identical expectations, since consuming those last-to-first is a likely cause of the failure.
+If the test already failed, call `Double::verifyAll(testFailed: true)` instead. It skips every check, since any failure would only be a misleading secondary one.
 
 Outside PHPUnit, nothing tells a runner one of these checks actually happened — [passing checks count as assertions](#passing-checks-count-as-assertions) above is PHPUnit-only. `verifyAll()`'s return value is the framework-agnostic version of that same signal: how many doubles and `received()` assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.
 

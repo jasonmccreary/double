@@ -10,11 +10,11 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/creating-doubles</loc>
-    <lastmod>2026-09-19</lastmod>
+    <lastmod>2026-10-10</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/expectations</loc>
-    <lastmod>2026-09-19</lastmod>
+    <lastmod>2026-11-04</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/argument-matching</loc>
@@ -30,7 +30,7 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/test-suite-integration</loc>
-    <lastmod>2026-09-19</lastmod>
+    <lastmod>2026-11-04</lastmod>
   </url>
   <url>
     <loc>https://testdoublephp.com/migrating-from-mockery</loc>
@@ -38,6 +38,10 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/contributing</loc>
+    <lastmod>2026-09-19</lastmod>
+  </url>
+  <url>
+    <loc>https://testdoublephp.com/blog/when-does-a-test-not-need-a-double-at-all</loc>
     <lastmod>2026-09-19</lastmod>
   </url>
   <url>
@@ -82,6 +86,6 @@
   </url>
   <url>
     <loc>https://testdoublephp.com/blog</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-06</lastmod>
   </url>
 </urlset>

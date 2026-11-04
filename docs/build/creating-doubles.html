@@ -134,12 +134,15 @@
 <p><code>instance()</code> works on an ordinary double too — it just hands back <code>$this</code>, since an ordinary double already is the target-shaped instance. That means <code>-&gt;instance()</code> is always safe to call, whether or not <code>Double::for()</code> actually needed <code>override</code> for a given target.</p>
 <p><code>override: true</code> only changes anything when there's actually a collision to route around. Passed against a class with none, it's a no-op — <code>for()</code> returns the exact same double it always would. It also only supports a single target; combined with more than one target passed to <code>for()</code>, it's rejected.</p>
 <h2 id="what-cant-be-doubled">What can't be doubled</h2>
-<p>A couple of things are rejected when you call <code>for()</code>, with a clear reason, rather than failing in a confusing way later:</p>
+<p>A few things are rejected when you call <code>for()</code>, with a clear reason, rather than failing in a confusing way later:</p>
 <ul>
 <li><strong>A <code>final</code> class.</strong> There's nothing for the double to extend — unless you opt into <code>Double::bypassFinals()</code>, covered next.</li>
 <li><strong>A class or interface that doesn't exist.</strong> Usually a typo, or a missing <code>use</code>.</li>
+<li><strong><code>UnitEnum</code>, <code>BackedEnum</code>, or an interface extending them.</strong> PHP lets only an enum implement these. Use a real enum case instead.</li>
+<li><strong>Multiple interfaces where one declares a method static and another declares it as an instance method.</strong> No class can implement both.</li>
+<li><strong>A class with an unimplemented <code>abstract static</code> method</strong>, declared by the class or by an interface it implements. Double doesn't stub static methods on classes. Write a small concrete subclass that implements the static method, then double that instead.</li>
 </ul>
-<p>Static methods are a related, separate case: you may create a double for a class that has one, but configuring it with <code>expects()</code>/<code>allows()</code>/<code>received()</code> is rejected, since there's no instance for a static call to run through. That's covered in <a href="/expectations#static-methods">expectations</a>.</p>
+<p>Static methods are a related, separate case: you may create a double for a class that has one, or an interface that declares one, but configuring it with <code>expects()</code>/<code>allows()</code>/<code>received()</code> is rejected, since there's no instance for a static call to run through. That's covered in <a href="/expectations#static-methods">expectations</a>.</p>
 <p>Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. <code>__invoke</code>, <code>__toString</code>, <code>__serialize</code>, <code>__unserialize</code>, and <code>__clone</code> are the exception and work like any other method. See <a href="/expectations#magic-methods">magic methods</a>.</p>
 <h3 id="doubling-a-final-class">Doubling a final class</h3>
 <p><code>Double::bypassFinals()</code> lifts the <code>final</code>-class restriction for the rest of the process:</p>

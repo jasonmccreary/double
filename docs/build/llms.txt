@@ -17,6 +17,7 @@
 
 ## Blog
 
+- [When does a test not need a double at all?](https://testdoublephp.com/blog/when-does-a-test-not-need-a-double-at-all): A Mockery test that mocked too shallow, a Double test that had to go one layer deeper to stay honest, and a third version that needed no mocking at all — three attempts at the same test, in order.
 - [How to handle method chains in Double?](https://testdoublephp.com/blog/how-to-handle-method-chains-in-double): Mockery lets you stub a whole call chain as one dotted string. Double doesn't, and the fix isn't a missing feature — it's naming the thing the string was hiding.
 - [How Double chooses which expectation wins](https://testdoublephp.com/blog/how-double-chooses-expectations): A detailed review of how Double improves the developer experience by adjusting its logic for choosing which expectation wins.
 - [What about method-level `passthru`?](https://testdoublephp.com/blog/what-about-method-level-passthru): Mockery lets one stubbed expectation run the real method. Double doesn't, and the reason isn't a missing feature — it's what that need is usually actually asking for.
