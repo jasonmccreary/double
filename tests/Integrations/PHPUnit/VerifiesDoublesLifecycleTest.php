@@ -39,12 +39,13 @@ final class VerifiesDoublesLifecycleTest extends TestCase
         $this->assertStringContainsString('expected `delete(1)` to be called exactly 1 time, but it was never called', $output);
     }
 
-    public function test_an_ambiguous_expectation_is_still_reported_when_the_test_already_failed(): void
+    public function test_an_ambiguous_expectation_is_not_reported_when_the_test_already_failed(): void
     {
         $output = $this->runFixture('AmbiguousExpectationFailingFixture.php');
 
+        $this->assertSame(1, $this->failureCount($output), "Expected exactly 1 failure:\n{$output}");
         $this->assertStringContainsString('Failed asserting that 2 is identical to 1.', $output);
-        $this->assertStringContainsString('This looks like an attempt to return values in sequence.', $output);
+        $this->assertStringNotContainsString('This looks like an attempt to return values in sequence.', $output);
     }
 
     private function runFixture(string $filename): string

@@ -263,20 +263,6 @@ final class Double
         self::verifyState(self::stateFor($double));
     }
 
-    /**
-     * @param  list<DoubleState>  $states
-     */
-    private static function verifyAmbiguities(array $states): void
-    {
-        foreach ($states as $state) {
-            $ambiguous = $state->ambiguousExpectations();
-
-            if ($ambiguous !== []) {
-                throw ExceptionFactory::ambiguousExpectations($state->label(), $ambiguous, $state->isFabricated());
-            }
-        }
-    }
-
     private static function verifyState(DoubleState $state): void
     {
         $unmet = $state->unmetExpectations();
@@ -377,11 +363,10 @@ final class Double
      * turned it back off, leaking a check into an unrelated test or, worse,
      * into process shutdown.
      *
-     * Pass $testFailed = true when the test already failed: unmet
-     * expectations and received() assertions are skipped, since they'd be
-     * misleading secondary failures, but ambiguous expectations are still
-     * reported. That check is static, so it can't be a side effect of the
-     * failure, and the reversed (LIFO) matching it flags may be its cause.
+     * Pass $testFailed = true when the test already failed: nothing is
+     * checked, since any failure would be a misleading secondary one. An
+     * ambiguous expectation that caused the failure is still reported once
+     * the test passes.
      */
     public static function verifyAll(bool $testFailed = false): int
     {
@@ -394,8 +379,6 @@ final class Double
         self::$pendingReceived = [];
 
         if ($testFailed) {
-            self::verifyAmbiguities($pending);
-
             return 0;
         }
 

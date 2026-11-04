@@ -36,7 +36,7 @@ $checkCount = Double::verifyAll(); // after the test finishes
 
 `enableAutoVerify()` resets and starts collecting every double created (and every `received()` assertion made) from that point on. `verifyAll()` checks everything collected since the matching `enableAutoVerify()`, then turns auto-verification back off.
 
-If the test already failed, call `Double::verifyAll(testFailed: true)` instead. It skips unmet expectations, which would only be misleading secondary failures, but still reports repeated identical expectations, since consuming those last-to-first is a likely cause of the failure.
+If the test already failed, call `Double::verifyAll(testFailed: true)` instead. It skips every check, since any failure would only be a misleading secondary one.
 
 Outside PHPUnit, nothing tells a runner one of these checks actually happened — [passing checks count as assertions](#passing-checks-count-as-assertions) above is PHPUnit-only. `verifyAll()`'s return value is the framework-agnostic version of that same signal: how many doubles and `received()` assertions it just checked. A runner that flags tests with zero assertions as risky can feed this count into whatever it uses for that, the same way PHPUnit feeds off its own assertion counter.
 
