@@ -28,6 +28,8 @@ use JMac\Testing\Tests\Support\AuthorizerInterface;
 use JMac\Testing\Tests\Support\AuthorizingLogger;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\ChannelAuthorizerInterface;
+use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\HasAbstractStaticMethod;
@@ -38,6 +40,7 @@ use JMac\Testing\Tests\Support\ImplementsStaticMethodInterface;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
+use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -451,6 +454,110 @@ final class DoubleTest extends TestCase
 
         $this->expectException(PHPUnitAmbiguousExpectationException::class);
         $this->expectExceptionMessage('has `save(any arguments)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_expects_with_different_arrays_of_the_same_length_are_not_ambiguous(): void
+    {
+        $double = Double::for(ChannelAuthorizerInterface::class);
+
+        $double->expects('authorize')->with(['private-encrypted-c'])->returns(true);
+        $double->expects('authorize')->with(['private-encrypted-d'])->returns(false);
+
+        $this->assertTrue($double->authorize(['private-encrypted-c']));
+        $this->assertFalse($double->authorize(['private-encrypted-d']));
+
+        $double->verify();
+    }
+
+    public function test_expects_with_identical_arrays_are_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(ChannelAuthorizerInterface::class);
+
+        $double->expects('authorize')->with(['private-encrypted-c'])->returns(true);
+        $double->expects('authorize')->with(['private-encrypted-c'])->returns(false);
+
+        $double->authorize(['private-encrypted-c']);
+        $double->authorize(['private-encrypted-c']);
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `authorize(array(1))` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_expects_with_the_same_object_instance_are_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $book = new Book('Title');
+
+        $double->expects('save')->with($book)->returns(true);
+        $double->expects('save')->with($book)->returns(false);
+
+        $double->save($book);
+        $double->save($book);
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `save(JMac\\Testing\\Tests\\Support\\Book)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_expects_with_the_same_enum_case_are_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(EnumDefaultInterface::class);
+
+        $double->expects('draw')->with(Suit::Hearts)->returns(Suit::Hearts);
+        $double->expects('draw')->with(Suit::Hearts)->returns(Suit::Spades);
+
+        $double->draw(Suit::Hearts);
+        $double->draw(Suit::Hearts);
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `draw(JMac\\Testing\\Tests\\Support\\Suit)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_expects_differing_only_in_method_name_case_are_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        $double->expects('find')->with(1)->returns(null);
+        $double->expects('FIND')->with(1)->returns(null);
+
+        $double->find(1);
+        $double->find(1);
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage('has `find(1)` registered 2 times.');
+
+        $double->verify();
+    }
+
+    public function test_expects_with_equal_but_separate_objects_are_not_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        $double->expects('save')->with(new Book('Title'))->returns(true);
+        $double->expects('save')->with(new Book('Title'))->returns(false);
+
+        $double->save(new Book('Title'));
+        $double->save(new Book('Title'));
+
+        $double->verify();
+    }
+
+    public function test_expects_with_equals_and_same_matchers_on_one_value_are_not_ambiguous(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        $double->expects('find')->with(1)->returns(null);
+        $double->expects('find')->with(Argument::same(1))->returns(null);
+
+        $double->find(1);
+        $double->find(1);
 
         $double->verify();
     }

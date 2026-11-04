@@ -277,25 +277,30 @@ final class DoubleState
      */
     public function ambiguousExpectations(): array
     {
-        $bySignature = [];
+        $groups = [];
 
         foreach ($this->expectations as $expectation) {
-            $key = strtolower($expectation->method())."\0".$expectation->describeArguments();
-            $bySignature[$key]['method'] ??= $expectation->method();
-            $bySignature[$key]['arguments'] ??= $expectation->describeArguments();
-            $bySignature[$key]['members'][] = $expectation;
+            foreach ($groups as $index => [$first]) {
+                if (strcasecmp($first->method(), $expectation->method()) === 0 && $first->hasSameArgumentsAs($expectation)) {
+                    $groups[$index][] = $expectation;
+
+                    continue 2;
+                }
+            }
+
+            $groups[] = [$expectation];
         }
 
         $ambiguities = [];
 
-        foreach ($bySignature as $group) {
-            if (count($group['members']) < 2) {
+        foreach ($groups as $members) {
+            if (count($members) < 2) {
                 continue;
             }
 
             $allFinite = true;
 
-            foreach ($group['members'] as $expectation) {
+            foreach ($members as $expectation) {
                 if (! $expectation->hasFiniteCallLimit()) {
                     $allFinite = false;
 
@@ -304,7 +309,7 @@ final class DoubleState
             }
 
             if ($allFinite) {
-                $ambiguities[] = new AmbiguousExpectation($group['method'], $group['arguments'], count($group['members']));
+                $ambiguities[] = new AmbiguousExpectation($members[0]->method(), $members[0]->describeArguments(), count($members));
             }
         }
 
