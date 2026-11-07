@@ -544,7 +544,8 @@ final class ClassGenerator
         // variable first is what makes the by-ref return actually silent.
         $body = match (true) {
             $method->returnsReference() => sprintf("\$__td_result = %s;\n\n        return \$__td_result;", $call),
-            $this->returnTypeString($method) === 'void' => sprintf('%s;', $call),
+            // `never` rejects a `return` at compile time just like `void`.
+            in_array($this->returnTypeString($method), ['void', 'never'], true) => sprintf('%s;', $call),
             default => sprintf('return %s;', $call),
         };
 

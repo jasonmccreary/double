@@ -10,6 +10,7 @@ use JMac\Testing\Engine\ClassGenerator;
 use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\ReservedNameCollisionException;
 use JMac\Testing\Exceptions\StaticMethodException;
+use JMac\Testing\Tests\Support\Aborter;
 use JMac\Testing\Tests\Support\AllowsCollisionInterface;
 use JMac\Testing\Tests\Support\ArrayAccessInterface;
 use JMac\Testing\Tests\Support\AuthorizerInterface;
@@ -239,6 +240,17 @@ final class ClassGeneratorTest extends TestCase
         $this->expectExceptionMessage('Can\'t call `abort`');
 
         $generated::abort();
+    }
+
+    public function test_doubles_a_never_returning_method(): void
+    {
+        $double = Double::for(Aborter::class);
+        $double->allows('abort')->throws(new \LogicException('doubled abort'));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('doubled abort');
+
+        $double->abort();
     }
 
     public function test_rejects_an_abstract_class_leaving_an_interface_static_method_unimplemented(): void
