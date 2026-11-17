@@ -597,6 +597,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('invalid-double-target-must-be-interface', $exception->getMessage());
     }
 
+    public function test_renders_invalid_double_target_second_class(): void
+    {
+        $exception = InvalidDoubleTargetException::secondClass('Book');
+
+        $this->assertMatchesGolden('invalid-double-target-second-class', $exception->getMessage());
+    }
+
     public function test_renders_invalid_double_target_duplicate_target(): void
     {
         $exception = InvalidDoubleTargetException::duplicateTarget('LoggerInterface');

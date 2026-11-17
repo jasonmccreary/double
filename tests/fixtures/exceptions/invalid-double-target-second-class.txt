@@ -1,0 +1,2 @@
+
+Can't create a double for `Book` since it's a class, and an intersection may only include one class.

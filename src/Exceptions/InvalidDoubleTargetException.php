@@ -42,6 +42,15 @@ class InvalidDoubleTargetException extends DoubleException
         return new self($target, "it's a class. When multiple targets are passed to `Double::for()`, they must all be interfaces");
     }
 
+    /**
+     * Only reachable from an intersection-typed return — Double::for()
+     * rejects any class among multiple targets before generation.
+     */
+    public static function secondClass(string $target): self
+    {
+        return new self($target, "it's a class, and an intersection may only include one class");
+    }
+
     public static function duplicateTarget(string $target): self
     {
         return new self($target, 'it was passed more than once');
