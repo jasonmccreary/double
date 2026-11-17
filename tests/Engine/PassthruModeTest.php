@@ -11,6 +11,7 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ClonesItselfDuringCall;
 use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\CreatesNewStaticInstance;
 use JMac\Testing\Tests\Support\ExtendedGreeter;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\HasObjectDefault;
@@ -255,6 +256,16 @@ final class PassthruModeTest extends TestCase
         $double->allows('double')->returns(100);
 
         $this->assertSame(100, $double->retryOnClone(5));
+    }
+
+    public function test_passthru_real_method_can_construct_a_fresh_instance(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $original->allows('name')->returns('original stub');
+
+        $fresh = $original->fresh('fresh');
+
+        $this->assertSame('fresh', $fresh->name());
     }
 
     public function test_passthru_rejects_an_instance_unrelated_to_the_doubled_class(): void
