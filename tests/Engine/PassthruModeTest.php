@@ -12,15 +12,19 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ClonesItselfDuringCall;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\ExtendedGreeter;
+use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\HasObjectDefault;
 use JMac\Testing\Tests\Support\InheritedReadonlyGreeter;
 use JMac\Testing\Tests\Support\InstantiableLogger;
+use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\LoggerInterface;
 use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\RealLogger;
 use JMac\Testing\Tests\Support\ReferenceCounter;
 use JMac\Testing\Tests\Support\SelfCallingCalculator;
+use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StatefulGreeter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PassthruModeTest extends TestCase
@@ -113,14 +117,22 @@ final class PassthruModeTest extends TestCase
         $this->assertInstanceOf(NewInInitializerDefault::class, $double->value());
     }
 
-    public function test_passthru_with_no_argument_on_an_interface_target_fails_clearly(): void
+    public static function interfacePassthruTargets(): iterable
     {
-        $double = Double::for(BookRepositoryInterface::class);
+        yield 'interface without an instance' => [[BookRepositoryInterface::class], null];
+        yield 'interface with an instance' => [[LoggerInterface::class], new RealLogger];
+        yield 'multiple interfaces' => [[Fillable::class, Sized::class], null];
+    }
+
+    #[DataProvider('interfacePassthruTargets')]
+    public function test_passthru_on_an_interface_target_fails_clearly(array $targets, ?object $instance): void
+    {
+        $double = Double::for(...$targets);
 
         $this->expectException(PassthruAutoInstantiationException::class);
-        $this->expectExceptionMessage('->passthru($existingInstance)');
+        $this->expectExceptionMessage('Double::for($existingInstance)->passthru()');
 
-        $double->passthru();
+        $double->passthru($instance);
     }
 
     /**
@@ -131,6 +143,13 @@ final class PassthruModeTest extends TestCase
     public function test_passthru_with_no_argument_never_runs_the_real_constructor(): void
     {
         $double = Double::for(ConcreteLogger::class)->passthru();
+
+        $this->assertTrue($double->log('hello'));
+    }
+
+    public function test_passthru_on_a_class_intersection_runs_the_classs_real_methods(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class)->makeLogger()->passthru();
 
         $this->assertTrue($double->log('hello'));
     }

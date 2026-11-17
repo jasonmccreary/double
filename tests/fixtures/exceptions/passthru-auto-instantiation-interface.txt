@@ -1,2 +1,2 @@
 
-Can't auto-instantiate `BookRepositoryInterface` to passthru. It's an interface — so there's no constructor to invoke. You may need to pass an existing instance instead. For example: `->passthru($existingInstance)`.
+Can't use passthru on `BookRepositoryInterface`. It's an interface, so there's no real method to run. You may double an existing instance instead. For example: `Double::for($existingInstance)->passthru()`.
