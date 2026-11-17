@@ -27,7 +27,7 @@ $logger instanceof LoggerInterface;    // true
 $logger instanceof FlushableInterface; // true
 ```
 
-Every target after the first must be an interface, the same rule PHP applies to intersection types, since a class may only extend one parent.
+When you pass more than one target, every target must be an interface.
 
 ## Wrapping a real instance
 
@@ -74,7 +74,7 @@ Passing `override: true` lets you double it anyway:
 $gate = Double::for(AuthorizerInterface::class, override: true);
 ```
 
-The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the seven still work, `override` reroutes control entirely: the object you get back carries none of the seven verbs itself. It wraps the real double instead, so every verb still works the same way regardless of which method actually collided:
+The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the eight still work, `override` reroutes control entirely: the real double carries none of the control verbs, and the wrapper you get back carries all of them, so every verb still works the same way regardless of which method actually collided:
 
 ```php
 $gate->expects('allows')->with('edit-post')->returns(true);
@@ -135,7 +135,7 @@ readonly class Money
 Double::for(Money::class); // works, no bypassFinals() needed
 ```
 
-PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is. That costs the double nothing, since it never declares properties of its own — it only overrides methods.
+PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is.
 
 ## Modes
 

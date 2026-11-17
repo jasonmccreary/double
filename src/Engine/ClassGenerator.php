@@ -74,9 +74,8 @@ final class ClassGenerator
     /**
      * @internal Used by SafeDefaultResolver (fabricating an
      * intersection-typed return) and Double::for() (a direct
-     * multi-target double). Intersection members are always interfaces in
-     * PHP, so this validates every target actually is one instead of
-     * branching between extends/implements.
+     * multi-target double). Only interface targets are supported here, so
+     * generated classes use implements.
      *
      * @param  list<string>  $targets
      */
@@ -387,9 +386,8 @@ final class ClassGenerator
         // hierarchy, so PHP refuses a non-readonly subclass outright). Only
         // relevant for `extends` — interfaces can't be readonly, so an
         // `implements` target (single interface or intersection) never
-        // triggers this. Harmless either way: the generated class never
-        // declares a property of its own, so marking it readonly imposes no
-        // real constraint here.
+        // triggers this. Harmless either way: the identity token added by
+        // DoubleIdentity is already readonly.
         $readOnly = $keyword === 'extends' && $reflections[0]->isReadOnly() ? 'readonly ' : '';
 
         return sprintf(

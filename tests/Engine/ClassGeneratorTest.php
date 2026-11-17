@@ -201,10 +201,11 @@ final class ClassGeneratorTest extends TestCase
      * Regression check: a readonly class's properties must stay readonly in
      * every subclass, or PHP refuses the subclass outright with an
      * uncatchable fatal error out of the eval()'d source ("Non-readonly
-     * class ... cannot extend readonly class ..."). The generated double
-     * never declares a property of its own, so marking it `readonly` too
-     * imposes no real constraint — ClassGenerator does this automatically
-     * whenever the target itself is readonly.
+     * class ... cannot extend readonly class ..."). The only property the
+     * generated double declares is DoubleIdentity's, which is already
+     * readonly, so marking the double `readonly` too imposes no real
+     * constraint — ClassGenerator does this automatically whenever the
+     * target itself is readonly.
      */
     public function test_generates_a_readonly_subclass_of_a_readonly_class(): void
     {

@@ -94,7 +94,7 @@ $connection->expects('write')->ordered();
 $connection->expects('close')->ordered();
 ```
 
-Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
+Calling `open()` after `write()` throws immediately, naming both methods involved. Skipping a required call fails verification. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
 
 ## Static methods
 
