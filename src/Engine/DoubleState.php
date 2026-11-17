@@ -226,7 +226,8 @@ final class DoubleState
 
     public function recordCall(string $method, array $arguments): void
     {
-        $this->calls[] = ['method' => $method, 'arguments' => $arguments];
+        // Copy values out of references so later writes don't change past calls.
+        $this->calls[] = ['method' => $method, 'arguments' => array_map(static fn (mixed $argument): mixed => $argument, $arguments)];
     }
 
     /**
