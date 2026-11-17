@@ -43,6 +43,7 @@ use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\Suit;
 use JMac\Testing\Tests\Support\VariadicInterface;
 use PHPUnit\Framework\Attributes\After;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
@@ -1458,6 +1459,107 @@ final class DoubleTest extends TestCase
     public function test_verify_passes_when_no_expectations_were_configured_at_all(): void
     {
         $double = Double::for(BookRepositoryInterface::class);
+
+        $double->verify();
+    }
+
+    public static function caughtCallFailures(): iterable
+    {
+        yield 'never' => [fn ($double) => $double->expects('delete')->never(), [1]];
+        yield 'call limit' => [fn ($double) => $double->expects('delete'), [1, 1]];
+        yield 'order' => [function ($double): void {
+            $double->expects('delete')->with(1)->ordered();
+            $double->expects('delete')->with(2)->ordered();
+        }, [2, 1]];
+        yield 'arguments' => [fn ($double) => $double->expects('delete')->with(1), [2, 1]];
+        yield 'strict mode' => [fn ($double) => $double->strict(), [1]];
+    }
+
+    #[DataProvider('caughtCallFailures')]
+    public function test_verify_rejects_a_caught_call_failure(callable $configure, array $calls): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $configure($double);
+        $caught = null;
+
+        foreach ($calls as $id) {
+            try {
+                $double->delete($id);
+            } catch (\Throwable $exception) {
+                $caught ??= $exception;
+            }
+        }
+
+        $this->assertNotNull($caught);
+        $this->expectExceptionObject($caught);
+        $this->expectExceptionMessage('Note: this was first thrown when the call was made, but something caught it.');
+
+        $double->verify();
+    }
+
+    public function test_verify_appends_the_caught_note_only_once(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+
+        try {
+            $double->delete(1);
+        } catch (PHPUnitUnexpectedCallException) {
+        }
+
+        foreach ([1, 2] as $attempt) {
+            try {
+                $double->verify();
+            } catch (PHPUnitUnexpectedCallException $exception) {
+            }
+        }
+
+        $this->assertSame(1, substr_count($exception->getMessage(), 'something caught it'));
+    }
+
+    public function test_verify_reports_the_first_call_failure_to_listeners(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+        $events = [];
+        Double::listen(function (CheckEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        foreach ([1, 2] as $id) {
+            try {
+                $double->delete($id);
+            } catch (PHPUnitUnexpectedCallException) {
+            }
+        }
+
+        $caught = null;
+
+        try {
+            $double->verify();
+        } catch (PHPUnitUnexpectedCallException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertCount(3, $events);
+        $this->assertFalse($events[2]->passed);
+        $this->assertNull($events[2]->method);
+        $this->assertSame($events[0]->failure, $caught);
+        $this->assertSame($caught, $events[2]->failure);
+    }
+
+    public function test_verify_passes_after_a_configured_exception_is_caught(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+        $failure = new \RuntimeException('Not found');
+        $double->expects('find')->throws($failure);
+        $caught = null;
+
+        try {
+            $double->find(1);
+        } catch (\RuntimeException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertSame($failure, $caught);
 
         $double->verify();
     }

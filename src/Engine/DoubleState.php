@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Engine;
 
 use JMac\Testing\Diagnostics\AmbiguousExpectation;
+use JMac\Testing\Diagnostics\Diagnostic;
 use JMac\Testing\Exceptions\ModeConfigurationException;
 
 /**
@@ -16,7 +17,7 @@ use JMac\Testing\Exceptions\ModeConfigurationException;
  * generic one, and within each of those tiers prefers the last-registered
  * candidate that both matches and still has remaining call capacity, see
  * ProxyBehavior::findMatch()), and every call actually observed, regardless
- * of whether it matched anything.
+ * of whether it matched anything, plus the first call failure.
  */
 final class DoubleState
 {
@@ -25,6 +26,8 @@ final class DoubleState
 
     /** @var list<array{method: string, arguments: array}> */
     private array $calls = [];
+
+    private (Diagnostic&\Throwable)|null $callFailure = null;
 
     private ?Mode $mode = null;
 
@@ -227,6 +230,16 @@ final class DoubleState
     public function recordCall(string $method, array $arguments): void
     {
         $this->calls[] = ['method' => $method, 'arguments' => $arguments];
+    }
+
+    public function recordCallFailure(Diagnostic&\Throwable $failure): void
+    {
+        $this->callFailure ??= $failure;
+    }
+
+    public function callFailure(): (Diagnostic&\Throwable)|null
+    {
+        return $this->callFailure;
     }
 
     /**

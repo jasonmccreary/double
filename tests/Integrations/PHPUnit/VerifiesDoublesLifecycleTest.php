@@ -39,6 +39,15 @@ final class VerifiesDoublesLifecycleTest extends TestCase
         $this->assertStringContainsString('expected `delete(1)` to be called exactly 1 time, but it was never called', $output);
     }
 
+    public function test_a_caught_call_failure_still_fails_when_the_test_body_passes(): void
+    {
+        $output = $this->runFixture('CaughtCallFailureFixture.php');
+
+        $this->assertSame(1, $this->failureCount($output), "Expected exactly 1 failure:\n{$output}");
+        $this->assertStringContainsString('received 1 call to `delete(1)`, but your expectation only allowed 0 calls', $output);
+        $this->assertStringContainsString('Note: this was first thrown when the call was made, but something caught it.', $output);
+    }
+
     public function test_an_ambiguous_expectation_is_not_reported_when_the_test_already_failed(): void
     {
         $output = $this->runFixture('AmbiguousExpectationFailingFixture.php');
