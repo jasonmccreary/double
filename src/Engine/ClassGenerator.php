@@ -55,17 +55,6 @@ final class ClassGenerator
 
         $reflection = new \ReflectionClass($target);
 
-        // Reflects whatever PHP actually compiled, not the source on disk —
-        // `final` is permanent for the rest of the process once a class is
-        // loaded, unless Double::bypassFinals() rewrote it out of the source
-        // before this was the thing that first triggered loading it (see
-        // FinalBypass). Nothing short of that changes what this check sees,
-        // which is why the exception below names that escape hatch directly
-        // instead of leaving a dead end.
-        if ($reflection->isFinal()) {
-            throw InvalidDoubleTargetException::isFinal($target);
-        }
-
         $keyword = $reflection->isInterface() ? 'implements' : 'extends';
 
         return $this->generateFromReflections([$reflection], [$target], $keyword, $override);
@@ -74,8 +63,8 @@ final class ClassGenerator
     /**
      * @internal Used by SafeDefaultResolver (fabricating an
      * intersection-typed return) and Double::for() (a direct
-     * multi-target double). Only interface targets are supported here, so
-     * generated classes use implements.
+     * multi-target double). A class target, when present, must come first;
+     * all remaining targets must be interfaces.
      *
      * @param  list<string>  $targets
      */
@@ -88,7 +77,9 @@ final class ClassGenerator
             $targets,
         );
 
-        return $this->generateFromReflections($reflections, $targets, 'implements', override: false);
+        $keyword = $reflections[0]->isInterface() ? 'implements' : 'extends';
+
+        return $this->generateFromReflections($reflections, $targets, $keyword, override: false);
     }
 
     /**
@@ -98,14 +89,14 @@ final class ClassGenerator
     {
         $seen = [];
 
-        foreach ($targets as $target) {
+        foreach ($targets as $index => $target) {
             if (isset($seen[$target])) {
                 throw InvalidDoubleTargetException::duplicateTarget($target);
             }
 
             $seen[$target] = true;
 
-            if (interface_exists($target)) {
+            if (interface_exists($target) || ($index === 0 && class_exists($target))) {
                 continue;
             }
 
@@ -121,6 +112,17 @@ final class ClassGenerator
      */
     private function generateFromReflections(array $reflections, array $targets, string $keyword, bool $override): string
     {
+        // Reflects whatever PHP actually compiled, not the source on disk —
+        // `final` is permanent for the rest of the process once a class is
+        // loaded, unless Double::bypassFinals() rewrote it out of the source
+        // before this was the thing that first triggered loading it (see
+        // FinalBypass). Nothing short of that changes what this check sees,
+        // which is why the exception below names that escape hatch directly
+        // instead of leaving a dead end.
+        if ($reflections[0]->isFinal()) {
+            throw InvalidDoubleTargetException::isFinal($targets[0]);
+        }
+
         $cacheKey = $this->cacheKey($targets, $override);
 
         if (isset(self::$cache[$cacheKey])) {
@@ -333,10 +335,10 @@ final class ClassGenerator
         $namespace = substr($fqcn, 0, $position);
         $shortName = substr($fqcn, $position + 1);
 
-        $parents = implode(', ', array_map(
+        $parents = array_map(
             static fn (string $target): string => '\\'.ltrim($target, '\\'),
             $targets,
-        ));
+        );
 
         // An ordinary generated double implements DoubleInterface for real,
         // not just as a docblock fiction for Double::for()'s
@@ -348,13 +350,13 @@ final class ClassGenerator
         // — real identity tracking, nothing else. Double::for() wraps it in
         // OverriddenDouble, which is what actually carries the eight verbs
         // for this double, forwarding each one back to the double this
-        // builds. A single-class target uses `extends`, so the interface
-        // needs its own `implements` clause; an interface target already
-        // uses `implements`, so it just joins the list.
+        // builds. A class target is extended; any interface targets join
+        // the control interface in the implements clause.
         $controlInterface = '\\'.ltrim($bare ? IdentifiableDouble::class : DoubleInterface::class, '\\');
-        $inheritance = $keyword === 'extends'
-            ? sprintf('extends %s implements %s', $parents, $controlInterface)
-            : sprintf('implements %s, %s', $parents, $controlInterface);
+        $parent = $keyword === 'extends' ? array_shift($parents) : null;
+        $parents[] = $controlInterface;
+        $inheritance = ($parent === null ? '' : sprintf('extends %s ', $parent))
+            .'implements '.implode(', ', $parents);
 
         $overridable = $this->overridableMethods($reflections);
 
@@ -385,9 +387,8 @@ final class ClassGenerator
         // property on a readonly class stays readonly all the way down the
         // hierarchy, so PHP refuses a non-readonly subclass outright). Only
         // relevant for `extends` — interfaces can't be readonly, so an
-        // `implements` target (single interface or intersection) never
-        // triggers this. Harmless either way: the identity token added by
-        // DoubleIdentity is already readonly.
+        // interface-only target list never triggers this. Harmless either
+        // way: the identity token added by DoubleIdentity is already readonly.
         $readOnly = $keyword === 'extends' && $reflections[0]->isReadOnly() ? 'readonly ' : '';
 
         return sprintf(
@@ -404,7 +405,8 @@ final class ClassGenerator
     /**
      * Merges overridable methods across every target, keyed by lowercased
      * name, as PHP treats method names case-insensitively — the
-     * first reflection to declare a given method wins.
+     * class takes precedence, including methods left unoverridden. Among
+     * interfaces, the first declaration wins.
      *
      * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>
@@ -412,11 +414,18 @@ final class ClassGenerator
     private function overridableMethods(array $reflections): array
     {
         $methods = [];
+        $classMethods = [];
 
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if (isset($methods[strtolower($method->getName())])) {
+                $name = strtolower($method->getName());
+
+                if (isset($methods[$name]) || isset($classMethods[$name])) {
                     continue;
+                }
+
+                if (! $reflection->isInterface()) {
+                    $classMethods[$name] = true;
                 }
 
                 // Static excluded: ProxyBehavior::intercept() takes $this and
@@ -433,7 +442,7 @@ final class ClassGenerator
                     continue;
                 }
 
-                $methods[strtolower($method->getName())] = $method;
+                $methods[$name] = $method;
             }
         }
 
@@ -445,7 +454,7 @@ final class ClassGenerator
      * overridableMethods() — the generated `final class` must implement each
      * one to compile, even though none can be configured. Every one comes
      * from an interface target: assertNoClassAbstractStaticMethods() rejects
-     * the rest first.
+     * the rest first. Methods already provided by the class are inherited.
      *
      * @param  list<\ReflectionClass>  $reflections
      * @return list<\ReflectionMethod>
@@ -453,11 +462,16 @@ final class ClassGenerator
     private function abstractStaticMethods(array $reflections): array
     {
         $methods = [];
+        $classMethods = [];
 
         foreach ($reflections as $reflection) {
             foreach ($reflection->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $method) {
-                if ($method->isStatic() && $method->isAbstract() && ! isset($methods[strtolower($method->getName())])) {
-                    $methods[strtolower($method->getName())] = $method;
+                $name = strtolower($method->getName());
+
+                if (! $reflection->isInterface()) {
+                    $classMethods[$name] = true;
+                } elseif ($method->isStatic() && $method->isAbstract() && ! isset($methods[$name]) && ! isset($classMethods[$name])) {
+                    $methods[$name] = $method;
                 }
             }
         }

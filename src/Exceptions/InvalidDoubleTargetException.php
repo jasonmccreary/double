@@ -28,9 +28,9 @@ class InvalidDoubleTargetException extends DoubleException
      * target is ever loaded anywhere in the process, rewrites `final class`
      * out of its source so ClassGenerator's own reflection check never sees
      * it in the first place (see that check's comment in
-     * ClassGenerator::generate()). The message names that escape hatch
-     * directly, since "final and can't be extended" alone would otherwise
-     * read as a dead end rather than something the caller can act on.
+     * ClassGenerator::generateFromReflections()). The message names that
+     * escape hatch directly, since "final and can't be extended" alone would
+     * otherwise read as a dead end rather than something the caller can act on.
      */
     public static function isFinal(string $target): self
     {

@@ -18,6 +18,7 @@ use JMac\Testing\Engine\Mode;
 use JMac\Testing\Engine\PassthruInitializer;
 use JMac\Testing\Engine\PhpUnitIntegration;
 use JMac\Testing\Engine\ReceivedAssertion;
+use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Exceptions\MagicMethodException;
 use JMac\Testing\Exceptions\StaticMethodException;
 use JMac\Testing\Exceptions\UnknownMethodException;
@@ -180,6 +181,10 @@ final class Double
                         '`Double::for()` can\'t accept a real instance as a target when passing multiple targets.',
                     );
                 }
+
+                if (class_exists($target)) {
+                    throw InvalidDoubleTargetException::mustBeInterface($target);
+                }
             }
 
             return self::fabricateIntersection($targets, depth: 0);
@@ -223,6 +228,11 @@ final class Double
      */
     public static function fabricateIntersection(array $targets, int $depth): object
     {
+        // The generated double extends a class target, so it goes first.
+        // The state then finds the class's declaration of a method before
+        // an interface's.
+        usort($targets, static fn (string $a, string $b): int => interface_exists($a) <=> interface_exists($b));
+
         $generatedClass = (new ClassGenerator)->generateForIntersection($targets);
 
         return self::create($generatedClass, implode('&', $targets), $depth);
