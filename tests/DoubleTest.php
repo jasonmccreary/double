@@ -29,6 +29,7 @@ use JMac\Testing\Tests\Support\AuthorizingLogger;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ChannelAuthorizerInterface;
+use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
@@ -289,6 +290,14 @@ final class DoubleTest extends TestCase
         $this->expectExceptionMessage('single target');
 
         Double::for(Fillable::class, Sized::class, override: true);
+    }
+
+    public function test_for_with_a_class_and_an_interface_is_rejected(): void
+    {
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('must all be interfaces');
+
+        Double::for(ConcreteLogger::class, Sized::class);
     }
 
     public function test_for_with_a_positional_bool_instead_of_a_named_override_is_rejected(): void

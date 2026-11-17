@@ -11,6 +11,7 @@ use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
 use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
+use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FirstLink;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
@@ -272,6 +273,18 @@ final class LooseModeTest extends TestCase
         $this->assertInstanceOf(Fillable::class, $result);
         $this->assertInstanceOf(Sized::class, $result);
         $this->assertFalse($result->fill());
+        $this->assertSame(0, $result->size());
+    }
+
+    public function test_a_class_intersection_return_extends_the_class_and_implements_the_interface(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class);
+
+        $result = $double->makeLogger();
+
+        $this->assertInstanceOf(ConcreteLogger::class, $result);
+        $this->assertInstanceOf(Sized::class, $result);
+        $this->assertFalse($result->log('message'));
         $this->assertSame(0, $result->size());
     }
 
