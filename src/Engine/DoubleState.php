@@ -58,7 +58,7 @@ final class DoubleState
 
     /**
      * Almost always a single-element list. An intersection-typed fabrication
-     * stores its constituent interfaces joined with "&" in $target for
+     * stores its constituent types joined with "&" in $target for
      * display — PHP names can never contain "&", so splitting on it is safe.
      *
      * @return list<string>

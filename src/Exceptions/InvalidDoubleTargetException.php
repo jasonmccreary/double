@@ -28,9 +28,9 @@ class InvalidDoubleTargetException extends DoubleException
      * target is ever loaded anywhere in the process, rewrites `final class`
      * out of its source so ClassGenerator's own reflection check never sees
      * it in the first place (see that check's comment in
-     * ClassGenerator::generate()). The message names that escape hatch
-     * directly, since "final and can't be extended" alone would otherwise
-     * read as a dead end rather than something the caller can act on.
+     * ClassGenerator::generateFromReflections()). The message names that
+     * escape hatch directly, since "final and can't be extended" alone would
+     * otherwise read as a dead end rather than something the caller can act on.
      */
     public static function isFinal(string $target): self
     {
@@ -40,6 +40,15 @@ class InvalidDoubleTargetException extends DoubleException
     public static function mustBeInterface(string $target): self
     {
         return new self($target, "it's a class. When multiple targets are passed to `Double::for()`, they must all be interfaces");
+    }
+
+    /**
+     * Only reachable from an intersection-typed return — Double::for()
+     * rejects any class among multiple targets before generation.
+     */
+    public static function multipleClasses(string $type): self
+    {
+        return new self($type, 'an object can only extend one class, and this intersection type requires more than one');
     }
 
     public static function duplicateTarget(string $target): self

@@ -29,6 +29,7 @@ use JMac\Testing\Tests\Support\ExpectsCollisionInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
 use JMac\Testing\Tests\Support\HasAbstractStaticMethod;
+use JMac\Testing\Tests\Support\HasFinalAndStaticMethods;
 use JMac\Testing\Tests\Support\HasHookedProperty;
 use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
@@ -489,6 +490,18 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertTrue(is_subclass_of($generated, Fillable::class));
         $this->assertTrue(is_subclass_of($generated, Sized::class));
+    }
+
+    public function test_a_class_intersection_inherits_final_and_concrete_static_methods(): void
+    {
+        $generated = (new ClassGenerator)->generateForIntersection([
+            HasFinalAndStaticMethods::class,
+            Sized::class,
+            StaticMethodInterface::class,
+        ]);
+
+        $this->assertSame(42, $generated::__td_instantiate()->size());
+        $this->assertSame('real', $generated::make());
     }
 
     public function test_intersection_rejects_a_non_existent_target(): void
