@@ -161,11 +161,33 @@ final class ExceptionFactory
 
     public static function recordedCallFailure(string $label, Diagnostic&\Throwable $failure): Diagnostic&\Throwable
     {
+        self::appendCaughtNote($failure);
+
         PhpUnitIntegration::registerPass();
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $failure));
 
         return $failure;
+    }
+
+    /**
+     * Rethrowing the original exception keeps its trace pointing at the call
+     * that failed, so the note is appended to that same instance rather than
+     * a new one. Every call failure extends \Exception, whose $message is
+     * protected, so this needs no new public API on the exception classes.
+     * Idempotent, since verify() can run more than once.
+     */
+    private static function appendCaughtNote(\Throwable $failure): void
+    {
+        $note = "\n\nNote: this was first thrown when the call was made, but something caught it.";
+
+        if (str_ends_with($failure->getMessage(), $note)) {
+            return;
+        }
+
+        (function () use ($note): void {
+            $this->message = rtrim($this->message, "\n").$note;
+        })->call($failure);
     }
 
     /**

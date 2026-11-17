@@ -1492,8 +1492,28 @@ final class DoubleTest extends TestCase
 
         $this->assertNotNull($caught);
         $this->expectExceptionObject($caught);
+        $this->expectExceptionMessage('Note: this was first thrown when the call was made, but something caught it.');
 
         $double->verify();
+    }
+
+    public function test_verify_appends_the_caught_note_only_once(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class)->strict();
+
+        try {
+            $double->delete(1);
+        } catch (PHPUnitUnexpectedCallException) {
+        }
+
+        foreach ([1, 2] as $attempt) {
+            try {
+                $double->verify();
+            } catch (PHPUnitUnexpectedCallException $exception) {
+            }
+        }
+
+        $this->assertSame(1, substr_count($exception->getMessage(), 'something caught it'));
     }
 
     public function test_verify_reports_the_first_call_failure_to_listeners(): void

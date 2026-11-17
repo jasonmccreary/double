@@ -45,6 +45,7 @@ final class VerifiesDoublesLifecycleTest extends TestCase
 
         $this->assertSame(1, $this->failureCount($output), "Expected exactly 1 failure:\n{$output}");
         $this->assertStringContainsString('received 1 call to `delete(1)`, but your expectation only allowed 0 calls', $output);
+        $this->assertStringContainsString('Note: this was first thrown when the call was made, but something caught it.', $output);
     }
 
     public function test_an_ambiguous_expectation_is_not_reported_when_the_test_already_failed(): void
