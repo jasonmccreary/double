@@ -117,7 +117,7 @@ Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's on
 - A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).
 - `shouldDeferMissing()` and `makePartial()` both map to **Passthru** mode (`->passthru()`) — Mockery splits these into two constructor calls, Double doesn't need to: it's the same mode either way, just with or without an argument.
   - `shouldDeferMissing()`, which takes real constructor arguments (or, in Mockery terms, is typically paired with `Mockery::mock(Foo::class, [$args])`), maps to `->passthru($realInstance)` — you build the real object however you need to (with real dependencies, a container, whatever), and hand it in directly. This is actually more flexible than Mockery here, since you're not limited to constructor arguments — you can hand in any already-built object.
-  - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the double builds its own real state via the target's constructor.
+  - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the real constructor never runs.
   - Either way, an unstubbed method runs its real code *on the double itself*, so a self-call it makes internally to another method of the same object can also hit a configured stub — see [passthru](03-creating-doubles.md#passthru) for why that matters and what it costs.
 
 ### No `Mockery::spy()`, just `Double::for()`

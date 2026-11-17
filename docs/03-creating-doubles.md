@@ -219,9 +219,9 @@ This is the shape to reach for when you want to exercise one method's real logic
 The one case still rejected up front is an interface, since there's no real method body at all to run:
 
 ```
-Can't auto-instantiate `Logger` to passthru. It's an interface —
-so there's no constructor to invoke. You may need to pass an
-existing instance instead. For example: `->passthru($existingInstance)`.
+Can't use passthru on `Logger`. It's an interface, so there's no real
+method to run. You may double an existing instance instead.
+For example: `Double::for($existingInstance)->passthru()`.
 ```
 
 Passthru only applies to classes, since an interface has no real implementation to run.
