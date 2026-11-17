@@ -252,15 +252,21 @@ final class Double
 
         $instance = $generatedClass::__td_instantiate();
 
-        (new \ReflectionProperty($instance, '__td_identity'))->setValue($instance, new \stdClass);
+        self::register($instance, $state);
 
-        self::states()[$instance->__td_identity()] = $state;
+        return $instance;
+    }
+
+    /**
+     * Shared by create() and stateFor() so both enroll automatic verification.
+     */
+    private static function register(object $double, DoubleState $state): void
+    {
+        self::states()[$double->__td_identity()] = $state;
 
         if (self::$autoVerifyEnabled) {
             self::$pending[] = $state;
         }
-
-        return $instance;
     }
 
     /**
@@ -489,6 +495,8 @@ final class Double
      * `DoubleInterface` itself (that's exactly the collision `override`
      * routes around), but it still needs real state, which is what
      * `OverriddenDouble` reaches for when it forwards each control verb.
+     * An instance real code creates with new static gets fresh passthru state
+     * so its constructor and methods can run normally.
      */
     public static function stateFor(object $double): DoubleState
     {
@@ -499,7 +507,15 @@ final class Double
         $state = self::states()[$double->__td_identity()] ?? null;
 
         if ($state === null) {
-            throw new \LogicException('Object is not a `Double`-generated double.');
+            $target = get_parent_class($double);
+
+            if ($target === false) {
+                throw new \LogicException('Object is not a `Double`-generated double.');
+            }
+
+            $state = new DoubleState($target, self::deriveLabel($target));
+            $state->configurePassthru();
+            self::register($double, $state);
         }
 
         return $state;

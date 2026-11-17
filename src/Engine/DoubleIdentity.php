@@ -22,9 +22,10 @@ trait DoubleIdentity
      *
      * An ordinary property, deliberately — PHP copies an object-typed
      * property by reference on `clone`, for free, with no `__clone` logic
-     * needed. Double::create() sets this once via reflection (readonly
-     * properties can't have a default value, and this must work whether or
-     * not the generated class itself is marked readonly); Double::states()
+     * needed. __td_identity() initializes it on first use, including when real
+     * code creates an instance with new static, bypassing Double::create().
+     * Readonly properties can't have a default value, and this must also work
+     * when the generated class itself is readonly. Double::states()
      * is keyed by this identity instead of the double directly, so a clone
      * — which PHP creates with no way for us to reach the original it came
      * from — resolves to the exact same DoubleState its original has,
@@ -37,7 +38,7 @@ trait DoubleIdentity
     /** @internal */
     public function __td_identity(): object
     {
-        return $this->__td_identity;
+        return $this->__td_identity ??= new \stdClass;
     }
 
     /** @internal */
