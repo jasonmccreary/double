@@ -305,7 +305,7 @@ final class LooseModeTest extends TestCase
         $double = Double::for(IntersectionReturnInterface::class);
 
         $this->expectException(InvalidDoubleTargetException::class);
-        $this->expectExceptionMessage('an intersection may only include one class');
+        $this->expectExceptionMessage('this intersection type requires more than one');
 
         $double->makeTwoClasses();
     }

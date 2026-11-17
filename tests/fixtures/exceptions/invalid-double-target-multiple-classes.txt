@@ -1,0 +1,2 @@
+
+Can't create a double for `ConcreteLogger&Book` since an object can only extend one class, and this intersection type requires more than one.

@@ -100,9 +100,13 @@ final class ClassGenerator
                 continue;
             }
 
-            throw class_exists($target)
-                ? InvalidDoubleTargetException::secondClass($target)
-                : InvalidDoubleTargetException::doesNotExist($target);
+            if (! class_exists($target)) {
+                throw InvalidDoubleTargetException::doesNotExist($target);
+            }
+
+            throw class_exists($targets[0])
+                ? InvalidDoubleTargetException::multipleClasses(implode('&', $targets))
+                : InvalidDoubleTargetException::mustBeInterface($target);
         }
     }
 
