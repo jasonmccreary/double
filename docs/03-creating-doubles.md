@@ -166,6 +166,7 @@ This is what you get from a plain `Double::for(...)`, with nothing extra to opt 
 | an enum | its first case |
 | a union type | the first branch that resolves cleanly, preferring `null` if it's an option |
 | a non-nullable class or interface | a fresh double of that type, generated for you |
+| an intersection type | a fresh double of every type in it |
 
 That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later. It hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
 
