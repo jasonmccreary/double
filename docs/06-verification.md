@@ -18,7 +18,7 @@ $repository->verify();
 
 When something's unmet, the message doesn't just say it didn't happen. It shows you what did happen instead, if anything, which is usually enough to spot a typo or a stale value at a glance. See [failure messages](07-failure-messages.md) for an example.
 
-A call that fails the moment it's made still fails `verify()` if the code under test catches the exception: a call past its `times()` or `never()` limit, a call out of order, a call that doesn't match its `expects()`, or an unconfigured call in Strict mode. `verify()` throws the first of these again. With `VerifiesDoubles`, that includes a test that uses `expectException()` for the failure. Exceptions you configure with `throws()`, or that a `resolves()` callback or a real passthru method throws, don't count.
+If the code under test catches a call failure, such as a call past its `never()` limit, `verify()` throws it again. Only Double's own failures count, not exceptions from `throws()`, `resolves()`, or a passthru method.
 
 ## Checking what happened: `received()`
 
