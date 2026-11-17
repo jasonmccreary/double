@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Double;
+use JMac\Testing\Exceptions\InvalidDoubleTargetException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
@@ -16,6 +17,7 @@ use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FirstLink;
 use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\NodeInterface;
+use JMac\Testing\Tests\Support\ProtectedSize;
 use JMac\Testing\Tests\Support\SafeDefaultInterface;
 use JMac\Testing\Tests\Support\SecondLink;
 use JMac\Testing\Tests\Support\Sized;
@@ -286,6 +288,26 @@ final class LooseModeTest extends TestCase
         $this->assertInstanceOf(Sized::class, $result);
         $this->assertFalse($result->log('message'));
         $this->assertSame(0, $result->size());
+    }
+
+    public function test_a_class_intersection_return_widens_a_protected_method_an_interface_declares(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class);
+
+        $result = $double->makeProtectedSize();
+
+        $this->assertInstanceOf(ProtectedSize::class, $result);
+        $this->assertSame(0, $result->size());
+    }
+
+    public function test_an_intersection_return_with_two_classes_is_rejected(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class);
+
+        $this->expectException(InvalidDoubleTargetException::class);
+        $this->expectExceptionMessage('this intersection type requires more than one');
+
+        $double->makeTwoClasses();
     }
 
     public function test_a_single_unconfigured_fabrication_hop_is_free(): void

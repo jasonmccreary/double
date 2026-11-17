@@ -100,9 +100,13 @@ final class ClassGenerator
                 continue;
             }
 
-            throw class_exists($target)
-                ? InvalidDoubleTargetException::mustBeInterface($target)
-                : InvalidDoubleTargetException::doesNotExist($target);
+            if (! class_exists($target)) {
+                throw InvalidDoubleTargetException::doesNotExist($target);
+            }
+
+            throw class_exists($targets[0])
+                ? InvalidDoubleTargetException::multipleClasses(implode('&', $targets))
+                : InvalidDoubleTargetException::mustBeInterface($target);
         }
     }
 
@@ -360,7 +364,22 @@ final class ClassGenerator
 
         $overridable = $this->overridableMethods($reflections);
 
-        $methods = implode("\n", array_map($this->buildMethod(...), $overridable));
+        // A protected class method that an interface target also declares
+        // must be public, or PHP refuses the generated class outright.
+        $interfaceMethods = [];
+
+        foreach ($reflections as $reflection) {
+            if ($reflection->isInterface()) {
+                foreach ($reflection->getMethods() as $method) {
+                    $interfaceMethods[strtolower($method->getName())] = true;
+                }
+            }
+        }
+
+        $methods = implode("\n", array_map(
+            fn (\ReflectionMethod $method): string => $this->buildMethod($method, isset($interfaceMethods[strtolower($method->getName())])),
+            $overridable,
+        ));
 
         $stubs = array_map(
             fn (\ReflectionMethod $method): string => $this->buildStaticStub($method, implode('&', $targets)),
@@ -496,7 +515,7 @@ final class ClassGenerator
         return $this->buildMethodFromBody($method, $method->getName(), $body, 'public static');
     }
 
-    private function buildMethod(\ReflectionMethod $method): string
+    private function buildMethod(\ReflectionMethod $method, bool $public = false): string
     {
         $call = sprintf(
             '\\%s::intercept($this, %s, %s)',
@@ -508,7 +527,7 @@ final class ClassGenerator
         // Mirrors the real method's own visibility: this is a genuine
         // override of that method, and PHP requires an override's visibility
         // to be at least as permissive as what it overrides.
-        $visibility = $method->isProtected() ? 'protected' : 'public';
+        $visibility = $method->isProtected() && ! $public ? 'protected' : 'public';
 
         return $this->buildMethodFromCall($method, $method->getName(), $call, $visibility);
     }
