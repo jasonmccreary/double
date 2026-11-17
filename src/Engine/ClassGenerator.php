@@ -657,10 +657,12 @@ final class ClassGenerator
     }
 
     /**
-     * The generated class lives in its own namespace, so any class-qualified
-     * default (an enum case, a ::class constant) must be forced absolute —
-     * otherwise PHP resolves it relative to the generated namespace instead
-     * of the one the original signature was written in.
+     * The generated class lives in its own namespace, so constant names must
+     * be forced absolute — otherwise PHP resolves them relative to the generated
+     * namespace instead of the one the original signature was written in.
+     * Reflection reports an unqualified constant under the original namespace,
+     * so it falls back to the global constant when that namespaced one isn't
+     * defined, as PHP does. A trait's __CLASS__ names the class using the trait.
      *
      * "self"/"parent" prefixes are resolved against the declaring class first,
      * same reasoning as stringifyNamedType(): left as literal keywords, they'd
@@ -673,8 +675,16 @@ final class ClassGenerator
      */
     private function qualifyConstantName(string $name, \ReflectionClass $declaringClass): string
     {
+        if ($name === '__CLASS__') {
+            return '\\'.$declaringClass->getName().'::class';
+        }
+
         if (! str_contains($name, '::')) {
-            return $name;
+            if (! defined($name) && defined($global = substr(strrchr('\\'.$name, '\\'), 1))) {
+                $name = $global;
+            }
+
+            return '\\'.$name;
         }
 
         [$prefix, $const] = explode('::', $name, 2);
