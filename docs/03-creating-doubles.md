@@ -74,7 +74,7 @@ Passing `override: true` lets you double it anyway:
 $gate = Double::for(AuthorizerInterface::class, override: true);
 ```
 
-The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the seven still work, `override` reroutes control entirely: the real double carries none of the control verbs, and the wrapper you get back carries all of them, so every verb still works the same way regardless of which method actually collided:
+The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the eight still work, `override` reroutes control entirely: the real double carries none of the control verbs, and the wrapper you get back carries all of them, so every verb still works the same way regardless of which method actually collided:
 
 ```php
 $gate->expects('allows')->with('edit-post')->returns(true);
