@@ -12,10 +12,13 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ClonesItselfDuringCall;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\ExtendedGreeter;
+use JMac\Testing\Tests\Support\HasObjectDefault;
 use JMac\Testing\Tests\Support\InheritedReadonlyGreeter;
 use JMac\Testing\Tests\Support\InstantiableLogger;
 use JMac\Testing\Tests\Support\LoggerInterface;
+use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\RealLogger;
+use JMac\Testing\Tests\Support\ReferenceCounter;
 use JMac\Testing\Tests\Support\SelfCallingCalculator;
 use JMac\Testing\Tests\Support\StatefulGreeter;
 use PHPUnit\Framework\TestCase;
@@ -79,6 +82,35 @@ final class PassthruModeTest extends TestCase
         $double = Double::for(InstantiableLogger::class)->passthru();
 
         $this->assertTrue($double->log('hello'));
+    }
+
+    public function test_passthru_updates_a_reference_parameter(): void
+    {
+        $double = Double::for(ReferenceCounter::class)->passthru();
+        $value = 1;
+
+        $double->increment($value);
+
+        $this->assertSame(2, $value);
+    }
+
+    public function test_passthru_updates_reference_variadics_without_changing_recorded_arguments(): void
+    {
+        $double = Double::for(ReferenceCounter::class)->passthru();
+        $first = 1;
+        $second = 2;
+
+        $double->incrementBy(2, $first, $second);
+
+        $this->assertSame([3, 4], [$first, $second]);
+        $double->received('incrementBy')->with(2, 1, 2);
+    }
+
+    public function test_passthru_uses_an_omitted_object_default(): void
+    {
+        $double = Double::for(HasObjectDefault::class)->passthru();
+
+        $this->assertInstanceOf(NewInInitializerDefault::class, $double->value());
     }
 
     public function test_passthru_with_no_argument_on_an_interface_target_fails_clearly(): void
