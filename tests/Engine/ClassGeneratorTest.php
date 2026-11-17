@@ -41,6 +41,7 @@ use JMac\Testing\Tests\Support\IntersectionReturnInterface;
 use JMac\Testing\Tests\Support\InvokableInterface;
 use JMac\Testing\Tests\Support\LowercaseGreetInterface;
 use JMac\Testing\Tests\Support\MagicMethodInterface;
+use JMac\Testing\Tests\Support\NamespacedConstantDefaultInterface;
 use JMac\Testing\Tests\Support\NewInInitializerDefault;
 use JMac\Testing\Tests\Support\NewInInitializerParamInterface;
 use JMac\Testing\Tests\Support\NullableParamInterface;
@@ -885,6 +886,34 @@ final class ClassGeneratorTest extends TestCase
 
         $this->assertTrue($parameter->isDefaultValueAvailable());
         $this->assertSame(ConstDefaultGrandparent::PARENT_MODE, $parameter->getDefaultValue());
+    }
+
+    public function test_reconstructs_an_unqualified_global_constant_default_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(NamespacedConstantDefaultInterface::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withGlobalConstant'))->getParameters()[0];
+
+        $this->assertSame(PHP_EOL, $parameter->getDefaultValue());
+        $this->assertSame('PHP_EOL', $parameter->getDefaultValueConstantName());
+    }
+
+    public function test_reconstructs_a_namespaced_constant_default_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(NamespacedConstantDefaultInterface::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withNamespacedConstant'))->getParameters()[0];
+
+        $this->assertSame(42, $parameter->getDefaultValue());
+    }
+
+    public function test_reconstructs_a_trait_class_name_default_exactly(): void
+    {
+        $generated = (new ClassGenerator)->generate(ConstDefaultChild::class);
+
+        $parameter = (new \ReflectionMethod($generated, 'withClassName'))->getParameters()[0];
+
+        $this->assertSame(ConstDefaultBase::class, $parameter->getDefaultValue());
     }
 
     public function test_preserves_enum_case_default_values(): void
