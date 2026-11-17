@@ -10,9 +10,12 @@ namespace JMac\Testing\Tests\Support;
  * "self"/"parent"-qualified class constant, inherited unoverridden by a
  * further subclass — the shape that must be doubled without a fatal
  * "'\self' is an invalid class name" error.
+ * The trait's __CLASS__ default must also keep this declaring-class context.
  */
 class ConstDefaultBase extends ConstDefaultGrandparent
 {
+    use ClassNameDefaultTrait;
+
     public const SELF_MODE = 1;
 
     public function withSelfConstant(int $mode = self::SELF_MODE): int
