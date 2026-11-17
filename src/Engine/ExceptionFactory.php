@@ -47,10 +47,14 @@ use PHPUnit\Framework\TestCase;
  *
  * Every method here except fabricationLimitExceeded() (an engine safety
  * valve, not a check the test authored) also calls Double::notify() with
- * the exception it just built, right before returning it — the single
- * choke point every in-scope check failure passes through, so that's the
- * only place this wiring needs to live. See CheckEvent's own docblock for
- * exactly which checks are in scope.
+ * its exception right before returning it — the single choke point every
+ * in-scope check failure passes through, so that's the only place this
+ * wiring needs to live. See CheckEvent's own docblock for exactly which
+ * checks are in scope.
+ *
+ * The four call-time failures are also recorded on DoubleState before
+ * notifying listeners, so verification still fails if the code under test
+ * catches the exception.
  */
 final class ExceptionFactory
 {
@@ -59,13 +63,15 @@ final class ExceptionFactory
      * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function unexpectedCall(
-        string $label,
+        DoubleState $state,
         string $method,
         string $argumentsDescription,
-        bool $fabricated,
         array $otherObservedCalls = [],
         ?array $argumentComparisons = null,
     ): Diagnostic&\Throwable {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -74,20 +80,24 @@ final class ExceptionFactory
             $exception = new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
         }
 
+        $state->recordCallFailure($exception);
+
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
 
         return $exception;
     }
 
     public static function expectationCallLimitExceeded(
-        string $label,
+        DoubleState $state,
         string $method,
         string $argumentsDescription,
         int $maximum,
         int $callNumber,
-        bool $fabricated,
         int $otherMatchingExpectations = 0,
     ): Diagnostic&\Throwable {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -112,6 +122,8 @@ final class ExceptionFactory
             );
         }
 
+        $state->recordCallFailure($exception);
+
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
 
         return $exception;
@@ -122,14 +134,16 @@ final class ExceptionFactory
      * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function expectationCallMismatch(
-        string $label,
+        DoubleState $state,
         string $method,
         string $argumentsDescription,
-        bool $fabricated,
         array $configuredCalls = [],
         ?array $argumentComparisons = null,
         bool $passthru = false,
     ): Diagnostic&\Throwable {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -138,9 +152,20 @@ final class ExceptionFactory
             $exception = new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
         }
 
+        $state->recordCallFailure($exception);
+
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
 
         return $exception;
+    }
+
+    public static function recordedCallFailure(string $label, Diagnostic&\Throwable $failure): Diagnostic&\Throwable
+    {
+        PhpUnitIntegration::registerPass();
+
+        Double::notify(new CheckEvent($label, method: null, passed: false, failure: $failure));
+
+        return $failure;
     }
 
     /**
@@ -195,11 +220,13 @@ final class ExceptionFactory
     }
 
     public static function outOfOrderCall(
-        string $label,
+        DoubleState $state,
         string $method,
         string $alreadyOccurredMethod,
-        bool $fabricated,
     ): Diagnostic&\Throwable {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -207,6 +234,8 @@ final class ExceptionFactory
         } else {
             $exception = new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
         }
+
+        $state->recordCallFailure($exception);
 
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
 

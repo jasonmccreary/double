@@ -49,12 +49,11 @@ final class ProxyBehavior
 
         if ($expectation->exceedsMaximum()) {
             throw ExceptionFactory::expectationCallLimitExceeded(
-                $state->label(),
+                $state,
                 $method,
                 ArgumentFormatter::describe($arguments),
                 $expectation->maximumCalls(),
                 $expectation->timesMatched(),
-                $state->isFabricated(),
                 self::countOtherMatchingExpectations($state, $method, $arguments, $expectation),
             );
         }
@@ -166,10 +165,9 @@ final class ProxyBehavior
         // unmet-expectation check at verify() time.
         if ($slot < $state->orderCursor()) {
             throw ExceptionFactory::outOfOrderCall(
-                $state->label(),
+                $state,
                 $expectation->method(),
                 $ordered[$state->orderCursor()]->method(),
-                $state->isFabricated(),
             );
         }
 
@@ -198,10 +196,9 @@ final class ProxyBehavior
         $otherRawCalls = array_slice($state->callsFor($method), 0, -1);
 
         return ExceptionFactory::unexpectedCall(
-            $state->label(),
+            $state,
             $method,
             ArgumentFormatter::describe($arguments),
-            $state->isFabricated(),
             array_map(ArgumentFormatter::describe(...), $otherRawCalls),
             self::comparisonsAgainstThePriorCall($state, $method, $arguments, $otherRawCalls),
         );
@@ -261,10 +258,9 @@ final class ProxyBehavior
     private static function expectationCallMismatch(DoubleState $state, string $method, array $arguments, array $candidates): \Throwable
     {
         return ExceptionFactory::expectationCallMismatch(
-            $state->label(),
+            $state,
             $method,
             ArgumentFormatter::describe($arguments),
-            $state->isFabricated(),
             array_map(static fn (MethodExpectation $candidate): string => $candidate->describeArguments(), $candidates),
             self::comparisonsAgainstTheOnlyCandidate($state, $method, $arguments, $candidates),
             $state->mode() === Mode::Passthru,

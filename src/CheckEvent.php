@@ -11,9 +11,9 @@ use JMac\Testing\Diagnostics\Diagnostic;
  * delivered to every listener registered via `Double::listen()`, at the
  * moment the check itself resolves rather than batched at verify time.
  *
- * $method is null for a whole-double check: unused(), and the verify-time
- * unmet-expectation check (which can bundle several unmet expectations
- * across different methods into a single failure already). It's set for the
+ * $method is null for a whole-double check: unused(), and verify() (which
+ * can report a prior call failure or bundle several unmet expectations
+ * across different methods into a single failure). It's set for the
  * four immediate call-time failures (an unmatched call on a Strict double, a
  * times()/never() limit exceeded, an out-of-order call, an argument
  * mismatch against a required expectation) and for received().

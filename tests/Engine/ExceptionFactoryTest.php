@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Tests\Engine;
 
+use JMac\Testing\Engine\DoubleState;
 use JMac\Testing\Engine\ExceptionFactory;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitFabricationLimitExceededException;
@@ -25,14 +26,14 @@ final class ExceptionFactoryTest extends TestCase
 {
     public function test_unexpected_call_picks_the_phpunit_variant(): void
     {
-        $exception = ExceptionFactory::unexpectedCall('BookRepository', 'count', '', false);
+        $exception = ExceptionFactory::unexpectedCall(new DoubleState('BookRepository', 'BookRepository'), 'count', '');
 
         $this->assertInstanceOf(PHPUnitUnexpectedCallException::class, $exception);
     }
 
     public function test_expectation_call_limit_exceeded_picks_the_phpunit_variant(): void
     {
-        $exception = ExceptionFactory::expectationCallLimitExceeded('BookRepository', 'delete', '1', 1, 2, false);
+        $exception = ExceptionFactory::expectationCallLimitExceeded(new DoubleState('BookRepository', 'BookRepository'), 'delete', '1', 1, 2);
 
         $this->assertInstanceOf(PHPUnitExpectationCallLimitExceededException::class, $exception);
     }
@@ -53,7 +54,7 @@ final class ExceptionFactoryTest extends TestCase
 
     public function test_out_of_order_call_picks_the_phpunit_variant(): void
     {
-        $exception = ExceptionFactory::outOfOrderCall('BookRepository', 'find', 'delete', false);
+        $exception = ExceptionFactory::outOfOrderCall(new DoubleState('BookRepository', 'BookRepository'), 'find', 'delete');
 
         $this->assertInstanceOf(PHPUnitOutOfOrderCallException::class, $exception);
     }
@@ -68,12 +69,12 @@ final class ExceptionFactoryTest extends TestCase
     public function test_every_exception_registers_a_phpunit_pass_on_construction(): void
     {
         $factoryCalls = [
-            fn () => ExceptionFactory::unexpectedCall('BookRepository', 'count', '', false),
-            fn () => ExceptionFactory::expectationCallLimitExceeded('BookRepository', 'delete', '1', 1, 2, false),
-            fn () => ExceptionFactory::expectationCallMismatch('BookRepository', 'find', '456', false),
+            fn () => ExceptionFactory::unexpectedCall(new DoubleState('BookRepository', 'BookRepository'), 'count', ''),
+            fn () => ExceptionFactory::expectationCallLimitExceeded(new DoubleState('BookRepository', 'BookRepository'), 'delete', '1', 1, 2),
+            fn () => ExceptionFactory::expectationCallMismatch(new DoubleState('BookRepository', 'BookRepository'), 'find', '456'),
             fn () => ExceptionFactory::unsatisfiedExpectation('BookRepository', [], false),
             fn () => ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1),
-            fn () => ExceptionFactory::outOfOrderCall('BookRepository', 'find', 'delete', false),
+            fn () => ExceptionFactory::outOfOrderCall(new DoubleState('BookRepository', 'BookRepository'), 'find', 'delete'),
             fn () => ExceptionFactory::unsatisfiedReceivedAssertion('BookRepository', 'was never called', false),
             fn () => ExceptionFactory::unusedAssertion('BookRepository', [], false),
         ];
