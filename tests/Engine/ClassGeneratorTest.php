@@ -48,6 +48,7 @@ use JMac\Testing\Tests\Support\PassthruCollisionInterface;
 use JMac\Testing\Tests\Support\ProtectedPassthruCollision;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
 use JMac\Testing\Tests\Support\ReceivedCollisionInterface;
+use JMac\Testing\Tests\Support\ReferenceCounter;
 use JMac\Testing\Tests\Support\RefReturnInterface;
 use JMac\Testing\Tests\Support\SecondStaticMethodInterface;
 use JMac\Testing\Tests\Support\SelfTypedParamBase;
@@ -749,25 +750,36 @@ final class ClassGeneratorTest extends TestCase
         $this->assertSame('int', (string) $parameter->getType());
     }
 
-    /**
-     * Calling a by-ref-parameter method through the double doesn't crash —
-     * ProxyBehavior::intercept() receives func_get_args() as ordinary
-     * values, so a configured return still works even though the
-     * interception layer has no way to write back through the reference.
-     * That's a real, accepted limitation (this library configures return
-     * values, not out-parameter mutation), not something this test claims
-     * to solve — it only proves the generated signature is valid PHP that
-     * can actually be called.
-     */
-    public function test_calls_a_method_with_a_by_reference_parameter_without_error(): void
+    public function test_resolver_updates_a_reference_parameter_without_changing_recorded_arguments(): void
     {
         $instance = Double::for(ByRefParamInterface::class);
-        $instance->allows('increment')->returns(null);
+        $instance->allows('increment')->resolves(function (int &$value): void {
+            $value++;
+        });
 
         $value = 5;
         $instance->increment($value);
 
-        $this->addToAssertionCount(1);
+        $this->assertSame(6, $value);
+        $instance->received('increment')->with(5);
+    }
+
+    public function test_reference_forwarding_preserves_omitted_and_extra_arguments(): void
+    {
+        $instance = Double::for(ReferenceCounter::class);
+        $calls = [];
+        $instance->allows('increment')->resolves(function (int &$value = 0) use (&$calls): void {
+            $calls[] = func_get_args();
+            $value++;
+        });
+
+        $instance->increment();
+        $value = 1;
+        $instance->increment(value: $value);
+        $instance->increment($value, 'extra', 'arguments');
+
+        $this->assertSame(3, $value);
+        $this->assertSame([[], [1], [2, 'extra', 'arguments']], $calls);
     }
 
     /**

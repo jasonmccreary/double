@@ -487,9 +487,10 @@ final class ClassGenerator
     private function buildMethod(\ReflectionMethod $method): string
     {
         $call = sprintf(
-            '\\%s::intercept($this, %s, func_get_args())',
+            '\\%s::intercept($this, %s, %s)',
             ProxyBehavior::class,
             var_export($method->getName(), true),
+            $this->buildArguments($method),
         );
 
         // Mirrors the real method's own visibility: this is a genuine
@@ -498,6 +499,37 @@ final class ClassGenerator
         $visibility = $method->isProtected() ? 'protected' : 'public';
 
         return $this->buildMethodFromCall($method, $method->getName(), $call, $visibility);
+    }
+
+    /**
+     * func_get_args() copies values, so reference parameters must be forwarded
+     * as variables for writes to reach the caller. Slicing to func_num_args()
+     * keeps omitted optionals out, including object defaults represented by null
+     * in the generated signature.
+     */
+    private function buildArguments(\ReflectionMethod $method): string
+    {
+        $arguments = [];
+        $variadic = null;
+        $hasReferences = false;
+
+        foreach ($method->getParameters() as $parameter) {
+            $hasReferences = $hasReferences || $parameter->isPassedByReference();
+
+            if ($parameter->isVariadic()) {
+                $variadic = '$'.$parameter->getName();
+            } else {
+                $arguments[] = ($parameter->isPassedByReference() ? '&' : '').'$'.$parameter->getName();
+            }
+        }
+
+        if (! $hasReferences) {
+            return 'func_get_args()';
+        }
+
+        $arguments[] = '...'.($variadic ?? sprintf('array_slice(func_get_args(), %d)', count($arguments)));
+
+        return sprintf('array_slice([%s], 0, func_num_args())', implode(', ', $arguments));
     }
 
     /**
@@ -512,12 +544,7 @@ final class ClassGenerator
     private function buildRealMethod(\ReflectionMethod $method): string
     {
         $name = $method->getName();
-        $forwarded = implode(', ', array_map(
-            static fn (\ReflectionParameter $parameter): string => ($parameter->isVariadic() ? '...' : '').'$'.$parameter->getName(),
-            $method->getParameters(),
-        ));
-
-        $call = sprintf('parent::%s(%s)', $name, $forwarded);
+        $call = sprintf('parent::%s(...%s)', $name, $this->buildArguments($method));
 
         // Always public, regardless of the real method's own visibility —
         // unlike buildMethod() above, this isn't overriding anything (its
@@ -618,11 +645,10 @@ final class ClassGenerator
                 // MissingValue`), which getDefaultValue() already evaluated into a real
                 // instance. var_export() on an arbitrary object without __set_state()
                 // emits a static method call, which isn't a legal constant expression in
-                // a parameter default — a compile-time fatal once eval()'d. The generated
-                // override only ever forwards through func_get_args() anyway (see
-                // buildMethod()), so the real default value is never actually needed here:
-                // substitute a benign `null` and widen the type to accept it if it doesn't
-                // already.
+                // a parameter default — a compile-time fatal once eval()'d. Generated
+                // methods forward only the supplied arguments (see buildArguments()), so
+                // the real method supplies an omitted parameter's default. Substitute a
+                // benign `null` and widen the type to accept it if it doesn't already.
                 $default = ' = null';
                 $forceNullable = $type !== null && ! $type->allowsNull();
             }
