@@ -6,7 +6,9 @@ namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Matching\Argument;
+use JMac\Testing\Matching\Matcher;
 use JMac\Testing\Tests\Support\Book;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class MethodExpectationTest extends TestCase
@@ -134,6 +136,23 @@ final class MethodExpectationTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $expectation->with(Argument::all(fn (): bool => true), 2);
+    }
+
+    public static function wholeCallMarkers(): iterable
+    {
+        yield 'remaining' => [Argument::remaining()];
+        yield 'none' => [Argument::none()];
+        yield 'all' => [Argument::all(static fn (): bool => true)];
+    }
+
+    #[DataProvider('wholeCallMarkers')]
+    public function test_with_rejects_a_whole_call_marker_passed_by_name(Matcher $marker): void
+    {
+        $expectation = new MethodExpectation('join', required: false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $expectation->with(parts: $marker);
     }
 
     public function test_compare_arguments_is_null_when_all_matches(): void

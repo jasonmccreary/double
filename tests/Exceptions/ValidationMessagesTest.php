@@ -108,6 +108,18 @@ final class ValidationMessagesTest extends GoldenFileTestCase
         }
     }
 
+    public function test_renders_with_whole_call_marker_passed_by_name(): void
+    {
+        $expectation = new MethodExpectation('join', required: false);
+
+        try {
+            $expectation->with(parts: Argument::remaining());
+            $this->fail('Expected an InvalidArgumentException.');
+        } catch (\InvalidArgumentException $exception) {
+            $this->assertMatchesGolden('with-whole-call-marker-by-name', $exception->getMessage());
+        }
+    }
+
     public function test_renders_returns_with_no_values(): void
     {
         $expectation = new MethodExpectation('find', required: false);
