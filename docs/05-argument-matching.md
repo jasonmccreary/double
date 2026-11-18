@@ -96,6 +96,17 @@ $repository->combine('-', 'a', 'b', 'c'); // also matches
 
 A trailing marker meaning "however many further arguments there are, leave them unconstrained." It must be the last argument passed to `with()`.
 
+A variadic parameter can also collect named arguments. Pass those to `with()` by name:
+
+```php
+$repository->allows('combine')->with('-', first: 'a')->returns('a');
+
+$repository->combine('-', first: 'a'); // matches
+$repository->combine('-', 'a');        // doesn't match
+```
+
+Names in `with()` only ever refer to these variadic extras. A declared parameter is still matched by its position, even when the caller passes it by name.
+
 ## Custom logic
 
 ```php
