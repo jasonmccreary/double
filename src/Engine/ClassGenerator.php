@@ -536,7 +536,9 @@ final class ClassGenerator
      * func_get_args() copies values, so reference parameters must be forwarded
      * as variables for writes to reach the caller. Slicing to func_num_args()
      * keeps omitted optionals out, including object defaults represented by null
-     * in the generated signature.
+     * in the generated signature. Neither function sees named variadic
+     * arguments, so the variadic parameter itself is spread after the slice,
+     * keeping them under their names.
      */
     private function buildArguments(\ReflectionMethod $method): string
     {
@@ -554,11 +556,17 @@ final class ClassGenerator
             }
         }
 
+        if ($variadic !== null) {
+            return $arguments === []
+                ? $variadic
+                : sprintf('[...array_slice([%s], 0, func_num_args()), ...%s]', implode(', ', $arguments), $variadic);
+        }
+
         if (! $hasReferences) {
             return 'func_get_args()';
         }
 
-        $arguments[] = '...'.($variadic ?? sprintf('array_slice(func_get_args(), %d)', count($arguments)));
+        $arguments[] = sprintf('...array_slice(func_get_args(), %d)', count($arguments));
 
         return sprintf('array_slice([%s], 0, func_num_args())', implode(', ', $arguments));
     }
