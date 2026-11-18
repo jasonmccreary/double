@@ -87,8 +87,8 @@ final class MethodExpectation
         );
 
         foreach ($constraints as $index => $matcher) {
-            // Each of these describes the argument list as a whole, so a
-            // name would have nothing to refer to.
+            // Each of these describes the argument list rather than a single
+            // argument, so a name would have nothing to refer to.
             if (is_string($index) && ($matcher instanceof RemainingMatcher || $matcher instanceof NoneMatcher || $matcher instanceof AllMatcher)) {
                 throw new \InvalidArgumentException(
                     '`Argument::remaining()`, `Argument::none()`, and `Argument::all()` can\'t be passed to `with()` by name.',
