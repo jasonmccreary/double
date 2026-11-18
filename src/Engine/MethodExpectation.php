@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JMac\Testing\Engine;
 
+use JMac\Testing\Diagnostics\ArgumentFormatter;
 use JMac\Testing\Diagnostics\Pluralizer;
 use JMac\Testing\Diagnostics\StringDiffer;
 use JMac\Testing\Diagnostics\ValueFormatter;
@@ -26,7 +27,7 @@ final class MethodExpectation
 {
     private const UNBOUNDED = PHP_INT_MAX;
 
-    /** @var list<Matcher>|null */
+    /** @var array<int|string, Matcher>|null */
     private ?array $argumentConstraints = null;
 
     /** @var list<mixed> */
@@ -86,6 +87,14 @@ final class MethodExpectation
         );
 
         foreach ($constraints as $index => $matcher) {
+            // Each of these describes the argument list as a whole, so a
+            // name would have nothing to refer to.
+            if (is_string($index) && ($matcher instanceof RemainingMatcher || $matcher instanceof NoneMatcher || $matcher instanceof AllMatcher)) {
+                throw new \InvalidArgumentException(
+                    '`Argument::remaining()`, `Argument::none()`, and `Argument::all()` can\'t be passed to `with()` by name.',
+                );
+            }
+
             if ($matcher instanceof RemainingMatcher && $index !== array_key_last($constraints)) {
                 throw new \InvalidArgumentException(
                     '`Argument::remaining()` must be the last argument passed to `with()`.',
@@ -232,7 +241,7 @@ final class MethodExpectation
         // Argument::none() as the sole constraint asserts the call took no
         // arguments at all — with() already guarantees it can only ever
         // appear alone, so there's no positional matching left to do here.
-        if ($constraints !== [] && $constraints[0] instanceof NoneMatcher) {
+        if (($constraints[0] ?? null) instanceof NoneMatcher) {
             return $arguments === [];
         }
 
@@ -240,7 +249,7 @@ final class MethodExpectation
         // real argument list to the predicate at once — with() already
         // guarantees it can only ever appear alone, and its own arity is the
         // predicate's business, not a positional count to enforce here.
-        if ($constraints !== [] && $constraints[0] instanceof AllMatcher) {
+        if (($constraints[0] ?? null) instanceof AllMatcher) {
             return $constraints[0]->matches($arguments);
         }
 
@@ -259,7 +268,7 @@ final class MethodExpectation
         }
 
         foreach ($constraints as $index => $matcher) {
-            if (! $matcher->matches($arguments[$index])) {
+            if (! array_key_exists($index, $arguments) || ! $matcher->matches($arguments[$index])) {
                 return false;
             }
         }
@@ -272,7 +281,8 @@ final class MethodExpectation
      * constraints, for the one case where that pairing is a plain fact
      * rather than a guess: exactly one real call was ever observed for this
      * method (see Double::verifyState()). Null when there's nothing to
-     * compare — with() was never called, or $arguments actually matches.
+     * compare — with() was never called, $arguments actually matches, or
+     * the call's named arguments differ from with()'s.
      *
      * Positional and unlabeled deliberately: this stays ignorant of real
      * parameter names (a reflection concern, resolved from the target class
@@ -281,7 +291,7 @@ final class MethodExpectation
      *
      * @return array{kind: 'arity', text: string}
      *                                            | array{kind: 'joint', text: string}
-     *                                            | array{kind: 'comparisons', comparisons: list<array{index: int, differs: bool, text: string}>}
+     *                                            | array{kind: 'comparisons', comparisons: list<array{index: int|string, differs: bool, text: string}>}
      *                                            | null
      */
     public function compareArguments(array $arguments): ?array
@@ -292,7 +302,7 @@ final class MethodExpectation
 
         $constraints = $this->argumentConstraints;
 
-        if ($constraints !== [] && $constraints[0] instanceof NoneMatcher) {
+        if (($constraints[0] ?? null) instanceof NoneMatcher) {
             return $arguments === []
                 ? null
                 : ['kind' => 'arity', 'text' => sprintf('expected no arguments, got %s', Pluralizer::pluralize(count($arguments), 'argument', 'arguments'))];
@@ -304,7 +314,7 @@ final class MethodExpectation
         // index 0. 'joint' is its own kind so callers that only special-case
         // 'comparisons' safely skip rendering a diff and fall back to the
         // predicate's own explanation instead.
-        if ($constraints !== [] && $constraints[0] instanceof AllMatcher) {
+        if (($constraints[0] ?? null) instanceof AllMatcher) {
             $explanation = $constraints[0]->explainMismatch($arguments);
 
             return $explanation === null ? null : ['kind' => 'joint', 'text' => $explanation];
@@ -325,6 +335,12 @@ final class MethodExpectation
                 Pluralizer::pluralize($expectedCount, 'argument', 'arguments'),
                 Pluralizer::pluralize($actualCount, 'argument', 'arguments'),
             )];
+        }
+
+        // A named argument has no position to pair it with, so a call whose
+        // names differ from with()'s is left to the plain list of calls.
+        if (array_diff_key($constraints, $arguments) !== []) {
+            return null;
         }
 
         $comparisons = [];
@@ -348,8 +364,8 @@ final class MethodExpectation
         // the reader sees the whole actual call, not just its constrained
         // prefix.
         if ($matchesRemaining) {
-            foreach (array_slice($arguments, $expectedCount) as $offset => $actual) {
-                $comparisons[] = ['index' => $expectedCount + $offset, 'differs' => false, 'text' => ValueFormatter::describe($actual)];
+            foreach (array_slice($arguments, $expectedCount, preserve_keys: true) as $index => $actual) {
+                $comparisons[] = ['index' => $index, 'differs' => false, 'text' => ValueFormatter::describe($actual)];
             }
         }
 
@@ -384,11 +400,11 @@ final class MethodExpectation
     }
 
     /**
-     * @param  list<mixed>  $arguments  Real call arguments, used only to feed any
-     *                                  Argument::capture() matcher — matches()
-     *                                  itself must stay side-effect-free since
-     *                                  it's called speculatively on losing
-     *                                  candidates too (see ProxyBehavior::findMatch()).
+     * @param  array<int|string, mixed>  $arguments  Real call arguments, used only to feed any
+     *                                               Argument::capture() matcher — matches()
+     *                                               itself must stay side-effect-free since
+     *                                               it's called speculatively on losing
+     *                                               candidates too (see ProxyBehavior::findMatch()).
      */
     public function recordMatch(array $arguments = []): void
     {
@@ -484,7 +500,7 @@ final class MethodExpectation
     {
         return $this->argumentConstraints === null
             ? 'any arguments'
-            : implode(', ', array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
+            : ArgumentFormatter::join(array_map(static fn (Matcher $matcher): string => $matcher->describe(), $this->argumentConstraints));
     }
 
     /**
@@ -504,9 +520,9 @@ final class MethodExpectation
         }
 
         foreach ($this->argumentConstraints as $index => $matcher) {
-            $theirs = $other->argumentConstraints[$index];
+            $theirs = $other->argumentConstraints[$index] ?? null;
 
-            if ($matcher::class !== $theirs::class || (array) $matcher !== (array) $theirs) {
+            if ($theirs === null || $matcher::class !== $theirs::class || (array) $matcher !== (array) $theirs) {
                 return false;
             }
         }

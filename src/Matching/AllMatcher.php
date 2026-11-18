@@ -27,10 +27,10 @@ final class AllMatcher implements Matcher
     }
 
     /**
-     * @param  list<mixed>  $actual  the whole real argument list, never a
-     *                               single value — only ever invoked this
-     *                               way, via MethodExpectation's special
-     *                               case for this matcher.
+     * @param  array<int|string, mixed>  $actual  the whole real argument list, never a
+     *                                            single value — only ever invoked this
+     *                                            way, via MethodExpectation's special
+     *                                            case for this matcher.
      */
     public function matches(mixed $actual): bool
     {
@@ -43,7 +43,7 @@ final class AllMatcher implements Matcher
     }
 
     /**
-     * @param  list<mixed>  $actual
+     * @param  array<int|string, mixed>  $actual
      */
     public function explainMismatch(mixed $actual): ?string
     {
