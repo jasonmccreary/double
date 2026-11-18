@@ -1,0 +1,1 @@
+`Argument::remaining()`, `Argument::none()`, and `Argument::all()` can't be passed to `with()` by name.
