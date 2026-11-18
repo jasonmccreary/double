@@ -42,6 +42,15 @@ final class Double
     private static ?\WeakMap $states = null;
 
     /**
+     * Read by stateFor() for an instance real code creates with new static,
+     * which bypasses create(). Its parent class alone doesn't tell us which
+     * interfaces an intersection target included.
+     *
+     * @var array<class-string, string>
+     */
+    private static array $targets = [];
+
+    /**
      * Strong references, not a WeakMap like $states — a double that's purely
      * a local variable in a test method (the common case) is already
      * garbage-collected, and therefore already gone from a WeakMap, the
@@ -240,6 +249,7 @@ final class Double
 
     private static function create(string $generatedClass, string $target, int $depth, ?object $knownInstance = null): object
     {
+        self::$targets[$generatedClass] ??= $target;
         $state = new DoubleState($target, self::deriveLabel($target));
 
         if ($depth > 0) {
@@ -252,15 +262,21 @@ final class Double
 
         $instance = $generatedClass::__td_instantiate();
 
-        (new \ReflectionProperty($instance, '__td_identity'))->setValue($instance, new \stdClass);
+        self::register($instance, $state);
 
-        self::states()[$instance->__td_identity()] = $state;
+        return $instance;
+    }
+
+    /**
+     * Shared by create() and stateFor() so both enroll automatic verification.
+     */
+    private static function register(object $double, DoubleState $state): void
+    {
+        self::states()[$double->__td_identity()] = $state;
 
         if (self::$autoVerifyEnabled) {
             self::$pending[] = $state;
         }
-
-        return $instance;
     }
 
     /**
@@ -283,7 +299,7 @@ final class Double
         // failure downstream, so it's reported as the root cause rather than
         // alongside whatever symptom it produced.
         if ($ambiguous !== []) {
-            throw ExceptionFactory::ambiguousExpectations($state->label(), $ambiguous, $state->isFabricated());
+            throw ExceptionFactory::ambiguousExpectations($state, $ambiguous);
         }
 
         if (($failure = $state->callFailure()) !== null) {
@@ -298,7 +314,7 @@ final class Double
         }
 
         throw ExceptionFactory::unsatisfiedExpectation(
-            $state->label(),
+            $state,
             array_map(
                 static function (MethodExpectation $expectation) use ($state): UnsatisfiedExpectation {
                     $rawCalls = $state->callsFor($expectation->method());
@@ -326,7 +342,6 @@ final class Double
                 },
                 $unmet,
             ),
-            $state->isFabricated(),
         );
     }
 
@@ -489,6 +504,8 @@ final class Double
      * `DoubleInterface` itself (that's exactly the collision `override`
      * routes around), but it still needs real state, which is what
      * `OverriddenDouble` reaches for when it forwards each control verb.
+     * An instance real code creates with new static gets fresh passthru state
+     * so its constructor and methods can run normally.
      */
     public static function stateFor(object $double): DoubleState
     {
@@ -499,7 +516,23 @@ final class Double
         $state = self::states()[$double->__td_identity()] ?? null;
 
         if ($state === null) {
-            throw new \LogicException('Object is not a `Double`-generated double.');
+            $target = self::$targets[$double::class] ?? null;
+
+            if ($target === null || get_parent_class($double) === false) {
+                throw new \LogicException('Object is not a `Double`-generated double.');
+            }
+
+            $state = new DoubleState($target, self::deriveLabel($target));
+            $state->configurePassthru();
+            $state->markCreatedByRealCode();
+
+            foreach (self::states() as $sibling) {
+                if ($sibling->target() === $target) {
+                    $sibling->addRealCodeInstance($state);
+                }
+            }
+
+            self::register($double, $state);
         }
 
         return $state;
@@ -600,12 +633,11 @@ final class Double
         }
 
         throw ExceptionFactory::unusedAssertion(
-            $state->label(),
+            $state,
             array_map(
                 static fn (array $call): string => sprintf('%s(%s)', $call['method'], ArgumentFormatter::describe($call['arguments'])),
                 $calls,
             ),
-            $state->isFabricated(),
         );
     }
 

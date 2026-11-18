@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Double;
+use JMac\Testing\Exceptions\ModeConfigurationException;
 use JMac\Testing\Exceptions\PassthruAutoInstantiationException;
 use JMac\Testing\Exceptions\PassthruTypeMismatchException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedExpectationException;
+use JMac\Testing\Integrations\PHPUnit\PHPUnitUnsatisfiedReceivedAssertionException;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ClonesItselfDuringCall;
 use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\CreatesNewStaticInstance;
 use JMac\Testing\Tests\Support\ExtendedGreeter;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\HasObjectDefault;
@@ -154,6 +158,16 @@ final class PassthruModeTest extends TestCase
         $this->assertTrue($double->log('hello'));
     }
 
+    public function test_new_static_preserves_the_interface_methods_of_a_class_intersection(): void
+    {
+        $factory = Double::for(IntersectionReturnInterface::class)->makeFactory()->passthru();
+
+        $fresh = $factory->fresh('Ada');
+        $fresh->allows('size')->returns(3);
+
+        $this->assertSame(3, $fresh->size());
+    }
+
     public function test_for_with_a_real_instance_derives_the_double_from_its_class(): void
     {
         $real = new InstantiableLogger;
@@ -255,6 +269,115 @@ final class PassthruModeTest extends TestCase
         $double->allows('double')->returns(100);
 
         $this->assertSame(100, $double->retryOnClone(5));
+    }
+
+    public function test_passthru_real_method_can_construct_a_fresh_instance(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $original->allows('name')->returns('original stub');
+
+        $fresh = $original->fresh('fresh');
+
+        $this->assertSame('fresh', $fresh->name());
+    }
+
+    public function test_static_factory_on_a_double_creates_a_fresh_passthru_instance(): void
+    {
+        $double = Double::for(CreatesNewStaticInstance::class);
+
+        $fresh = $double::make('fresh');
+
+        $this->assertSame('fresh', $fresh->name());
+        $this->assertSame('', $double->name());
+
+        $fresh->allows('name')->returns('stub');
+
+        $this->assertSame('stub', $fresh->name());
+    }
+
+    public function test_unmet_expectation_notes_calls_received_by_a_new_static_instance(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $original->expects('name');
+
+        $original->freshName('fresh');
+
+        try {
+            $original->verify();
+            $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).", trim($exception->getMessage()));
+        }
+    }
+
+    public function test_unmet_received_assertion_notes_calls_received_by_a_new_static_instance(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+
+        $original->freshName('fresh');
+
+        try {
+            $original->received('name')->check();
+            $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
+            $this->assertStringEndsWith('Note: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).', $exception->getMessage());
+        }
+    }
+
+    public function test_never_received_assertion_omits_the_new_static_instance_note(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $original->name();
+
+        $original->freshName('fresh');
+
+        try {
+            $original->received('name')->never()->check();
+            $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
+        } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
+            $this->assertStringNotContainsString('new static', $exception->getMessage());
+        }
+    }
+
+    public function test_failure_on_a_new_static_instance_explains_where_it_came_from(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $fresh = $original->fresh('fresh');
+        $fresh->expects('name');
+
+        try {
+            $fresh->verify();
+            $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: this double was created outside of Double (for example, with `new static`), so it runs in passthru mode with its own expectations and call history.", trim($exception->getMessage()));
+        }
+    }
+
+    public function test_a_new_static_instance_missing_a_call_gets_only_one_note(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $first = $original->fresh('first');
+        $first->expects('name');
+
+        $original->freshName('second');
+
+        try {
+            $first->verify();
+            $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).", trim($exception->getMessage()));
+        }
+    }
+
+    public function test_setting_a_mode_on_a_new_static_instance_explains_why_it_is_passthru(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $fresh = $original->fresh('fresh');
+
+        $this->expectException(ModeConfigurationException::class);
+        $this->expectExceptionMessage('Note: this double was created outside of Double (for example, with `new static`), so it runs in passthru mode with its own expectations and call history.');
+
+        $fresh->strict();
     }
 
     public function test_passthru_rejects_an_instance_unrelated_to_the_doubled_class(): void

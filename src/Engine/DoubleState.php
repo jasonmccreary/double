@@ -38,6 +38,18 @@ final class DoubleState
 
     private int $fabricationDepth = 0;
 
+    private bool $createdByRealCode = false;
+
+    /**
+     * Doubles of the same class created outside of Double (e.g. new static) while
+     * this one existed. Strong references, since such an instance is often a
+     * temporary (`$this->newInstance()->save()`) that's gone before this
+     * double's failure is reported.
+     *
+     * @var list<DoubleState>
+     */
+    private array $realCodeInstances = [];
+
     /**
      * The furthest slot reached so far by an ordered()-marked call — see
      * orderedExpectations(). 0 is a safe starting sentinel: the first ordered()-marked
@@ -162,7 +174,10 @@ final class DoubleState
     public function setMode(Mode $mode): void
     {
         if ($this->mode !== null) {
-            throw new ModeConfigurationException($this->label, $this->mode->name, $mode->name, $this->isFabricated());
+            $exception = new ModeConfigurationException($this->label, $this->mode->name, $mode->name, $this->isFabricated());
+            ExceptionFactory::appendOriginNote($exception, $this);
+
+            throw $exception;
         }
 
         $this->mode = $mode;
@@ -209,6 +224,35 @@ final class DoubleState
     public function isFabricated(): bool
     {
         return $this->fabricationDepth > 0;
+    }
+
+    /**
+     * @internal used only by Double::stateFor()
+     */
+    public function markCreatedByRealCode(): void
+    {
+        $this->createdByRealCode = true;
+    }
+
+    public function isCreatedByRealCode(): bool
+    {
+        return $this->createdByRealCode;
+    }
+
+    /**
+     * @internal used only by Double::stateFor()
+     */
+    public function addRealCodeInstance(DoubleState $instance): void
+    {
+        $this->realCodeInstances[] = $instance;
+    }
+
+    /**
+     * @return list<DoubleState>
+     */
+    public function realCodeInstances(): array
+    {
+        return $this->realCodeInstances;
     }
 
     public function registerExpectation(MethodExpectation $expectation): void

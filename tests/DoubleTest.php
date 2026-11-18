@@ -30,6 +30,7 @@ use JMac\Testing\Tests\Support\Book;
 use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ChannelAuthorizerInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
+use JMac\Testing\Tests\Support\CreatesNewStaticInstance;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
@@ -1730,6 +1731,19 @@ final class DoubleTest extends TestCase
 
         $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
         $this->expectExceptionMessageMatches('/expected `save\(any arguments\)` to be called exactly 1 time, but it was never called/s');
+
+        Double::verifyAll();
+    }
+
+    public function test_verify_all_checks_instances_created_by_real_methods(): void
+    {
+        Double::enableAutoVerify();
+
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $fresh = $original->fresh('fresh');
+        $fresh->expects('name');
+
+        $this->expectException(PHPUnitUnsatisfiedExpectationException::class);
 
         Double::verifyAll();
     }

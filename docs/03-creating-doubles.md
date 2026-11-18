@@ -207,6 +207,8 @@ Unconfigured calls run for real. Anything you have configured still intercepts a
 
 `passthru($realLogger)` doesn't keep `$realLogger` around and forward calls to it — it copies `$realLogger`'s state onto the double once, right then, and from that point on the double *is* the real object, running its actual code directly on itself. That's not just an implementation detail: it's what makes an unstubbed method's own internal calls to other methods on `$this` reach your stubs too, the same way overriding a method in an ordinary subclass would. If `Logger::info()` internally called `$this->format($message)`, and you'd configured `format()`, that stub would fire — even though nothing called `format()` directly from your test.
 
+A new instance that real code creates with `new static` is a separate double: it runs in Passthru mode with its own expectations and call history.
+
 One consequence of copying state up front rather than continuing to reach into `$realLogger`: if something else mutates `$realLogger` *after* `passthru()` was called, the double won't see that later change. It's a snapshot at the moment you called `passthru()`, not a live view of `$realLogger` going forward.
 
 `$realLogger` must be `Logger` or a subclass of it — the same rule as any real type hint. A subclass is accepted, but only `Logger`'s own methods ever run, never the subclass's overrides: passthru runs the *doubled* class's real code, not whatever class the instance you handed in actually is. Anything unrelated to `Logger` is rejected outright, since there'd be nothing for `Logger`'s own methods to run against.
