@@ -189,28 +189,31 @@ final class ExceptionFactory
     }
 
     /**
-     * A double real code created with new static runs in passthru mode with
-     * nothing carried over from the double it came from, which is easy to
-     * mistake for a bug when one of its own checks fails.
+     * A double created outside of Double (usually by real code's new static)
+     * runs in passthru mode with nothing carried over from the double it came
+     * from, which is easy to mistake for a bug when one of its own checks
+     * fails. Double only knows create() was bypassed, not how, so new static
+     * is given as an example rather than a claim.
      *
      * @internal Also used by DoubleState::setMode().
      */
     public static function appendOriginNote(\Throwable $failure, DoubleState $state): void
     {
         if ($state->isCreatedByRealCode()) {
-            self::appendNote($failure, 'real code created this double with `new static`, so it runs in passthru mode with its own expectations and call history.');
+            self::appendNote($failure, 'this double was created outside of Double (for example, with `new static`), so it runs in passthru mode with its own expectations and call history.');
         }
     }
 
     /**
      * When this double is missing calls that a double of the same class,
-     * created by real code with new static, actually received — the usual
-     * cause is real code calling them on the new instance rather than on
-     * $this. Stated only from recorded calls, never guessed.
+     * created outside of Double, actually received — the usual cause is real
+     * code calling them on a new instance rather than on $this. Stated only
+     * from recorded calls, never guessed. Returns whether it added the note,
+     * so callers can skip appendOriginNote() and keep to a single note.
      *
      * @param  list<string>  $methods
      */
-    private static function appendRealCodeInstancesNote(\Throwable $failure, DoubleState $state, array $methods): void
+    private static function appendRealCodeInstancesNote(\Throwable $failure, DoubleState $state, array $methods): bool
     {
         $instances = $state->realCodeInstances();
         $received = [];
@@ -226,7 +229,7 @@ final class ExceptionFactory
         }
 
         if ($received === []) {
-            return;
+            return false;
         }
 
         $methodList = count($received) === 1
@@ -234,10 +237,12 @@ final class ExceptionFactory
             : implode(', ', array_slice($received, 0, -1)).' and '.end($received).' were';
 
         $doubles = count($instances) === 1
-            ? sprintf('a separate `%s` double that real code created with `new static`. Its calls are', $state->label())
-            : sprintf('separate `%s` doubles that real code created with `new static`. Their calls are', $state->label());
+            ? sprintf('a separate `%s` double', $state->label())
+            : sprintf('separate `%s` doubles', $state->label());
 
-        self::appendNote($failure, sprintf("%s called on %s recorded separately from this double's.", $methodList, $doubles));
+        self::appendNote($failure, sprintf('%s called on %s, created outside of Double (for example, with `new static`).', $methodList, $doubles));
+
+        return true;
     }
 
     /**
@@ -274,11 +279,11 @@ final class ExceptionFactory
             $exception = new UnsatisfiedExpectationException($label, $expectations, $fabricated);
         }
 
-        self::appendOriginNote($exception, $state);
-        self::appendRealCodeInstancesNote($exception, $state, array_map(
-            static fn (UnsatisfiedExpectation $expectation): string => $expectation->method,
-            $expectations,
-        ));
+        $methods = array_map(static fn (UnsatisfiedExpectation $expectation): string => $expectation->method, $expectations);
+
+        if (! self::appendRealCodeInstancesNote($exception, $state, $methods)) {
+            self::appendOriginNote($exception, $state);
+        }
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
 
@@ -372,10 +377,8 @@ final class ExceptionFactory
             $exception = new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
         }
 
-        self::appendOriginNote($exception, $state);
-
-        if ($tooFewCalls && $method !== '') {
-            self::appendRealCodeInstancesNote($exception, $state, [$method]);
+        if (! ($tooFewCalls && $method !== '' && self::appendRealCodeInstancesNote($exception, $state, [$method]))) {
+            self::appendOriginNote($exception, $state);
         }
 
         Double::notify(new CheckEvent($label, $method === '' ? null : $method, passed: false, failure: $exception));

@@ -306,7 +306,7 @@ final class PassthruModeTest extends TestCase
             $original->verify();
             $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
-            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: `name` was called on a separate `CreatesNewStaticInstance` double that real code created with `new static`. Its calls are recorded separately from this double's.", trim($exception->getMessage()));
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).", trim($exception->getMessage()));
         }
     }
 
@@ -320,7 +320,7 @@ final class PassthruModeTest extends TestCase
             $original->received('name')->check();
             $this->fail('Expected PHPUnitUnsatisfiedReceivedAssertionException to be thrown.');
         } catch (PHPUnitUnsatisfiedReceivedAssertionException $exception) {
-            $this->assertStringEndsWith("Note: `name` was called on a separate `CreatesNewStaticInstance` double that real code created with `new static`. Its calls are recorded separately from this double's.", $exception->getMessage());
+            $this->assertStringEndsWith('Note: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).', $exception->getMessage());
         }
     }
 
@@ -349,7 +349,23 @@ final class PassthruModeTest extends TestCase
             $fresh->verify();
             $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
         } catch (PHPUnitUnsatisfiedExpectationException $exception) {
-            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: real code created this double with `new static`, so it runs in passthru mode with its own expectations and call history.", trim($exception->getMessage()));
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: this double was created outside of Double (for example, with `new static`), so it runs in passthru mode with its own expectations and call history.", trim($exception->getMessage()));
+        }
+    }
+
+    public function test_a_new_static_instance_missing_a_call_gets_only_one_note(): void
+    {
+        $original = Double::for(new CreatesNewStaticInstance('original'))->passthru();
+        $first = $original->fresh('first');
+        $first->expects('name');
+
+        $original->freshName('second');
+
+        try {
+            $first->verify();
+            $this->fail('Expected PHPUnitUnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $this->assertSame("Double `CreatesNewStaticInstance` expected `name(any arguments)` to be called exactly 1 time, but it was never called.\n\nNote: `name` was called on a separate `CreatesNewStaticInstance` double, created outside of Double (for example, with `new static`).", trim($exception->getMessage()));
         }
     }
 
@@ -359,7 +375,7 @@ final class PassthruModeTest extends TestCase
         $fresh = $original->fresh('fresh');
 
         $this->expectException(ModeConfigurationException::class);
-        $this->expectExceptionMessage('Note: real code created this double with `new static`, so it runs in passthru mode with its own expectations and call history.');
+        $this->expectExceptionMessage('Note: this double was created outside of Double (for example, with `new static`), so it runs in passthru mode with its own expectations and call history.');
 
         $fresh->strict();
     }

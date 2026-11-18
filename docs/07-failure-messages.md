@@ -224,8 +224,9 @@ One generated double for free, and then a clear stop with a fix you may paste di
 Real code running in [passthru mode](03-creating-doubles.md#passthru) may create a new instance with `new static`, like Eloquent's `newInstance()`. That instance is a separate double, and any failure message involving it says so:
 
 ```
-Note: real code created this double with `new static`, so it runs
-in passthru mode with its own expectations and call history.
+Note: this double was created outside of Double (for example, with
+`new static`), so it runs in passthru mode with its own expectations
+and call history.
 ```
 
 When the original double is missing a call that the new instance received, the failure points you there instead of leaving you to wonder why a call you know happened was "never called":
@@ -234,7 +235,6 @@ When the original double is missing a call that the new instance received, the f
 Double `Post` expected `save(any arguments)` to be called exactly 1
 time, but it was never called.
 
-Note: `save` was called on a separate `Post` double that real code
-created with `new static`. Its calls are recorded separately from
-this double's.
+Note: `save` was called on a separate `Post` double, created outside
+of Double (for example, with `new static`).
 ```

@@ -41,7 +41,7 @@ final class DoubleState
     private bool $createdByRealCode = false;
 
     /**
-     * Doubles of the same class that real code created with new static while
+     * Doubles of the same class created outside of Double (e.g. new static) while
      * this one existed. Strong references, since such an instance is often a
      * temporary (`$this->newInstance()->save()`) that's gone before this
      * double's failure is reported.
