@@ -278,6 +278,20 @@ final class PassthruModeTest extends TestCase
         $this->assertSame('fresh', $fresh->name());
     }
 
+    public function test_static_factory_on_a_double_creates_a_fresh_passthru_instance(): void
+    {
+        $double = Double::for(CreatesNewStaticInstance::class);
+
+        $fresh = $double::make('fresh');
+
+        $this->assertSame('fresh', $fresh->name());
+        $this->assertSame('', $double->name());
+
+        $fresh->allows('name')->returns('stub');
+
+        $this->assertSame('stub', $fresh->name());
+    }
+
     public function test_passthru_rejects_an_instance_unrelated_to_the_doubled_class(): void
     {
         $double = Double::for(StatefulGreeter::class);
