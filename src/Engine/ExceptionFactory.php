@@ -80,6 +80,8 @@ final class ExceptionFactory
             $exception = new UnexpectedCallException($label, $method, $argumentsDescription, $fabricated, $otherObservedCalls, $argumentComparisons);
         }
 
+        self::appendOriginNote($exception, $state);
+
         $state->recordCallFailure($exception);
 
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
@@ -122,6 +124,8 @@ final class ExceptionFactory
             );
         }
 
+        self::appendOriginNote($exception, $state);
+
         $state->recordCallFailure($exception);
 
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
@@ -152,6 +156,8 @@ final class ExceptionFactory
             $exception = new ExpectationCallMismatchException($label, $method, $argumentsDescription, $fabricated, $configuredCalls, $argumentComparisons, $passthru);
         }
 
+        self::appendOriginNote($exception, $state);
+
         $state->recordCallFailure($exception);
 
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
@@ -179,7 +185,69 @@ final class ExceptionFactory
      */
     private static function appendCaughtNote(\Throwable $failure): void
     {
-        $note = "\n\nNote: this was first thrown when the call was made, but something caught it.";
+        self::appendNote($failure, 'this was first thrown when the call was made, but something caught it.');
+    }
+
+    /**
+     * A double real code created with new static runs in passthru mode with
+     * nothing carried over from the double it came from, which is easy to
+     * mistake for a bug when one of its own checks fails.
+     *
+     * @internal Also used by DoubleState::setMode().
+     */
+    public static function appendOriginNote(\Throwable $failure, DoubleState $state): void
+    {
+        if ($state->isCreatedByRealCode()) {
+            self::appendNote($failure, 'real code created this double with `new static`, so it runs in passthru mode with its own expectations and call history.');
+        }
+    }
+
+    /**
+     * When this double is missing calls that a double of the same class,
+     * created by real code with new static, actually received — the usual
+     * cause is real code calling them on the new instance rather than on
+     * $this. Stated only from recorded calls, never guessed.
+     *
+     * @param  list<string>  $methods
+     */
+    private static function appendRealCodeInstancesNote(\Throwable $failure, DoubleState $state, array $methods): void
+    {
+        $instances = $state->realCodeInstances();
+        $received = [];
+
+        foreach (array_unique($methods) as $method) {
+            foreach ($instances as $instance) {
+                if ($instance->callsFor($method) !== []) {
+                    $received[] = '`'.$method.'`';
+
+                    break;
+                }
+            }
+        }
+
+        if ($received === []) {
+            return;
+        }
+
+        $methodList = count($received) === 1
+            ? $received[0].' was'
+            : implode(', ', array_slice($received, 0, -1)).' and '.end($received).' were';
+
+        $doubles = count($instances) === 1
+            ? sprintf('a separate `%s` double that real code created with `new static`. Its calls are', $state->label())
+            : sprintf('separate `%s` doubles that real code created with `new static`. Their calls are', $state->label());
+
+        self::appendNote($failure, sprintf("%s called on %s recorded separately from this double's.", $methodList, $doubles));
+    }
+
+    /**
+     * Every failure extends \Exception, whose $message is protected, so a note
+     * can be added to the same instance without new public API on the
+     * exception classes. Idempotent, since verify() can run more than once.
+     */
+    private static function appendNote(\Throwable $failure, string $note): void
+    {
+        $note = "\n\nNote: ".$note;
 
         if (str_ends_with($failure->getMessage(), $note)) {
             return;
@@ -193,8 +261,11 @@ final class ExceptionFactory
     /**
      * @param  list<UnsatisfiedExpectation>  $expectations
      */
-    public static function unsatisfiedExpectation(string $label, array $expectations, bool $fabricated): Diagnostic&\Throwable
+    public static function unsatisfiedExpectation(DoubleState $state, array $expectations): Diagnostic&\Throwable
     {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -202,6 +273,12 @@ final class ExceptionFactory
         } else {
             $exception = new UnsatisfiedExpectationException($label, $expectations, $fabricated);
         }
+
+        self::appendOriginNote($exception, $state);
+        self::appendRealCodeInstancesNote($exception, $state, array_map(
+            static fn (UnsatisfiedExpectation $expectation): string => $expectation->method,
+            $expectations,
+        ));
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
 
@@ -211,8 +288,11 @@ final class ExceptionFactory
     /**
      * @param  list<AmbiguousExpectation>  $ambiguities
      */
-    public static function ambiguousExpectations(string $label, array $ambiguities, bool $fabricated): Diagnostic&\Throwable
+    public static function ambiguousExpectations(DoubleState $state, array $ambiguities): Diagnostic&\Throwable
     {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -220,6 +300,8 @@ final class ExceptionFactory
         } else {
             $exception = new AmbiguousExpectationException($label, $ambiguities, $fabricated);
         }
+
+        self::appendOriginNote($exception, $state);
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
 
@@ -257,6 +339,8 @@ final class ExceptionFactory
             $exception = new OutOfOrderCallException($label, $method, $alreadyOccurredMethod, $fabricated);
         }
 
+        self::appendOriginNote($exception, $state);
+
         $state->recordCallFailure($exception);
 
         Double::notify(new CheckEvent($label, $method, passed: false, failure: $exception));
@@ -269,20 +353,29 @@ final class ExceptionFactory
      * @param  ?list<ArgumentComparison>  $argumentComparisons
      */
     public static function unsatisfiedReceivedAssertion(
-        string $label,
+        DoubleState $state,
         string $description,
-        bool $fabricated,
         string $method = '',
         array $otherObservedCalls = [],
         ?string $argumentMismatch = null,
         ?array $argumentComparisons = null,
+        bool $tooFewCalls = true,
     ): Diagnostic&\Throwable {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
             $exception = new PHPUnitUnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
         } else {
             $exception = new UnsatisfiedReceivedAssertionException($label, $description, $fabricated, $method, $otherObservedCalls, $argumentMismatch, $argumentComparisons);
+        }
+
+        self::appendOriginNote($exception, $state);
+
+        if ($tooFewCalls && $method !== '') {
+            self::appendRealCodeInstancesNote($exception, $state, [$method]);
         }
 
         Double::notify(new CheckEvent($label, $method === '' ? null : $method, passed: false, failure: $exception));
@@ -293,8 +386,11 @@ final class ExceptionFactory
     /**
      * @param  list<string>  $calls
      */
-    public static function unusedAssertion(string $label, array $calls, bool $fabricated): Diagnostic&\Throwable
+    public static function unusedAssertion(DoubleState $state, array $calls): Diagnostic&\Throwable
     {
+        $label = $state->label();
+        $fabricated = $state->isFabricated();
+
         if (self::phpUnitIsAvailable()) {
             PhpUnitIntegration::registerPass();
 
@@ -302,6 +398,8 @@ final class ExceptionFactory
         } else {
             $exception = new UnusedAssertionException($label, $calls, $fabricated);
         }
+
+        self::appendOriginNote($exception, $state);
 
         Double::notify(new CheckEvent($label, method: null, passed: false, failure: $exception));
 

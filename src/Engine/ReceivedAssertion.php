@@ -107,15 +107,15 @@ final class ReceivedAssertion
             : null;
 
         throw ExceptionFactory::unsatisfiedReceivedAssertion(
-            $this->state->label(),
+            $this->state,
             $this->expectation->describe(),
-            $this->state->isFabricated(),
             $this->method,
             array_map(ArgumentFormatter::describe(...), $calls),
             argumentMismatch: ($comparison['kind'] ?? null) === 'arity' ? $comparison['text'] : null,
             argumentComparisons: ($comparison['kind'] ?? null) === 'comparisons'
                 ? ArgumentLabeler::label($this->state->parameterNames($this->method), $comparison['comparisons'])
                 : null,
+            tooFewCalls: ! $this->expectation->isSatisfied(),
         );
     }
 }

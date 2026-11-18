@@ -40,7 +40,7 @@ final class ExceptionFactoryTest extends TestCase
 
     public function test_unsatisfied_expectation_picks_the_phpunit_variant(): void
     {
-        $exception = ExceptionFactory::unsatisfiedExpectation('BookRepository', [], false);
+        $exception = ExceptionFactory::unsatisfiedExpectation(new DoubleState('BookRepository', 'BookRepository'), []);
 
         $this->assertInstanceOf(PHPUnitUnsatisfiedExpectationException::class, $exception);
     }
@@ -72,11 +72,11 @@ final class ExceptionFactoryTest extends TestCase
             fn () => ExceptionFactory::unexpectedCall(new DoubleState('BookRepository', 'BookRepository'), 'count', ''),
             fn () => ExceptionFactory::expectationCallLimitExceeded(new DoubleState('BookRepository', 'BookRepository'), 'delete', '1', 1, 2),
             fn () => ExceptionFactory::expectationCallMismatch(new DoubleState('BookRepository', 'BookRepository'), 'find', '456'),
-            fn () => ExceptionFactory::unsatisfiedExpectation('BookRepository', [], false),
+            fn () => ExceptionFactory::unsatisfiedExpectation(new DoubleState('BookRepository', 'BookRepository'), []),
             fn () => ExceptionFactory::fabricationLimitExceeded('SecondLink', 'toThird', 'ThirdLink', 1),
             fn () => ExceptionFactory::outOfOrderCall(new DoubleState('BookRepository', 'BookRepository'), 'find', 'delete'),
-            fn () => ExceptionFactory::unsatisfiedReceivedAssertion('BookRepository', 'was never called', false),
-            fn () => ExceptionFactory::unusedAssertion('BookRepository', [], false),
+            fn () => ExceptionFactory::unsatisfiedReceivedAssertion(new DoubleState('BookRepository', 'BookRepository'), 'was never called'),
+            fn () => ExceptionFactory::unusedAssertion(new DoubleState('BookRepository', 'BookRepository'), []),
         ];
 
         foreach ($factoryCalls as $factoryCall) {

@@ -7,7 +7,8 @@ namespace JMac\Testing\Tests\Support;
 /**
  * fresh() creates an instance with new static whose constructor calls an
  * overridable method, like Illuminate\Database\Eloquent\Model::newInstance().
- * make() does the same from a static factory.
+ * make() does the same from a static factory, and freshName() calls a
+ * method on the new instance rather than on $this.
  */
 class CreatesNewStaticInstance
 {
@@ -31,6 +32,11 @@ class CreatesNewStaticInstance
     public function fresh(string $name): static
     {
         return new static($name);
+    }
+
+    public function freshName(string $name): string
+    {
+        return $this->fresh($name)->name();
     }
 
     public function name(): string

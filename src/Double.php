@@ -299,7 +299,7 @@ final class Double
         // failure downstream, so it's reported as the root cause rather than
         // alongside whatever symptom it produced.
         if ($ambiguous !== []) {
-            throw ExceptionFactory::ambiguousExpectations($state->label(), $ambiguous, $state->isFabricated());
+            throw ExceptionFactory::ambiguousExpectations($state, $ambiguous);
         }
 
         if (($failure = $state->callFailure()) !== null) {
@@ -314,7 +314,7 @@ final class Double
         }
 
         throw ExceptionFactory::unsatisfiedExpectation(
-            $state->label(),
+            $state,
             array_map(
                 static function (MethodExpectation $expectation) use ($state): UnsatisfiedExpectation {
                     $rawCalls = $state->callsFor($expectation->method());
@@ -342,7 +342,6 @@ final class Double
                 },
                 $unmet,
             ),
-            $state->isFabricated(),
         );
     }
 
@@ -525,6 +524,14 @@ final class Double
 
             $state = new DoubleState($target, self::deriveLabel($target));
             $state->configurePassthru();
+            $state->markCreatedByRealCode();
+
+            foreach (self::states() as $sibling) {
+                if ($sibling->target() === $target) {
+                    $sibling->addRealCodeInstance($state);
+                }
+            }
+
             self::register($double, $state);
         }
 
@@ -626,12 +633,11 @@ final class Double
         }
 
         throw ExceptionFactory::unusedAssertion(
-            $state->label(),
+            $state,
             array_map(
                 static fn (array $call): string => sprintf('%s(%s)', $call['method'], ArgumentFormatter::describe($call['arguments'])),
                 $calls,
             ),
-            $state->isFabricated(),
         );
     }
 
