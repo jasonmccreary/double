@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace JMac\Testing\Exceptions;
 
 /**
- * Thrown when ->passthru() is called with no argument and the target is an
- * interface — the only case that's still rejected outright, since an
- * interface has no real method bodies at all for ClassGenerator to have
- * generated a "__td_real_*" sibling for (see
- * ClassGenerator::buildRealMethod()). A class, even one whose constructor
- * needs arguments this has no way to supply, is never rejected here — see
- * PassthruInitializer::assertConstructible().
+ * Thrown when ->passthru() is called on an interface target, with or without
+ * an instance — it is rejected outright, since an interface has no real
+ * method bodies at all for ClassGenerator to have generated a "__td_real_*"
+ * sibling for (see ClassGenerator::buildRealMethod()). A class, even one
+ * whose constructor needs arguments this has no way to supply, is never
+ * rejected here — see PassthruInitializer::assertNotInterface().
  */
 class PassthruAutoInstantiationException extends DoubleException
 {
@@ -24,14 +23,14 @@ class PassthruAutoInstantiationException extends DoubleException
 
     public static function isInterface(string $target): self
     {
-        return new self($target, "It's an interface — so there's no constructor to invoke.");
+        return new self($target, "It's an interface, so there's no real method to run.");
     }
 
     private function render(): string
     {
         return sprintf(
-            'Can\'t auto-instantiate `%s` to passthru. %s You may need to pass an existing instance '
-            .'instead. For example: `->passthru($existingInstance)`.',
+            'Can\'t use passthru on `%s`. %s You may double an existing instance instead. '
+            .'For example: `Double::for($existingInstance)->passthru()`.',
             $this->target,
             $this->reason,
         );

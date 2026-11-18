@@ -11,22 +11,21 @@ use JMac\Testing\Exceptions\PassthruTypeMismatchException;
  * @internal
  *
  * Backs ->passthru() (see DoubleControlMethods::passthru()): gets the
- * double's own property state to match what a real instance would have (or,
- * with no instance supplied, confirms there's at least a real class to run
- * methods on), before Mode::Passthru is ever configured on it. There's no
- * separate object to delegate to afterward — the double *is* the real
- * object from here on, which is what lets ProxyBehavior route an unmatched
- * call to the double's own "__td_real_*" body (see
- * ClassGenerator::buildRealMethod()) and have a self-call inside it
- * re-enter the double instead of escaping to a wrapped instance.
+ * double's own property state to match what a real instance would have, and
+ * confirms there's a real class to run methods on, before Mode::Passthru is
+ * ever configured on it. There's no separate object to delegate to afterward
+ * — the double *is* the real object from here on, which is what lets
+ * ProxyBehavior route an unmatched call to the double's own "__td_real_*"
+ * body (see ClassGenerator::buildRealMethod()) and have a self-call inside
+ * it re-enter the double instead of escaping to a wrapped instance.
  */
 final class PassthruInitializer
 {
     /**
-     * No existing instance was supplied — the double simply stays as it
-     * already is (built via newInstanceWithoutConstructor() in
-     * Double::create()), properties uninitialized, real constructor never
-     * run. Deliberately not an attempt to construct $target for real: a
+     * Confirms the target is a class, whether or not an instance was
+     * supplied. With no instance, the double stays as Double::create() built
+     * it via newInstanceWithoutConstructor(), properties uninitialized. The
+     * real constructor never runs. This does not try to construct $target: a
      * constructor needing arguments this has no way to supply would
      * otherwise make passthru() unusable for exactly the classes it's most
      * useful for — isolating one method's real logic from its siblings,
@@ -41,7 +40,7 @@ final class PassthruInitializer
      * an unmatched call would hit a method that doesn't exist rather than
      * failing clearly.
      */
-    public static function assertConstructible(string $target): void
+    public static function assertNotInterface(string $target): void
     {
         if ((new \ReflectionClass($target))->isInterface()) {
             throw PassthruAutoInstantiationException::isInterface($target);

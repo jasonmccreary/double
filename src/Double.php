@@ -535,23 +535,26 @@ final class Double
      * if omitted, falls back to the real instance for() remembered
      * (DoubleState::knownInstance()). With neither, there's no real instance
      * at all to copy from — the double just keeps the uninitialized state it
-     * already has (see PassthruInitializer::assertConstructible()), real
+     * already has (see PassthruInitializer::assertNotInterface()), real
      * constructor never run. Either way, an unmatched call afterward runs on
      * the double itself, via the real body ClassGenerator generated for it
      * (see ClassGenerator::buildRealMethod() and
      * ProxyBehavior::handleUnmatchedCall()), not on a separate wrapped
      * object. That's what lets a self-call made from inside that real body
-     * re-enter the double and hit a configured stub.
+     * re-enter the double and hit a configured stub. fabricateIntersection()
+     * puts the class first, so the first target candidate owns the real
+     * methods and property state even for an intersection.
      */
     public static function passthru(object $double, ?object $realInstance = null): void
     {
         $state = self::stateFor($double);
+        $target = $state->targetCandidates()[0];
         $realInstance ??= $state->knownInstance();
 
+        PassthruInitializer::assertNotInterface($target);
+
         if ($realInstance !== null) {
-            PassthruInitializer::copyState($double, $realInstance, $state->target());
-        } else {
-            PassthruInitializer::assertConstructible($state->target());
+            PassthruInitializer::copyState($double, $realInstance, $target);
         }
 
         $state->configurePassthru();

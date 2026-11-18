@@ -6,9 +6,7 @@ namespace JMac\Testing\Tests\Support;
 
 /**
  * A real constructor that sets a property greet() actually reads — used to
- * prove passthru()'s copyState() (an existing instance) and
- * assertConstructible() (no instance, auto-instantiated) both leave the
- * double's own state matching a real instance, not just its behavior.
+ * prove passthru() copies the supplied instance's state onto the double.
  */
 class StatefulGreeter
 {

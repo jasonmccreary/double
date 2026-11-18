@@ -33,7 +33,7 @@ final class DoubleState
 
     // A real instance supplied directly to Double::for($instance). Remembered
     // independent of mode, so a later ->passthru() with no argument can reuse
-    // it instead of auto-instantiating a fresh one.
+    // it instead of leaving the double's state uninitialized.
     private ?object $knownInstance = null;
 
     private int $fabricationDepth = 0;

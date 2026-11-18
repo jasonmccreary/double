@@ -166,6 +166,7 @@ This is what you get from a plain `Double::for(...)`, with nothing extra to opt 
 | an enum | its first case |
 | a union type | the first branch that resolves cleanly, preferring `null` if it's an option |
 | a non-nullable class or interface | a fresh double of that type, generated for you |
+| an intersection type | a fresh double of every type in it |
 
 That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later. It hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
 
@@ -219,9 +220,9 @@ This is the shape to reach for when you want to exercise one method's real logic
 The one case still rejected up front is an interface, since there's no real method body at all to run:
 
 ```
-Can't auto-instantiate `Logger` to passthru. It's an interface —
-so there's no constructor to invoke. You may need to pass an
-existing instance instead. For example: `->passthru($existingInstance)`.
+Can't use passthru on `Logger`. It's an interface, so there's no real
+method to run. You may double an existing instance instead.
+For example: `Double::for($existingInstance)->passthru()`.
 ```
 
 Passthru only applies to classes, since an interface has no real implementation to run.
