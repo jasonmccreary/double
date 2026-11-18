@@ -10,6 +10,8 @@ interface IntersectionReturnInterface
 
     public function makeLogger(): Sized&ConcreteLogger;
 
+    public function makeFactory(): CreatesNewStaticInstance&Sized;
+
     public function makeProtectedSize(): ProtectedSize&Sized;
 
     public function makeTwoClasses(): ConcreteLogger&Book;

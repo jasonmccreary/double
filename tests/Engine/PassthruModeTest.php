@@ -155,6 +155,16 @@ final class PassthruModeTest extends TestCase
         $this->assertTrue($double->log('hello'));
     }
 
+    public function test_new_static_preserves_the_interface_methods_of_a_class_intersection(): void
+    {
+        $factory = Double::for(IntersectionReturnInterface::class)->makeFactory()->passthru();
+
+        $fresh = $factory->fresh('Ada');
+        $fresh->allows('size')->returns(3);
+
+        $this->assertSame(3, $fresh->size());
+    }
+
     public function test_for_with_a_real_instance_derives_the_double_from_its_class(): void
     {
         $real = new InstantiableLogger;
