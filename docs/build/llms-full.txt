@@ -612,6 +612,19 @@ $repository->combine('-', 'a');        // doesn't match
 
 Names in `with()` only ever refer to these variadic extras. A declared parameter is still matched by its position, even when the caller passes it by name.
 
+## Omitted defaults
+
+A call that omits trailing arguments also matches a `with()` whose extra plain values equal the declared defaults. A match on the actual arguments always wins first.
+
+```php
+// function where($column, $operator = null, $value = null, $boolean = 'and')
+$query->expects('where')->with('votes', '=', 100, 'and');
+
+$query->where('votes', '=', 100); // matches
+```
+
+Matching stops at the first `null` default, object default, variadic, or required parameter. Matchers such as `Argument::any()` and `Argument::capture()` only match arguments that were actually passed. Call history, `resolves()`, passthru, and failure messages always use the actual arguments.
+
 ## Custom logic
 
 ```php
