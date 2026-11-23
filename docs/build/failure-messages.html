@@ -222,7 +222,7 @@ this was expected to be called before `close()` was called.
 <li>A method name that collides with the library's own control verbs (see <a href="/creating-doubles#reserved-method-names">reserved method names</a>).</li>
 <li>Setting a double's mode twice.</li>
 <li>Configuring a static method with <code>expects()</code>/<code>allows()</code>/<code>received()</code> (see <a href="/expectations#static-methods">static methods</a>).</li>
-<li>Calling <code>-&gt;passthru()</code> with no argument when there's nothing to auto-instantiate.</li>
+<li>Calling <code>-&gt;passthru()</code> on a double for an interface.</li>
 </ul>
 <h2 id="fabricated-doubles">Fabricated doubles</h2>
 <p><a href="/creating-doubles#loose-the-default">Loose mode</a> sometimes hands you back a freshly-generated double rather than a plain value. Any failure message involving one of those says so plainly:</p>
@@ -236,6 +236,19 @@ you'll need to configure it explicitly. For example:
 `$book-&gt;allows('author')-&gt;returns($anotherDouble)`.
 </code></pre></div>
 <p>One generated double for free, and then a clear stop with a fix you may paste directly, rather than a silently growing chain of generated objects.</p>
+<h2 id="doubles-created-with-new-static">Doubles created with <code>new static</code></h2>
+<p>Real code running in <a href="/creating-doubles#passthru">passthru mode</a> may create a new instance with <code>new static</code>, like Eloquent's <code>newInstance()</code>. That instance is a separate double, and any failure message involving it says so:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Note: this double was created outside of Double (for example, with
+`new static`), so it runs in passthru mode with its own expectations
+and call history.
+</code></pre></div>
+<p>When the original double is missing a call that the new instance received, the failure points you there instead of leaving you to wonder why a call you know happened was &quot;never called&quot;:</p>
+<div class="code-block"><div class="code-block-header"><span class="code-lang">text</span><button type="button" class="copy-button" aria-label="Copy code"><svg class="copy-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13H7" stroke="currentColor" stroke-width="1.5"/></svg><svg class="check-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10.5l4 4 8-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><pre><code>Double `Post` expected `save(any arguments)` to be called exactly 1
+time, but it was never called.
+
+Note: `save` was called on a separate `Post` double, created outside
+of Double (for example, with `new static`).
+</code></pre></div>
 
       </article>
       <nav class="pager" aria-label="Chapter navigation"><a href="/verification" class="pager-link prev"><span class="pager-direction">&larr; Previous</span><span class="pager-title">Verification</span></a><a href="/test-suite-integration" class="pager-link next"><span class="pager-direction">Next &rarr;</span><span class="pager-title">Test suite integration</span></a></nav>
@@ -251,6 +264,7 @@ you'll need to configure it explicitly. For example:
         <li><a href="#a-call-happened-out-of-order">A call happened out of order</a></li>
         <li><a href="#setup-mistakes">Setup mistakes</a></li>
         <li><a href="#fabricated-doubles">Fabricated doubles</a></li>
+        <li><a href="#doubles-created-with-new-static">Doubles created with <code>new static</code></a></li>
 
     </ol>
   </aside>

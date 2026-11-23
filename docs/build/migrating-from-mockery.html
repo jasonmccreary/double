@@ -294,7 +294,7 @@
 <li><code>shouldDeferMissing()</code> and <code>makePartial()</code> both map to <strong>Passthru</strong> mode (<code>-&gt;passthru()</code>) — Mockery splits these into two constructor calls, Double doesn't need to: it's the same mode either way, just with or without an argument.
 <ul>
 <li><code>shouldDeferMissing()</code>, which takes real constructor arguments (or, in Mockery terms, is typically paired with <code>Mockery::mock(Foo::class, [$args])</code>), maps to <code>-&gt;passthru($realInstance)</code> — you build the real object however you need to (with real dependencies, a container, whatever), and hand it in directly. This is actually more flexible than Mockery here, since you're not limited to constructor arguments — you can hand in any already-built object.</li>
-<li><code>makePartial()</code>, which takes nothing, maps to <code>-&gt;passthru()</code> with no argument — the double builds its own real state via the target's constructor.</li>
+<li><code>makePartial()</code>, which takes nothing, maps to <code>-&gt;passthru()</code> with no argument — the real constructor never runs.</li>
 <li>Either way, an unstubbed method runs its real code <em>on the double itself</em>, so a self-call it makes internally to another method of the same object can also hit a configured stub — see <a href="/creating-doubles#passthru">passthru</a> for why that matters and what it costs.</li>
 </ul>
 </li>

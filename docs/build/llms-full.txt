@@ -149,7 +149,7 @@ $logger instanceof LoggerInterface;    // true
 $logger instanceof FlushableInterface; // true
 ```
 
-Every target after the first must be an interface, the same rule PHP applies to intersection types, since a class may only extend one parent.
+When you pass more than one target, every target must be an interface.
 
 ## Wrapping a real instance
 
@@ -196,7 +196,7 @@ Passing `override: true` lets you double it anyway:
 $gate = Double::for(AuthorizerInterface::class, override: true);
 ```
 
-The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the seven still work, `override` reroutes control entirely: the object you get back carries none of the seven verbs itself. It wraps the real double instead, so every verb still works the same way regardless of which method actually collided:
+The object this returns is a genuinely different kind of double. `allows()` already means something real on `AuthorizerInterface` — it can't also mean "configure an expectation" on that same object, so one of the two has to give way. Rather than quietly dropping just the one colliding verb and leaving you to discover, method by method, which of the eight still work, `override` reroutes control entirely: the real double carries none of the control verbs, and the wrapper you get back carries all of them, so every verb still works the same way regardless of which method actually collided:
 
 ```php
 $gate->expects('allows')->with('edit-post')->returns(true);
@@ -257,7 +257,7 @@ readonly class Money
 Double::for(Money::class); // works, no bypassFinals() needed
 ```
 
-PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is. That costs the double nothing, since it never declares properties of its own — it only overrides methods.
+PHP requires every subclass of a readonly class to be readonly itself, so the generated double is marked `readonly` too whenever its target is.
 
 ## Modes
 
@@ -288,6 +288,7 @@ This is what you get from a plain `Double::for(...)`, with nothing extra to opt 
 | an enum | its first case |
 | a union type | the first branch that resolves cleanly, preferring `null` if it's an option |
 | a non-nullable class or interface | a fresh double of that type, generated for you |
+| an intersection type | a fresh double of every type in it |
 
 That last row is worth a moment: if `find()` is typed to return a non-nullable `Author`, an unconfigured call doesn't hand you `null` and a `TypeError` a few lines later. It hands you a real, freshly-generated `Author` double instead. This only happens once per call chain. If that generated double is then asked to produce something of its own, it stops and asks you to configure it explicitly:
 
@@ -328,6 +329,8 @@ Unconfigured calls run for real. Anything you have configured still intercepts a
 
 `passthru($realLogger)` doesn't keep `$realLogger` around and forward calls to it — it copies `$realLogger`'s state onto the double once, right then, and from that point on the double *is* the real object, running its actual code directly on itself. That's not just an implementation detail: it's what makes an unstubbed method's own internal calls to other methods on `$this` reach your stubs too, the same way overriding a method in an ordinary subclass would. If `Logger::info()` internally called `$this->format($message)`, and you'd configured `format()`, that stub would fire — even though nothing called `format()` directly from your test.
 
+A new instance that real code creates with `new static` is a separate double: it runs in Passthru mode with its own expectations and call history.
+
 One consequence of copying state up front rather than continuing to reach into `$realLogger`: if something else mutates `$realLogger` *after* `passthru()` was called, the double won't see that later change. It's a snapshot at the moment you called `passthru()`, not a live view of `$realLogger` going forward.
 
 `$realLogger` must be `Logger` or a subclass of it — the same rule as any real type hint. A subclass is accepted, but only `Logger`'s own methods ever run, never the subclass's overrides: passthru runs the *doubled* class's real code, not whatever class the instance you handed in actually is. Anything unrelated to `Logger` is rejected outright, since there'd be nothing for `Logger`'s own methods to run against.
@@ -341,9 +344,9 @@ This is the shape to reach for when you want to exercise one method's real logic
 The one case still rejected up front is an interface, since there's no real method body at all to run:
 
 ```
-Can't auto-instantiate `Logger` to passthru. It's an interface —
-so there's no constructor to invoke. You may need to pass an
-existing instance instead. For example: `->passthru($existingInstance)`.
+Can't use passthru on `Logger`. It's an interface, so there's no real
+method to run. You may double an existing instance instead.
+For example: `Double::for($existingInstance)->passthru()`.
 ```
 
 Passthru only applies to classes, since an interface has no real implementation to run.
@@ -450,7 +453,7 @@ $connection->expects('write')->ordered();
 $connection->expects('close')->ordered();
 ```
 
-Calling `write()` before `open()` throws immediately, naming both methods involved. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
+Calling `open()` after `write()` throws immediately, naming both methods involved. Skipping a required call fails verification. Expectations without `ordered()` are unaffected, and ordering is only checked within a single double.
 
 ## Static methods
 
@@ -492,7 +495,7 @@ $verify($credential, $options); // runs the double, not the real action
 
 Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__callStatic` — stays rejected. Those exist to intercept access to members that don't exist at all, so there's no fixed call shape for `expects()`/`allows()` to match against.
 
-`__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from.
+`__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from. A new instance that real code creates with `new static` is different: it starts blank, with its own expectations and call history.
 
 This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
 
@@ -598,6 +601,17 @@ $repository->combine('-', 'a', 'b', 'c'); // also matches
 
 A trailing marker meaning "however many further arguments there are, leave them unconstrained." It must be the last argument passed to `with()`.
 
+A variadic parameter can also collect named arguments. Pass those to `with()` by name:
+
+```php
+$repository->allows('combine')->with('-', first: 'a')->returns('a');
+
+$repository->combine('-', first: 'a'); // matches
+$repository->combine('-', 'a');        // doesn't match
+```
+
+Names in `with()` only ever refer to these variadic extras. A declared parameter is still matched by its position, even when the caller passes it by name.
+
 ## Custom logic
 
 ```php
@@ -648,6 +662,8 @@ $repository->verify();
 `verify()` looks at every `expects()` you configured on the double and fails if any of them weren't met. If you're using PHPUnit or Pest, you don't need to call this yourself at all. See [test suite integration](08-test-suite-integration.md) for a trait that runs it automatically at the end of every test. Otherwise, call it once, wherever your test naturally ends.
 
 When something's unmet, the message doesn't just say it didn't happen. It shows you what did happen instead, if anything, which is usually enough to spot a typo or a stale value at a glance. See [failure messages](07-failure-messages.md) for an example.
+
+If the code under test catches a call failure, such as a call past its `never()` limit, `verify()` throws it again. Only Double's own failures count, not exceptions from `throws()`, `resolves()`, or a passthru method.
 
 ## Checking what happened: `received()`
 
@@ -901,7 +917,7 @@ A handful of failures are about the test's setup rather than the double misbehav
 - A method name that collides with the library's own control verbs (see [reserved method names](03-creating-doubles.md#reserved-method-names)).
 - Setting a double's mode twice.
 - Configuring a static method with `expects()`/`allows()`/`received()` (see [static methods](04-expectations.md#static-methods)).
-- Calling `->passthru()` with no argument when there's nothing to auto-instantiate.
+- Calling `->passthru()` on a double for an interface.
 
 ## Fabricated doubles
 
@@ -922,6 +938,26 @@ you'll need to configure it explicitly. For example:
 ```
 
 One generated double for free, and then a clear stop with a fix you may paste directly, rather than a silently growing chain of generated objects.
+
+## Doubles created with `new static`
+
+Real code running in [passthru mode](03-creating-doubles.md#passthru) may create a new instance with `new static`, like Eloquent's `newInstance()`. That instance is a separate double, and any failure message involving it says so:
+
+```
+Note: this double was created outside of Double (for example, with
+`new static`), so it runs in passthru mode with its own expectations
+and call history.
+```
+
+When the original double is missing a call that the new instance received, the failure points you there instead of leaving you to wonder why a call you know happened was "never called":
+
+```
+Double `Post` expected `save(any arguments)` to be called exactly 1
+time, but it was never called.
+
+Note: `save` was called on a separate `Post` double, created outside
+of Double (for example, with `new static`).
+```
 
 ---
 
@@ -1133,7 +1169,7 @@ Mockery starts with a choice: a mock, a spy, or a partial mock. Here, there's on
 - A strict `mock()` with no leniency maps to **Strict** mode (`->strict()`).
 - `shouldDeferMissing()` and `makePartial()` both map to **Passthru** mode (`->passthru()`) — Mockery splits these into two constructor calls, Double doesn't need to: it's the same mode either way, just with or without an argument.
   - `shouldDeferMissing()`, which takes real constructor arguments (or, in Mockery terms, is typically paired with `Mockery::mock(Foo::class, [$args])`), maps to `->passthru($realInstance)` — you build the real object however you need to (with real dependencies, a container, whatever), and hand it in directly. This is actually more flexible than Mockery here, since you're not limited to constructor arguments — you can hand in any already-built object.
-  - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the double builds its own real state via the target's constructor.
+  - `makePartial()`, which takes nothing, maps to `->passthru()` with no argument — the real constructor never runs.
   - Either way, an unstubbed method runs its real code *on the double itself*, so a self-call it makes internally to another method of the same object can also hit a configured stub — see [passthru](03-creating-doubles.md#passthru) for why that matters and what it costs.
 
 ### No `Mockery::spy()`, just `Double::for()`
