@@ -58,6 +58,8 @@ final class DoubleState
      */
     private int $orderCursor = 0;
 
+    private ?string $doubleClass = null;
+
     public function __construct(
         private readonly string $target,
         private readonly string $label,
@@ -133,6 +135,58 @@ final class DoubleState
             static fn (\ReflectionParameter $parameter): string => $parameter->getName(),
             (new \ReflectionMethod($declaringCandidate, $method))->getParameters(),
         );
+    }
+
+    /**
+     * @internal used only by Double::register()
+     */
+    public function rememberDoubleClass(string $class): void
+    {
+        $this->doubleClass = $class;
+    }
+
+    /**
+     * The declared defaults of the parameters a positional call left off, in
+     * order. Reads the generated signature, which represents object defaults
+     * as null, so stopping at the first null covers those too. A null default
+     * never counts as a match: `where('a', '=')` and `where('a', '=', null)`
+     * are different calls.
+     *
+     * @return list<mixed>
+     */
+    public function omittedDefaults(string $method, array $arguments): array
+    {
+        if ($this->doubleClass === null || ! array_is_list($arguments) || ! method_exists($this->doubleClass, $method)) {
+            return [];
+        }
+
+        $defaults = [];
+
+        foreach (array_slice((new \ReflectionMethod($this->doubleClass, $method))->getParameters(), count($arguments)) as $parameter) {
+            if ($parameter->isVariadic() || ! $parameter->isDefaultValueAvailable()) {
+                break;
+            }
+
+            $default = $parameter->getDefaultValue();
+
+            if ($default === null) {
+                break;
+            }
+
+            $defaults[] = $default;
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * Whether $expectation matches this call, by its actual arguments or
+     * through the defaults of the ones it omitted.
+     */
+    public function matchesCall(MethodExpectation $expectation, string $method, array $arguments): bool
+    {
+        return $expectation->matchesArguments($arguments)
+            || $expectation->matchesWithDefaults($arguments, $this->omittedDefaults($method, $arguments));
     }
 
     /**

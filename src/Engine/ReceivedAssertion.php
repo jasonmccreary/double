@@ -83,7 +83,7 @@ final class ReceivedAssertion
         $calls = $this->state->callsFor($this->method);
 
         foreach ($calls as $call) {
-            if ($this->expectation->matchesArguments($call)) {
+            if ($this->state->matchesCall($this->expectation, $this->method, $call)) {
                 $this->expectation->recordMatch($call);
             }
         }
@@ -101,8 +101,9 @@ final class ReceivedAssertion
         // matched fine — the problem is that it happened at all, not what
         // its arguments were, so there's nothing to diff. And with
         // anything but exactly one recorded call, there's no fact-based way
-        // to say which one to pair against this assertion.
-        $comparison = ! $this->expectation->isSatisfied() && count($calls) === 1
+        // to say which one to pair against this assertion. A call that
+        // already matched, perhaps through a default, has no diff either.
+        $comparison = ! $this->expectation->isSatisfied() && count($calls) === 1 && $this->expectation->timesMatched() === 0
             ? $this->expectation->compareArguments($calls[0])
             : null;
 

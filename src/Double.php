@@ -273,6 +273,7 @@ final class Double
     private static function register(object $double, DoubleState $state): void
     {
         self::states()[$double->__td_identity()] = $state;
+        $state->rememberDoubleClass($double::class);
 
         if (self::$autoVerifyEnabled) {
             self::$pending[] = $state;
@@ -322,8 +323,9 @@ final class Double
                     // Only when exactly one call was ever made to this method does
                     // pairing "the expectation" against "the call" stop being a
                     // guess — with two or more, there's no fact-based way to tell
-                    // which one this expectation was meant to match.
-                    $comparison = count($rawCalls) === 1
+                    // which one this expectation was meant to match. A call it
+                    // already matched, perhaps through a default, has no diff.
+                    $comparison = count($rawCalls) === 1 && $expectation->timesMatched() === 0
                         ? $expectation->compareArguments($rawCalls[0])
                         : null;
 
