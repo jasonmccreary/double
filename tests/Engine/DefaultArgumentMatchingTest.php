@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JMac\Testing\Tests\Engine;
 
 use JMac\Testing\Double;
+use JMac\Testing\Engine\MethodExpectation;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitAmbiguousExpectationException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallLimitExceededException;
 use JMac\Testing\Integrations\PHPUnit\PHPUnitExpectationCallMismatchException;
@@ -230,7 +231,7 @@ final class DefaultArgumentMatchingTest extends TestCase
     {
         $double = Double::for(HasDefaultArguments::class);
 
-        $this->assertSame([], Double::stateFor($double)->omittedDefaults('where', []));
+        $this->assertSame([], Double::stateFor($double)->omittedDefaults('variadic', []));
     }
 
     public function test_omitted_defaults_stop_at_each_boundary(): void
@@ -243,6 +244,7 @@ final class DefaultArgumentMatchingTest extends TestCase
         $this->assertSame([], $state->omittedDefaults('objectDefault', ['a']));
         $this->assertSame(['next'], $state->omittedDefaults('variadic', ['a']));
         $this->assertSame([], $state->omittedDefaults('variadic', ['a', 'extra' => 'x']));
+        $this->assertSame([], $state->omittedDefaults('namedVariadic', ['a', 'extra' => 'x']));
     }
 
     public function test_named_variadic_calls_are_not_padded(): void
@@ -253,6 +255,23 @@ final class DefaultArgumentMatchingTest extends TestCase
         $this->expectException(PHPUnitExpectationCallMismatchException::class);
 
         $double->variadic('a', extra: 'x');
+    }
+
+    public function test_named_variadic_calls_do_not_reach_later_defaults(): void
+    {
+        $double = Double::for(HasDefaultArguments::class);
+        $double->expects('namedVariadic')->with('a', 'x', 'third');
+
+        $this->expectException(PHPUnitExpectationCallMismatchException::class);
+
+        $double->namedVariadic('a', extra: 'x');
+    }
+
+    public function test_expectation_rejects_named_arguments_even_with_defaults(): void
+    {
+        $expectation = (new MethodExpectation('namedVariadic', required: false))->with('a', 'x', 'third');
+
+        $this->assertFalse($expectation->matchesWithDefaults(['a', 'extra' => 'x'], ['third']));
     }
 
     public function test_php_normalizes_named_declared_parameters_to_positional(): void
@@ -271,6 +290,13 @@ final class DefaultArgumentMatchingTest extends TestCase
         $this->expectException(PHPUnitExpectationCallMismatchException::class);
 
         $double->variadic('a');
+    }
+
+    public function test_named_null_constraint_is_not_padded(): void
+    {
+        $expectation = (new MethodExpectation('variadic', required: false))->with('a', extra: null);
+
+        $this->assertFalse($expectation->matchesWithDefaults(['a'], ['next']));
     }
 
     public function test_none_sees_only_actual_arguments(): void
@@ -295,6 +321,16 @@ final class DefaultArgumentMatchingTest extends TestCase
         $double->where('a', '=', 'b');
 
         $this->assertSame(['a', '=', 'b'], $seen);
+    }
+
+    public function test_all_does_not_match_through_omitted_defaults(): void
+    {
+        $double = Double::for(HasDefaultArguments::class);
+        $double->expects('where')->with(Argument::all(static fn (mixed ...$arguments): bool => count($arguments) === 4));
+
+        $this->expectException(PHPUnitExpectationCallMismatchException::class);
+
+        $double->where('a', '=', 'b');
     }
 
     public function test_remaining_sees_only_actual_arguments(): void
@@ -384,6 +420,21 @@ final class DefaultArgumentMatchingTest extends TestCase
         $double->allows('where')->with('other', '=', 'b', 'and')->returns(['stubbed']);
 
         $this->assertSame([2, 'a', '=', null, 'and'], $double->where('a', '='));
+        $this->assertSame([3, 'a', '=', 'b', 'and'], $double->where('a', '=', 'b'));
+    }
+
+    public function test_default_match_preserves_reference_arguments(): void
+    {
+        $total = 5;
+        $double = Double::for(HasDefaultArguments::class);
+        $double->expects('addTo')->with(5, 1)->resolves(function (int &$value): void {
+            $value = 99;
+        });
+
+        $double->addTo($total);
+
+        $this->assertSame(99, $total);
+        $this->assertSame([[5]], Double::stateFor($double)->callsFor('addTo'));
     }
 
     public function test_passthru_uses_a_default_matched_expectation(): void

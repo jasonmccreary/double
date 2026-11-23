@@ -28,6 +28,16 @@ class HasDefaultArguments
         return func_num_args();
     }
 
+    public function namedVariadic(string $name, string $next = 'next', string $third = 'third', string ...$rest): int
+    {
+        return func_num_args();
+    }
+
+    public function addTo(int &$total, int $amount = 1): void
+    {
+        $total += $amount;
+    }
+
     public function other(string $name = 'name'): string
     {
         return $name;
