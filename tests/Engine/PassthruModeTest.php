@@ -114,6 +114,18 @@ final class PassthruModeTest extends TestCase
         $double->received('incrementBy')->with(2, 1, 2);
     }
 
+    public function test_passthru_forwards_named_reference_variadics(): void
+    {
+        $double = Double::for(ReferenceCounter::class)->passthru();
+        $first = 1;
+        $second = 2;
+
+        $double->incrementBy(2, $first, second: $second);
+
+        $this->assertSame([3, 4], [$first, $second]);
+        $double->received('incrementBy')->with(2, 1, second: 2);
+    }
+
     public function test_passthru_uses_an_omitted_object_default(): void
     {
         $double = Double::for(HasObjectDefault::class)->passthru();

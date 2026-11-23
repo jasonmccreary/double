@@ -469,6 +469,22 @@ final class DoubleTest extends TestCase
         $double->verify();
     }
 
+    public function test_stacking_expects_with_the_same_names_in_another_order_is_rejected_as_ambiguous(): void
+    {
+        $double = Double::for(VariadicInterface::class);
+
+        $double->expects('join')->with(first: 'a', second: 'b')->returns('first');
+        $double->expects('join')->with(second: 'b', first: 'a')->returns('second');
+
+        $double->join(first: 'a', second: 'b');
+        $double->join(first: 'a', second: 'b');
+
+        $this->expectException(PHPUnitAmbiguousExpectationException::class);
+        $this->expectExceptionMessage("has `join(first: 'a', second: 'b')` registered 2 times.");
+
+        $double->verify();
+    }
+
     public function test_expects_with_different_arrays_of_the_same_length_are_not_ambiguous(): void
     {
         $double = Double::for(ChannelAuthorizerInterface::class);
@@ -922,6 +938,25 @@ final class DoubleTest extends TestCase
         $this->expectException(PHPUnitExpectationCallMismatchException::class);
 
         $double->combine('+', 'a', 'b');
+    }
+
+    /**
+     * A variadic parameter collects named arguments under their names, so
+     * with() matches them by name and a resolver receives them the way the
+     * real method would. Expectations that differ only by name are distinct,
+     * not ambiguous.
+     */
+    public function test_with_matches_named_variadic_arguments_by_name(): void
+    {
+        $double = Double::for(VariadicInterface::class);
+
+        $double->expects('join')->with(first: 'a')->resolves(static fn (string ...$parts): string => implode(',', array_keys($parts)));
+        $double->expects('join')->with(second: 'a')->returns('second');
+
+        $this->assertSame('first', $double->join(first: 'a'));
+        $this->assertSame('second', $double->join(second: 'a'));
+
+        $double->verify();
     }
 
     /**
@@ -1673,6 +1708,49 @@ final class DoubleTest extends TestCase
             $this->assertStringContainsString('The following similar call was made to `combine`:', $message);
             $this->assertStringContainsString("  glue:\n    - 'baz'\n    + 'Baz'", $message);
             $this->assertStringContainsString("  parts:\n    - 'x'\n    + 'y'", $message);
+        }
+    }
+
+    public function test_verify_failure_names_a_named_variadic_argument_by_its_own_name(): void
+    {
+        $double = Double::for(VariadicInterface::class);
+        $double->allows('combine')->returns('');
+        $double->expects('combine')->with('+', Argument::remaining())->returns('stubbed');
+
+        $double->combine('-', first: 'a');
+
+        try {
+            $double->verify();
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString("  glue:\n    - '+'\n    + '-'", $message);
+            $this->assertStringContainsString("  first: 'a'", $message);
+        }
+    }
+
+    /**
+     * A named argument has no position to diff against, so a call whose
+     * names differ from with()'s falls back to the plain call list.
+     */
+    public function test_verify_failure_lists_a_call_whose_argument_names_differ(): void
+    {
+        $double = Double::for(VariadicInterface::class);
+        $double->allows('combine')->returns('');
+        $double->expects('combine')->with('-', first: 'a')->returns('stubbed');
+
+        $double->combine('-', second: 'a');
+
+        try {
+            $double->verify();
+            $this->fail('Expected UnsatisfiedExpectationException to be thrown.');
+        } catch (PHPUnitUnsatisfiedExpectationException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringContainsString("expected `combine('-', first: 'a')`", $message);
+            $this->assertStringContainsString("`combine('-', second: 'a')`", $message);
+            $this->assertStringNotContainsString('similar call', $message);
         }
     }
 

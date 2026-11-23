@@ -22,7 +22,7 @@ final class ArgumentLabeler
 {
     /**
      * @param  list<string>  $parameterNames
-     * @param  list<array{index: int, differs: bool, text: string}>  $comparisons
+     * @param  list<array{index: int|string, differs: bool, text: string}>  $comparisons
      * @return list<ArgumentComparison>
      */
     public static function label(array $parameterNames, array $comparisons): array
@@ -44,10 +44,16 @@ final class ArgumentLabeler
      * declared name fall back to `name[n]` rather than reusing the same
      * bare name for every one of them.
      *
+     * A named argument is labeled by its own name.
+     *
      * @param  list<string>  $parameterNames
      */
-    private static function labelFor(array $parameterNames, int $index): string
+    private static function labelFor(array $parameterNames, int|string $index): string
     {
+        if (is_string($index)) {
+            return $index;
+        }
+
         if ($parameterNames === []) {
             return sprintf('argument %d', $index + 1);
         }

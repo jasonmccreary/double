@@ -7,4 +7,6 @@ namespace JMac\Testing\Tests\Support;
 interface VariadicInterface
 {
     public function combine(string $glue, string ...$parts): string;
+
+    public function join(string ...$parts): string;
 }
