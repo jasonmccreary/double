@@ -277,6 +277,45 @@ final class MethodExpectation
     }
 
     /**
+     * Whether a call that omitted trailing arguments still matches because
+     * each extra constraint is a plain value equal to that parameter's
+     * declared default. Only plain values qualify: every other matcher,
+     * including any() and capture(), describes an argument that was actually
+     * passed. That also keeps none(), all(), and remaining() on the real
+     * argument list.
+     *
+     * @param  list<mixed>  $defaults  see DoubleState::omittedDefaults()
+     */
+    public function matchesWithDefaults(array $arguments, array $defaults): bool
+    {
+        $constraints = $this->argumentConstraints;
+
+        if ($constraints === null || ! array_is_list($constraints) || ! array_is_list($arguments)) {
+            return false;
+        }
+
+        $omitted = array_slice($constraints, count($arguments));
+
+        if ($omitted === [] || count($omitted) > count($defaults)) {
+            return false;
+        }
+
+        foreach ($omitted as $index => $matcher) {
+            if (! $matcher instanceof EqualsMatcher || ! $matcher->matches($defaults[$index])) {
+                return false;
+            }
+        }
+
+        foreach ($arguments as $index => $argument) {
+            if (! $constraints[$index]->matches($argument)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Compares $arguments position by position against this expectation's
      * constraints, for the one case where that pairing is a plain fact
      * rather than a guess: exactly one real call was ever observed for this

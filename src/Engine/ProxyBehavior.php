@@ -26,7 +26,8 @@ final class ProxyBehavior
         $state->recordCall($method, $arguments);
 
         $candidates = $state->expectationsFor($method);
-        $expectation = self::findMatch($candidates, $arguments);
+        $expectation = self::findMatch($candidates, static fn (MethodExpectation $candidate): bool => $candidate->matchesArguments($arguments))
+            ?? self::findMatchWithDefaults($state, $candidates, $method, $arguments);
 
         if ($expectation === null) {
             // expects() holds this method to a stricter standard than the
@@ -80,8 +81,9 @@ final class ProxyBehavior
     // already have been satisfied correctly and isn't the real culprit.
     /**
      * @param  list<MethodExpectation>  $candidates
+     * @param  \Closure(MethodExpectation): bool  $matches
      */
-    private static function findMatch(array $candidates, array $arguments): ?MethodExpectation
+    private static function findMatch(array $candidates, \Closure $matches): ?MethodExpectation
     {
         $specific = [];
         $generic = [];
@@ -96,18 +98,34 @@ final class ProxyBehavior
 
         $fallback = null;
 
-        return self::findMatchInTier($specific, $arguments, $fallback)
-            ?? self::findMatchInTier($generic, $arguments, $fallback)
+        return self::findMatchInTier($specific, $matches, $fallback)
+            ?? self::findMatchInTier($generic, $matches, $fallback)
             ?? $fallback;
     }
 
     /**
-     * @param  list<MethodExpectation>  $candidates  one tier only (see findMatch())
+     * Runs only once nothing matches the actual arguments, even an exhausted
+     * expectation, so any call that matched without defaults keeps its match.
+     *
+     * @param  list<MethodExpectation>  $candidates
      */
-    private static function findMatchInTier(array $candidates, array $arguments, ?MethodExpectation &$fallback): ?MethodExpectation
+    private static function findMatchWithDefaults(DoubleState $state, array $candidates, string $method, array $arguments): ?MethodExpectation
+    {
+        $defaults = $state->omittedDefaults($method, $arguments);
+
+        return $defaults === []
+            ? null
+            : self::findMatch($candidates, static fn (MethodExpectation $candidate): bool => $candidate->matchesWithDefaults($arguments, $defaults));
+    }
+
+    /**
+     * @param  list<MethodExpectation>  $candidates  one tier only (see findMatch())
+     * @param  \Closure(MethodExpectation): bool  $matches
+     */
+    private static function findMatchInTier(array $candidates, \Closure $matches, ?MethodExpectation &$fallback): ?MethodExpectation
     {
         for ($i = count($candidates) - 1; $i >= 0; $i--) {
-            if (! $candidates[$i]->matchesArguments($arguments)) {
+            if (! $matches($candidates[$i])) {
                 continue;
             }
 
@@ -138,7 +156,7 @@ final class ProxyBehavior
         $count = 0;
 
         foreach ($state->expectationsFor($method) as $candidate) {
-            if ($candidate !== $selected && $candidate->matchesArguments($arguments)) {
+            if ($candidate !== $selected && $state->matchesCall($candidate, $method, $arguments)) {
                 $count++;
             }
         }
