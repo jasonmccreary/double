@@ -57,9 +57,8 @@ class UnknownMethodException extends DoubleException
     private function callExplanation(): string
     {
         return sprintf(
-            "\n\nIt handles undeclared calls through `__call()`, so `%s` has no signature for Double to check an expectation against. "
-                .'Double the object those calls reach instead, or use the real thing. '
-                .'Review the documentation for more detail: https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods',
+            "\n\n`%s` may be handled by `__call()`, but Double only configures declared methods. Instead, double the class that declares `%s`.",
+            $this->method,
             $this->method,
         );
     }

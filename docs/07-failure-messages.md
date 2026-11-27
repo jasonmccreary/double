@@ -118,10 +118,8 @@ When the class declares `__call()`, the message also explains that a method only
 Can't configure `get` on a double for `CacheManager` because it
 doesn't declare this method.
 
-It handles undeclared calls through `__call()`, so `get` has no
-signature for Double to check an expectation against. Double the
-object those calls reach instead, or use the real thing. Review the
-documentation for more detail: https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods
+`get` may be handled by `__call()`, but Double only configures
+declared methods. Instead, double the class that declares `get`.
 ```
 
 ## A call didn't match an `expects()`

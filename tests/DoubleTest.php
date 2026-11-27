@@ -1468,7 +1468,7 @@ final class DoubleTest extends TestCase
         $double = Double::for(DiskManager::class)->strict();
 
         $this->expectException(UnknownMethodException::class);
-        $this->expectExceptionMessage('It handles undeclared calls through `__call()`, so `put` has no signature for Double to check an expectation against.');
+        $this->expectExceptionMessage('`put` may be handled by `__call()`, but Double only configures declared methods. Instead, double the class that declares `put`.');
 
         $double->expects('put');
     }
@@ -1478,7 +1478,7 @@ final class DoubleTest extends TestCase
         $double = Double::for(DiskManager::class);
 
         $this->expectException(UnknownMethodException::class);
-        $this->expectExceptionMessage('It handles undeclared calls through `__call()`');
+        $this->expectExceptionMessage('`put` may be handled by `__call()`');
 
         $double->received('put');
     }
@@ -1488,7 +1488,7 @@ final class DoubleTest extends TestCase
         $double = Double::for(DiskManager::class);
 
         $this->expectException(UnknownMethodException::class);
-        $this->expectExceptionMessage("Did you mean `disk`?\n\nIt handles undeclared calls through `__call()`");
+        $this->expectExceptionMessage("Did you mean `disk`?\n\n`disc` may be handled by `__call()`");
 
         $double->allows('disc');
     }

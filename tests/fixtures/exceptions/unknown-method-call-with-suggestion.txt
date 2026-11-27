@@ -1,4 +1,4 @@
 
 Can't configure `stor` on a double for `CacheManager` because it doesn't declare this method. Did you mean `store`?
 
-It handles undeclared calls through `__call()`, so `stor` has no signature for Double to check an expectation against. Double the object those calls reach instead, or use the real thing. Review the documentation for more detail: https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods
+`stor` may be handled by `__call()`, but Double only configures declared methods. Instead, double the class that declares `stor`.

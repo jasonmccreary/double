@@ -145,9 +145,8 @@ $cache->expects('get'); // CacheManager forwards get() through __call()
 // Can't configure `get` on a double for `CacheManager` because it
 // doesn't declare this method.
 //
-// It handles undeclared calls through `__call()`, so `get` has no
-// signature for Double to check an expectation against. Double the
-// object those calls reach instead, or use the real thing. ...
+// `get` may be handled by `__call()`, but Double only configures
+// declared methods. Instead, double the class that declares `get`.
 ```
 
 See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
