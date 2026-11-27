@@ -226,7 +226,7 @@ A few things are rejected when you call `for()`, with a clear reason, rather tha
 
 Static methods are a related, separate case: you may create a double for a class that has one, or an interface that declares one, but configuring it with `expects()`/`allows()`/`received()` is rejected, since there's no instance for a static call to run through. That's covered in [expectations](04-expectations.md#static-methods).
 
-Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. See [magic methods](04-expectations.md#magic-methods).
+Most magic methods are the same kind of separate case — a double may exist for a class that declares one, but configuring most of them is rejected. `__invoke`, `__toString`, `__serialize`, `__unserialize`, and `__clone` are the exception and work like any other method. A method a class only handles through `__call()` isn't declared, so it can't be configured either. See [magic methods](04-expectations.md#magic-methods).
 
 ### Doubling a final class
 
@@ -497,7 +497,30 @@ Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__cal
 
 `__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from. A new instance that real code creates with `new static` is different: it starts blank, with its own expectations and call history.
 
-This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
+This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, Laravel's managers, and similar. Configuring a method that only `__call()` handles is rejected like any undeclared method, and the message says why:
+
+```php
+$cache->expects('get'); // CacheManager forwards get() through __call()
+// Can't configure `get` on a double for `CacheManager` because it
+// doesn't declare this method.
+//
+// `get` may be handled by `__call()`, but Double only configures
+// declared methods. Instead, double the class that declares `get`.
+```
+
+See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
+
+A class with `__call()` also limits its protected and private methods. A call to one from outside the class goes to `__call()` instead, so configuring one is rejected:
+
+```php
+$filesystem->expects('get'); // protected get(), plus __call()
+// Can't configure `get` on a double for `FilesystemManager` since
+// it's a protected method. Calls from outside the class go to
+// `__call()` instead, so they never reach it. If real code calls
+// it, configure it after `passthru()`.
+```
+
+A passthru double is exempt, since its own real code can call the method. The check runs when the method is configured, so call `passthru()` first.
 
 ---
 
@@ -839,11 +862,21 @@ $repository->expects('sav'); // meant "save"
 ```
 
 ```
-Can't configure `sav` on a double for `BookRepository`. That method
-does not exist. Did you mean `save`?
+Can't configure `sav` on a double for `BookRepository` because it
+doesn't declare this method. Did you mean `save`?
 ```
 
 The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
+
+When the class declares `__call()`, the message also explains that a method only `__call()` handles can't be configured, after any suggestion:
+
+```
+Can't configure `get` on a double for `CacheManager` because it
+doesn't declare this method.
+
+`get` may be handled by `__call()`, but Double only configures
+declared methods. Instead, double the class that declares `get`.
+```
 
 ## A call didn't match an `expects()`
 
@@ -930,6 +963,7 @@ A handful of failures are about the test's setup rather than the double misbehav
 - A method name that collides with the library's own control verbs (see [reserved method names](03-creating-doubles.md#reserved-method-names)).
 - Setting a double's mode twice.
 - Configuring a static method with `expects()`/`allows()`/`received()` (see [static methods](04-expectations.md#static-methods)).
+- Configuring a protected or private method on a class with `__call()` (see [magic methods](04-expectations.md#magic-methods)).
 - Calling `->passthru()` on a double for an interface.
 
 ## Fabricated doubles
