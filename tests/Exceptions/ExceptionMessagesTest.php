@@ -324,6 +324,20 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unknown-method-with-suggestion', $exception->getMessage());
     }
 
+    public function test_renders_unknown_method_for_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $exception = new UnknownMethodException('FilesystemManager', 'get', visibility: 'protected');
+
+        $this->assertMatchesGolden('unknown-method-protected', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_for_a_private_method_on_a_class_declaring_call(): void
+    {
+        $exception = new UnknownMethodException('FilesystemManager', 'get', visibility: 'private');
+
+        $this->assertMatchesGolden('unknown-method-private', $exception->getMessage());
+    }
+
     public function test_renders_mode_configuration(): void
     {
         $exception = new ModeConfigurationException('BookRepository', 'Strict', 'Strict');
@@ -581,6 +595,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new UnknownMethodException('BookRepositoryInterface', 'sav', fabricated: true, suggestion: 'save');
 
         $this->assertMatchesGolden('unknown-method-fabricated-with-suggestion', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_fabricated_for_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $exception = new UnknownMethodException('FilesystemManager', 'get', fabricated: true, visibility: 'protected');
+
+        $this->assertMatchesGolden('unknown-method-fabricated-protected', $exception->getMessage());
     }
 
     public function test_renders_mode_configuration_on_a_fabricated_double(): void

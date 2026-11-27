@@ -645,8 +645,13 @@ final class Double
 
     /**
      * Shared by registerExpectation() and received(): both need the same
-     * three checks before they can do anything with $method — that it
-     * exists, that it isn't static, and that it isn't magic.
+     * checks before they can do anything with $method — that it exists,
+     * that it isn't static, that it isn't magic, and that calls can reach it.
+     *
+     * An outside call to a non-public method on a target with __call() runs
+     * __call() instead, so it would never match. Passthru is exempt, since
+     * the double's own real code can call it. The check runs only here, at
+     * registration: configure non-public methods after passthru().
      */
     private static function assertConfigurable(DoubleState $state, string $method): void
     {
@@ -667,6 +672,17 @@ final class Double
 
         if (str_starts_with($method, '__') && ! in_array($method, ClassGenerator::DOUBLEABLE_MAGIC_METHODS, true)) {
             throw new MagicMethodException($state->target(), $method, $state->isFabricated());
+        }
+
+        // PHP runs the doubleable magic methods itself, never through __call().
+        if (str_starts_with($method, '__') || $state->mode() === Mode::Passthru || ! $state->declaresCall()) {
+            return;
+        }
+
+        $visibility = $state->nonPublicVisibility($declaringCandidate, $method);
+
+        if ($visibility !== null) {
+            throw new UnknownMethodException($state->target(), $method, $state->isFabricated(), visibility: $visibility);
         }
     }
 

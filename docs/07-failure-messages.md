@@ -197,6 +197,7 @@ A handful of failures are about the test's setup rather than the double misbehav
 - A method name that collides with the library's own control verbs (see [reserved method names](03-creating-doubles.md#reserved-method-names)).
 - Setting a double's mode twice.
 - Configuring a static method with `expects()`/`allows()`/`received()` (see [static methods](04-expectations.md#static-methods)).
+- Configuring a protected or private method on a class with `__call()` (see [magic methods](04-expectations.md#magic-methods)).
 - Calling `->passthru()` on a double for an interface.
 
 ## Fabricated doubles

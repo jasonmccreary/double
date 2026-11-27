@@ -31,6 +31,8 @@ use JMac\Testing\Tests\Support\BookRepositoryInterface;
 use JMac\Testing\Tests\Support\ChannelAuthorizerInterface;
 use JMac\Testing\Tests\Support\ConcreteLogger;
 use JMac\Testing\Tests\Support\CreatesNewStaticInstance;
+use JMac\Testing\Tests\Support\DiskInterface;
+use JMac\Testing\Tests\Support\DiskManager;
 use JMac\Testing\Tests\Support\EnumDefaultInterface;
 use JMac\Testing\Tests\Support\Fillable;
 use JMac\Testing\Tests\Support\FinalLogger;
@@ -39,7 +41,10 @@ use JMac\Testing\Tests\Support\HasInvokeMethod;
 use JMac\Testing\Tests\Support\HasMagicMethod;
 use JMac\Testing\Tests\Support\HasStaticMethod;
 use JMac\Testing\Tests\Support\ImplementsStaticMethodInterface;
+use JMac\Testing\Tests\Support\IntersectionReturnInterface;
+use JMac\Testing\Tests\Support\PrivateDiskManager;
 use JMac\Testing\Tests\Support\ReadOnlyLogger;
+use JMac\Testing\Tests\Support\SelfCallingCalculator;
 use JMac\Testing\Tests\Support\Sized;
 use JMac\Testing\Tests\Support\StaticMethodInterface;
 use JMac\Testing\Tests\Support\Suit;
@@ -1452,6 +1457,112 @@ final class DoubleTest extends TestCase
         $this->expectExceptionMessage('magic method');
 
         $double->received('__call');
+    }
+
+    /**
+     * Mirrors Storage::expects('get') against Laravel's FilesystemManager:
+     * the outside get() call lands in __call() and never reaches the
+     * protected get(), so the expectation could never match.
+     */
+    public function test_expects_rejects_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $double = Double::for(DiskManager::class)->strict();
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('Can\'t configure `get` on a double for `JMac\Testing\Tests\Support\DiskManager` since it\'s a protected method.');
+
+        $double->expects('get')->with('tags.json');
+    }
+
+    public function test_allows_rejects_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $double = Double::for(DiskManager::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('protected method');
+
+        $double->allows('get');
+    }
+
+    /**
+     * get() really was called, but only __call() saw it, so a never()
+     * check on it would otherwise pass.
+     */
+    public function test_received_rejects_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $double = Double::for(DiskManager::class);
+        $double->get('tags.json');
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('protected method');
+
+        $double->received('get');
+    }
+
+    public function test_allows_rejects_a_private_method_on_a_class_declaring_call(): void
+    {
+        $double = Double::for(PrivateDiskManager::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('private method');
+
+        $double->allows('get');
+    }
+
+    public function test_allows_rejects_a_protected_method_on_a_fabricated_intersection_declaring_call(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('this double was returned automatically');
+
+        $double->makeDiskManager()->allows('get');
+    }
+
+    /**
+     * DiskResolverInterface declares get() public, so the intersection
+     * widens it and outside calls reach it.
+     */
+    public function test_allows_configures_a_protected_method_an_intersection_widens_to_public(): void
+    {
+        $disk = Double::for(DiskInterface::class);
+        $resolver = Double::for(IntersectionReturnInterface::class)->makeDiskResolver();
+        $resolver->allows('get')->returns($disk);
+
+        $this->assertSame($disk, $resolver->get('s3'));
+    }
+
+    /**
+     * The real disk() runs on the double and calls its own get(), so the
+     * stub is reachable.
+     */
+    public function test_passthru_configures_a_protected_method_on_a_class_declaring_call(): void
+    {
+        $disk = Double::for(DiskInterface::class);
+        $double = Double::for(DiskManager::class)->passthru();
+        $double->expects('get')->with('s3')->returns($disk);
+
+        $this->assertSame($disk, $double->disk('s3'));
+    }
+
+    /**
+     * Checked at registration only: the mode isn't passthru yet.
+     */
+    public function test_allows_rejects_a_protected_method_configured_before_passthru(): void
+    {
+        $double = Double::for(DiskManager::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('If real code calls it, configure it after `passthru()`.');
+
+        $double->allows('get');
+    }
+
+    public function test_expects_configures_a_protected_method_on_a_class_without_call(): void
+    {
+        $double = Double::for(SelfCallingCalculator::class)->strict();
+
+        $this->assertSame('double', $double->allows('double')->method());
     }
 
     public function test_received_passes_for_a_doubleable_magic_method(): void
