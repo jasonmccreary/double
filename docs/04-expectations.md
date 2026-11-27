@@ -139,3 +139,15 @@ Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__cal
 `__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from. A new instance that real code creates with `new static` is different: it starts blank, with its own expectations and call history.
 
 This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
+
+A class with `__call()` also limits its protected and private methods. A call to one from outside the class goes to `__call()` instead, so configuring one is rejected:
+
+```php
+$filesystem->expects('get'); // protected get(), plus __call()
+// Can't configure `get` on a double for `FilesystemManager` since
+// it's a protected method. Calls from outside the class go to
+// `__call()` instead, so they never reach it. If real code calls
+// it, configure it after `passthru()`.
+```
+
+A passthru double is exempt, since its own real code can call the method. The check runs when the method is configured, so call `passthru()` first.
