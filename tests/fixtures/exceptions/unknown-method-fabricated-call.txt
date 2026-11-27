@@ -1,0 +1,6 @@
+
+Can't configure `get` on a double for `CacheManager` because it doesn't declare this method.
+
+`get` may be handled by `__call()`, but Double only configures declared methods. Instead, double the class that declares `get`.
+
+Note: this double was returned automatically. You will need to configure it explicitly if you want it to behave differently.

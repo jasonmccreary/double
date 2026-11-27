@@ -138,7 +138,18 @@ Everything else — `__get`, `__set`, `__isset`, `__unset`, `__call`, and `__cal
 
 `__clone` being configurable is separate from what a plain `clone $double` does on its own, with nothing configured: the clone is a fully working double, sharing the original's expectations and call history rather than starting blank — the same way cloning a Mockery mock carries its state over, since Mockery's own state lives in ordinary instance properties that PHP's default `clone` already copies. This matters most when it happens somewhere you didn't write it: real code you're exercising via `passthru()` may clone `$this` internally (Eloquent's relation builders do, for instance), and the clone it produces keeps working exactly like the double it came from. A new instance that real code creates with `new static` is different: it starts blank, with its own expectations and call history.
 
-This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, and similar. See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
+This comes up most often with classes whose entire public API is `__call`-forwarded — AWS SDK clients, Redis connection wrappers, Laravel's managers, and similar. Configuring a method that only `__call()` handles is rejected like any undeclared method, and the message says why:
+
+```php
+$cache->expects('get'); // CacheManager forwards get() through __call()
+// Can't configure `get` on a double for `CacheManager` because it
+// doesn't declare this method.
+//
+// `get` may be handled by `__call()`, but Double only configures
+// declared methods. Instead, double the class that declares `get`.
+```
+
+See [why doesn't Double mock magic methods](https://testdoublephp.com/blog/why-doesnt-double-mock-magic-methods) for what to double instead in those cases, and why it usually ends up being the stronger test.
 
 A class with `__call()` also limits its protected and private methods. A call to one from outside the class goes to `__call()` instead, so configuring one is rejected:
 

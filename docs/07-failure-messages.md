@@ -106,11 +106,21 @@ $repository->expects('sav'); // meant "save"
 ```
 
 ```
-Can't configure `sav` on a double for `BookRepository`. That method
-does not exist. Did you mean `save`?
+Can't configure `sav` on a double for `BookRepository` because it
+doesn't declare this method. Did you mean `save`?
 ```
 
 The suggestion only appears when something is genuinely close. If nothing is, the message simply doesn't guess.
+
+When the class declares `__call()`, the message also explains that a method only `__call()` handles can't be configured, after any suggestion:
+
+```
+Can't configure `get` on a double for `CacheManager` because it
+doesn't declare this method.
+
+`get` may be handled by `__call()`, but Double only configures
+declared methods. Instead, double the class that declares `get`.
+```
 
 ## A call didn't match an `expects()`
 

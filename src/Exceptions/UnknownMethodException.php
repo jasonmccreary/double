@@ -14,6 +14,9 @@ namespace JMac\Testing\Exceptions;
  * Also thrown when the method is declared but $visibility ("protected" or
  * "private") keeps it out of reach: the target declares __call(), so an
  * outside call lands there instead of on the method.
+ *
+ * $declaresCall is whether the target declares __call(). For an undeclared
+ * method, the message then explains why Double still won't configure it.
  */
 class UnknownMethodException extends DoubleException
 {
@@ -23,6 +26,7 @@ class UnknownMethodException extends DoubleException
         public readonly bool $fabricated = false,
         public readonly ?string $suggestion = null,
         public readonly ?string $visibility = null,
+        public readonly bool $declaresCall = false,
     ) {
         parent::__construct(self::lead($this->render()));
     }
@@ -41,11 +45,21 @@ class UnknownMethodException extends DoubleException
         }
 
         return sprintf(
-            'Can\'t configure `%s` on a double for `%s` because it doesn\'t declare this method.%s%s',
+            'Can\'t configure `%s` on a double for `%s` because it doesn\'t declare this method.%s%s%s',
             $this->method,
             $this->target,
             $this->suggestion !== null ? sprintf(' Did you mean `%s`?', $this->suggestion) : '',
+            $this->declaresCall ? $this->callExplanation() : '',
             self::fabricatedNote($this->fabricated),
+        );
+    }
+
+    private function callExplanation(): string
+    {
+        return sprintf(
+            "\n\n`%s` may be handled by `__call()`, but Double only configures declared methods. Instead, double the class that declares `%s`.",
+            $this->method,
+            $this->method,
         );
     }
 }

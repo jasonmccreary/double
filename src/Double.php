@@ -663,6 +663,7 @@ final class Double
                 $method,
                 $state->isFabricated(),
                 DidYouMean::suggest($method, $state->declarableMethodNames()),
+                declaresCall: $state->declaresCall(),
             );
         }
 
@@ -682,7 +683,7 @@ final class Double
         $visibility = $state->nonPublicVisibility($declaringCandidate, $method);
 
         if ($visibility !== null) {
-            throw new UnknownMethodException($state->target(), $method, $state->isFabricated(), visibility: $visibility);
+            throw new UnknownMethodException($state->target(), $method, $state->isFabricated(), visibility: $visibility, declaresCall: true);
         }
     }
 

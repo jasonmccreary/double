@@ -324,6 +324,20 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $this->assertMatchesGolden('unknown-method-with-suggestion', $exception->getMessage());
     }
 
+    public function test_renders_unknown_method_on_a_class_declaring_call(): void
+    {
+        $exception = new UnknownMethodException('CacheManager', 'get', declaresCall: true);
+
+        $this->assertMatchesGolden('unknown-method-call', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_on_a_class_declaring_call_with_a_suggestion(): void
+    {
+        $exception = new UnknownMethodException('CacheManager', 'stor', suggestion: 'store', declaresCall: true);
+
+        $this->assertMatchesGolden('unknown-method-call-with-suggestion', $exception->getMessage());
+    }
+
     public function test_renders_unknown_method_for_a_protected_method_on_a_class_declaring_call(): void
     {
         $exception = new UnknownMethodException('FilesystemManager', 'get', visibility: 'protected');
@@ -595,6 +609,13 @@ final class ExceptionMessagesTest extends GoldenFileTestCase
         $exception = new UnknownMethodException('BookRepositoryInterface', 'sav', fabricated: true, suggestion: 'save');
 
         $this->assertMatchesGolden('unknown-method-fabricated-with-suggestion', $exception->getMessage());
+    }
+
+    public function test_renders_unknown_method_fabricated_on_a_class_declaring_call(): void
+    {
+        $exception = new UnknownMethodException('CacheManager', 'get', fabricated: true, declaresCall: true);
+
+        $this->assertMatchesGolden('unknown-method-fabricated-call', $exception->getMessage());
     }
 
     public function test_renders_unknown_method_fabricated_for_a_protected_method_on_a_class_declaring_call(): void
