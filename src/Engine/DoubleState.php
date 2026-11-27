@@ -110,6 +110,39 @@ final class DoubleState
     }
 
     /**
+     * "protected" or "private" when no target candidate declares $method
+     * public, null otherwise. An intersection whose interface declares it
+     * public widens it to public on the double (see
+     * ClassGenerator::buildMethod()). Takes $declaringCandidate for the
+     * same reason isStatic() does; its visibility is the one reported.
+     */
+    public function nonPublicVisibility(string $declaringCandidate, string $method): ?string
+    {
+        foreach ($this->targetCandidates() as $candidate) {
+            if (method_exists($candidate, $method) && (new \ReflectionMethod($candidate, $method))->isPublic()) {
+                return null;
+            }
+        }
+
+        return (new \ReflectionMethod($declaringCandidate, $method))->isProtected() ? 'protected' : 'private';
+    }
+
+    /**
+     * Whether any target candidate declares __call(). An outside call to one
+     * of its non-public methods then lands in __call() instead of failing.
+     */
+    public function declaresCall(): bool
+    {
+        foreach ($this->targetCandidates() as $candidate) {
+            if (method_exists($candidate, '__call')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * The real declared parameter names for $method, for labeling argument
      * mismatches by name instead of position (see Double::verifyState()).
      * A variadic parameter's name appears once here even though it can

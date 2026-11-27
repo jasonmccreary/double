@@ -1,0 +1,2 @@
+
+Can't configure `get` on a double for `FilesystemManager` since it's a protected method. Calls from outside the class go to `__call()` instead, so they never reach it. If real code calls it, configure it after `passthru()`.

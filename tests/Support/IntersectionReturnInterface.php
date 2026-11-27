@@ -15,4 +15,8 @@ interface IntersectionReturnInterface
     public function makeProtectedSize(): ProtectedSize&Sized;
 
     public function makeTwoClasses(): ConcreteLogger&Book;
+
+    public function makeDiskManager(): DiskManager&Sized;
+
+    public function makeDiskResolver(): DiskManager&DiskResolverInterface;
 }
