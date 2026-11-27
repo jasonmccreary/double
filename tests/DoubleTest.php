@@ -1460,6 +1460,63 @@ final class DoubleTest extends TestCase
     }
 
     /**
+     * Mirrors Cache::expects('get') against Laravel's CacheManager: put() is
+     * only reachable through __call(), which forwards it to the disk.
+     */
+    public function test_expects_explains_call_for_an_undeclared_method(): void
+    {
+        $double = Double::for(DiskManager::class)->strict();
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('It handles undeclared calls through `__call()`, so `put` has no signature for Double to check an expectation against.');
+
+        $double->expects('put');
+    }
+
+    public function test_received_explains_call_for_an_undeclared_method(): void
+    {
+        $double = Double::for(DiskManager::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage('It handles undeclared calls through `__call()`');
+
+        $double->received('put');
+    }
+
+    public function test_expects_leads_with_the_suggestion_before_explaining_call(): void
+    {
+        $double = Double::for(DiskManager::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessage("Did you mean `disk`?\n\nIt handles undeclared calls through `__call()`");
+
+        $double->allows('disc');
+    }
+
+    public function test_allows_explains_call_for_an_undeclared_method_on_a_fabricated_intersection(): void
+    {
+        $double = Double::for(IntersectionReturnInterface::class);
+
+        $this->expectException(UnknownMethodException::class);
+        $this->expectExceptionMessageMatches('/`__call\(\)`.*\n\nNote: this double was returned automatically/s');
+
+        $double->makeDiskManager()->allows('put');
+    }
+
+    public function test_expects_does_not_explain_call_for_a_class_without_call(): void
+    {
+        $double = Double::for(BookRepositoryInterface::class);
+
+        try {
+            $double->expects('bogus');
+            $this->fail('Expected an UnknownMethodException.');
+        } catch (UnknownMethodException $exception) {
+            $this->assertFalse($exception->declaresCall);
+            $this->assertStringNotContainsString('__call()', $exception->getMessage());
+        }
+    }
+
+    /**
      * Mirrors Storage::expects('get') against Laravel's FilesystemManager:
      * the outside get() call lands in __call() and never reaches the
      * protected get(), so the expectation could never match.
